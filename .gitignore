@@ -1,0 +1,32 @@
+# Android (not ready)
+ChemViz3D-Android/
+
+# Development guide (not for public repo)
+Agent.md
+
+# WorkBuddy project memory
+.workbuddy/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+tsconfig.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+src/temp_patch.txt
+
+# Environment
+.env
+.env.local
