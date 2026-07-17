@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>ChemViz3D</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+      body { margin: 0; overflow: hidden; background: #111122; }
+      #root { width: 100vw; height: 100vh; }
+      * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // ── Android ↔ JavaScript bridge ──
+      window.__chemviz = {};
+      window.__chemviz.loadMolecule = function(f, c, s, n) {
+        window.dispatchEvent(new CustomEvent('android-molecule', { detail: { formula: f, canonical: c, smiles: s, name: n } }));
+      };
+      window.__chemviz.sendMeasurement = function(t, v) { if (window.ChemVizAndroid) window.ChemVizAndroid.onMeasurement(t, JSON.stringify(v)); };
+      window.__chemviz.sendStatus = function(m) { if (window.ChemVizAndroid) window.ChemVizAndroid.onStatus(m); };
+      window.__chemviz.sendMoleculeInfo = function(i) { if (window.ChemVizAndroid) window.ChemVizAndroid.onMoleculeInfo(JSON.stringify(i)); };
+      window.addEventListener('load', function() {
+        setTimeout(function() { if (window.ChemVizAndroid) window.ChemVizAndroid.onReady(); }, 800);
+      });
+      if (window.ChemVizAndroid) {
+        var _l=console.log; var _e=console.error;
+        console.log = function() { window.ChemVizAndroid.onConsoleLog(Array.prototype.slice.call(arguments).join(' ')); _l.apply(console, arguments); };
+        console.error = function() { window.ChemVizAndroid.onConsoleLog('[E] '+Array.prototype.slice.call(arguments).join(' ')); _e.apply(console, arguments); };
+      }
+    </script>
+    <script src="RDKit_minimal.js"></script>
+    <script src="assets/main.js"></script>
+  </body>
+</html>
