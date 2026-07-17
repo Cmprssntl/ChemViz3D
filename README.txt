@@ -1,6 +1,27 @@
 ChemViz3D ——化学结构可视化
 项目启动时间：2026.7.13
 
+## 快速开始
+
+```bash
+# 1. 安装依赖（克隆后必须执行，node_modules 未纳入版本控制）
+npm install
+
+# 2. 启动开发服务器
+npm run dev
+
+# 3. 浏览器打开 http://localhost:5173
+```
+
+环境要求：Node.js >= 18
+
+## 生产构建
+
+```bash
+npm run build          # 输出到 dist/
+npm run preview        # 预览生产构建
+```
+
 赞助者：
 ydssj233 CNY 10.00
 
