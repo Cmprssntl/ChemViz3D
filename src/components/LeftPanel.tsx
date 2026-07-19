@@ -33,7 +33,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessFormula, onProces
     if (inputFormula.trim()) onProcessFormula(inputFormula.trim());
   };
 
-  const examples = ["CH4","C2H6","C2H4","C2H2","C6H6","CH3OH","C2H5OH","CH3COOH","H2O","NH3","CO2"];
+  const examples = ["CH4","C2H6","C2H4","C2H2","C6H6","C3H6","C4H8","C5H10","C6H12","C7H14","CH3OH","C2H5OH","CH3COOH","H2O","NH3","CO2"];
 
   return (<div className="panel left-panel"><h2 className="panel-title">Input</h2>
     <form onSubmit={handleSubmit} className="input-form">

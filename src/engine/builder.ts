@@ -456,6 +456,7 @@ function buildAlkaneChain(C: number, formula: string): MoleculeData | null {
       index: i, element: "C",
       x: cPos[i].x, y: cPos[i].y, z: cPos[i].z,
       covalentRadius: 76, vdwRadius: 170,
+      hybridization: "sp3",
     });
   }
   for (let i = 0; i < C - 1; i++) {

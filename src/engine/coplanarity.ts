@@ -133,7 +133,7 @@ export function dihedralAngle(a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vecto
   return THREE.MathUtils.radToDeg(Math.acos(cosA));
 }
 
-function planarityDeviation(positions: THREE.Vector3[], planeNormal: THREE.Vector3, planeCenter: THREE.Vector3): number {
+export function planarityDeviation(positions: THREE.Vector3[], planeNormal: THREE.Vector3, planeCenter: THREE.Vector3): number {
   let maxDist = 0;
   for (const p of positions) {
     const vec = new THREE.Vector3().subVectors(p, planeCenter);
@@ -150,7 +150,12 @@ function planarityDeviation(positions: THREE.Vector3[], planeNormal: THREE.Vecto
 function detectPlanarChains(atoms: any[], bonds: any[], adj: Map<number, number[]>): CoplanarSet[] {
   const results: CoplanarSet[] = [];
   const visited = new Set<string>();
-  const DIHEDRAL_THRESHOLD = 15;
+  // Planarity check: require the 4 atoms to be ACTUALLY coplanar (max
+  // deviation from the best-fit plane < 0.1 Å), not just a low dihedral
+  // (which can occur even when atoms are off the plane in different ways).
+  // This avoids false positives like "C0_H - C0 - C1 - C1_H" being flagged
+  // as coplanar when the 2 H's are actually 0.5 Å off the ring plane.
+  const PLANAR_TOL = 0.1;
 
   for (const b of bonds) {
     const a = b.atom1Idx;
@@ -162,29 +167,42 @@ function detectPlanarChains(atoms: any[], bonds: any[], adj: Map<number, number[
       if (a2 === c) continue;
       for (const c2 of cNeighbors) {
         if (c2 === a || c2 === a2) continue;
+        // Require at least 3 of the 4 chain atoms to be heavy atoms (non-H).
+        // Without this, tetrahedral H placement on adjacent C's creates
+        // "spurious" 4-atom coplanar sets (2 C's + 2 H's) due to the
+        // sp3 symmetry, which pollutes the coplanarity count. The C-only
+        // chains (e.g. C2-C0-C1-C2 ring trace) are still detected normally.
+        const nHeavy = (atoms[a2].element !== "H" ? 1 : 0)
+                     + (atoms[a].element !== "H" ? 1 : 0)
+                     + (atoms[c].element !== "H" ? 1 : 0)
+                     + (atoms[c2].element !== "H" ? 1 : 0);
+        if (nHeavy < 3) continue;
         // Chain: a2 - a - c - c2 (4 consecutive atoms)
         const p1 = new THREE.Vector3(atoms[a2].x, atoms[a2].y, atoms[a2].z);
         const p2 = new THREE.Vector3(atoms[a].x, atoms[a].y, atoms[a].z);
         const p3 = new THREE.Vector3(atoms[c].x, atoms[c].y, atoms[c].z);
         const p4 = new THREE.Vector3(atoms[c2].x, atoms[c2].y, atoms[c2].z);
 
+        // First, dihedral must be small (quick pre-filter)
         const dihedralVal = dihedralAngle(p1, p2, p3, p4);
         const planarity = Math.min(dihedralVal, 180 - dihedralVal);
+        if (planarity >= 5) continue;
 
-        if (planarity < DIHEDRAL_THRESHOLD) {
-          const indices = [a2, a, c, c2].sort((x, y) => x - y);
-          const key = indices.join(',');
-          if (!visited.has(key)) {
-            visited.add(key);
-            const positions = indices.map(i => new THREE.Vector3(atoms[i].x, atoms[i].y, atoms[i].z));
-            const clusterCenter = new THREE.Vector3();
-            for (const p of positions) clusterCenter.add(p);
-            clusterCenter.divideScalar(positions.length);
-            const va = new THREE.Vector3().subVectors(positions[1], positions[0]);
-            const vb = new THREE.Vector3().subVectors(positions[2], positions[0]);
-            const nml = new THREE.Vector3().crossVectors(va, vb).normalize();
-            results.push({ atomIndices: indices, type: 'chain', normal: nml, center: clusterCenter });
-          }
+        // Then, verify the 4 atoms are actually coplanar (max deviation
+        // from best-fit plane < PLANAR_TOL). dihedral ≈ 0 is necessary
+        // but not sufficient — only this full check guarantees coplanarity.
+        const positions = [p1, p2, p3, p4];
+        const fit = bestFitPlane(positions);
+        const deviation = planarityDeviation(positions, fit.normal, fit.center);
+        if (deviation >= PLANAR_TOL) continue;
+
+        const indices = [a2, a, c, c2].sort((x, y) => x - y);
+        const key = indices.join(',');
+        if (!visited.has(key)) {
+          visited.add(key);
+          const clusterCenter = fit.center.clone();
+          const nml = fit.normal.clone();
+          results.push({ atomIndices: indices, type: 'chain', normal: nml, center: clusterCenter });
         }
       }
     }
@@ -209,13 +227,18 @@ export function detectPlanarFragments(molecule: MoleculeData): CoplanarSet[] {
   const results: CoplanarSet[] = [];
 
   // 1. Ring detection
+  // Tightened threshold: 0.20 Å (was 0.5) so chair-like rings (max
+  // deviation ~0.30 Å) are NOT marked as coplanar. The 0.5 threshold
+  // was far too lenient — any mildly puckered ring got flagged and the
+  // best-fit plane then visibly missed the "up" / "down" atoms.
+  const RING_DEVIATION_TOL = 0.20;
   const rings = findRings(adj);
   for (const ring of rings) {
     const positions = ring.map((idx) => new THREE.Vector3(atoms[idx].x, atoms[idx].y, atoms[idx].z));
     if (positions.length < 3) continue;
     const { normal, center } = bestFitPlane(positions);
     const deviation = planarityDeviation(positions, normal, center);
-    if (deviation < 0.5) {
+    if (deviation < RING_DEVIATION_TOL) {
       const angles: number[] = [];
       for (let i = 0; i < ring.length; i++) {
         angles.push(dihedralAngle(

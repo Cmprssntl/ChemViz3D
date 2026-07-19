@@ -24,6 +24,13 @@ export const RightPanel: React.FC = () => {
   // Language reactivity: force re-render when locale changes
   const _locale = useStore((s) => s.locale);
 
+  // Prevent the 3D viewer from capturing pointer events on the right panel.
+  // The OrbitControls calls domElement.setPointerCapture() on pointerdown,
+  // which can keep capturing events even after the pointer leaves the canvas.
+  const handlePanelPointerDown = useCallback((e: React.PointerEvent) => {
+    e.stopPropagation();
+  }, []);
+
   const planarFragments = useMemo<CoplanarSet[]>(() => {
     if (!molecule || !highlightCoplanar) return [];
     return detectPlanarFragments(molecule);
@@ -66,7 +73,7 @@ export const RightPanel: React.FC = () => {
 
   if (!molecule) {
     return (
-      <div className="panel right-panel">
+      <div className="panel right-panel" onPointerDown={handlePanelPointerDown}>
         <h2 className="panel-title">{t("details")}</h2>
         <p className="hint-text">{t("clickHint")}</p>
       </div>
@@ -94,7 +101,7 @@ export const RightPanel: React.FC = () => {
   }
 
   return (
-    <div className="panel right-panel">
+    <div className="panel right-panel" onPointerDown={handlePanelPointerDown}>
       <h2 className="panel-title">{t("details")}</h2>
 
       {selectedAtom && (
@@ -168,7 +175,11 @@ export const RightPanel: React.FC = () => {
       {highlightCoplanar && planarFragments.length > 0 && (
         <div className="section">
           <h3 className="section-title">{t("coplanar")}</h3>
-          {planarFragments.map((frag, fi) => (
+          {/* Only show chemically meaningful fragments (ring, alkene, carbonyl).
+              Chain fragments are too numerous (especially for sp2 rings like
+              benzene) and push the button section below the viewport, making
+              the right panel un- scrollable and unfocusable. */}
+          {planarFragments.filter(f => f.type !== "chain" && f.type !== "other").slice(0, 8).map((frag, fi) => (
             <div key={fi} className="info-list" style={{ marginBottom: 6 }}>
               <div className="info-item" style={{ color: frag.type === "ring" ? "#44aaff" : frag.type === "carbonyl" ? "#88dd44" : "#ffaa44" }}>
                 <span className="info-label">{frag.type}</span>
@@ -176,6 +187,17 @@ export const RightPanel: React.FC = () => {
               </div>
             </div>
           ))}
+          {/* Summary info: count of chain fragments */}
+          {(() => {
+            const chainCount = planarFragments.filter(f => f.type === "chain").length;
+            if (chainCount === 0) return null;
+            return (
+              <div className="info-item" style={{ color: "#666688", fontSize: 11, marginTop: 2 }}>
+                <span className="info-label">chains</span>
+                <span className="info-value">{chainCount} fragments</span>
+              </div>
+            );
+          })()}
         </div>
       )}
 

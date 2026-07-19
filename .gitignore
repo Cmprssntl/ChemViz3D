@@ -26,6 +26,9 @@ Thumbs.db
 
 # Temp files
 src/temp_patch.txt
+test_*.json
+test_*.ts
+test_*.cjs
 
 # Environment
 .env

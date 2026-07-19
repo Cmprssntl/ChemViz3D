@@ -11,7 +11,8 @@ import { validateFormula } from "../engine/validation";
 
 const KNOWN_FORMULAS: Record<string, string> = {
   "CH4": "C", "C2H6": "CC", "C3H8": "CCC", "C4H10": "CCCC",
-  "C2H4": "C=C", "C3H6": "CC=C", "C2H2": "C#C", "C6H6": "c1ccccc1",
+  "C2H4": "C=C", "C3H6": "C1CC1", "C2H2": "C#C", "C6H6": "c1ccccc1",
+  "C4H8": "C1CCC1", "C5H10": "C1CCCC1", "C6H12": "C1CCCCC1", "C7H14": "C1CCCCCC1",
   "CH3OH": "CO", "C2H5OH": "CCO", "C3H7OH": "CCCO",
   "CH3COOH": "CC(=O)O", "HCOOH": "C(=O)O", "CH3OCH3": "COC",
   "CH3CHO": "CC=O", "C3H6O2": "CC(=O)OC", "C4H8O2": "CC(=O)OCC", "C5H12": "CC(C)(C)C", "H2O": "O", "NH3": "N", "CO2": "O=C=O",

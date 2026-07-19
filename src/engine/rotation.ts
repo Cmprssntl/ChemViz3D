@@ -30,16 +30,17 @@ export function buildAdj(bonds: BondData[]): Map<number, number[]> {
 }
 
 /**
- * Build a set of ring bonds (as "atom1Idx,atom2Idx" key with min,max ordering).
- * Uses DFS to find all rings, then collects all bond pairs in those rings.
+ * Find all simple cycles (rings) in the graph using DFS backtracking.
+ * Returns an array of rings, each ring being an array of atom indices in order.
+ * Each ring appears only once, normalized (smallest index first, lex-smallest
+ * of forward/reverse orientations).
  */
-export function buildRingBondSet(
+export function findRings(
   simpleAdj: Map<number, number[]>,
-  bonds: BondData[]
-): Set<string> {
+  maxSize = 20
+): number[][] {
   const rings: number[][] = [];
   const visited = new Set<number>();
-  const maxSize = 8;
 
   function dfs(start: number, current: number, path: number[]) {
     visited.add(current);
@@ -48,10 +49,18 @@ export function buildRingBondSet(
       if (next === start && path.length >= 3 && path.length <= maxSize) {
         const ring = [...path];
         const minIdx = ring.indexOf(Math.min(...ring));
-        const normalized = [...ring.slice(minIdx), ...ring.slice(0, minIdx)];
-        const key = normalized.join(",");
-        if (!rings.some((r) => r.join(",") === key)) {
-          rings.push(normalized);
+        const fwd = [...ring.slice(minIdx), ...ring.slice(0, minIdx)];
+        // Compute normalized reverse to deduplicate rings found in
+        // opposite traversal directions (e.g. [0,1,2,3,4,5] and [0,5,4,3,2,1]
+        // are the same physical ring traversed in opposite directions).
+        const revRaw = [...fwd].reverse();
+        const revMinIdx = revRaw.indexOf(Math.min(...revRaw));
+        const rev = [...revRaw.slice(revMinIdx), ...revRaw.slice(0, revMinIdx)];
+        const fwdKey = fwd.join(",");
+        const revKey = rev.join(",");
+        const canonicalKey = fwdKey < revKey ? fwdKey : revKey;
+        if (!rings.some((r) => r.join(",") === canonicalKey)) {
+          rings.push(fwd);
         }
       } else if (!visited.has(next) && path.length < maxSize && next > start) {
         if (next > start || !path.includes(next)) {
@@ -70,6 +79,19 @@ export function buildRingBondSet(
       dfs(node, node, [node]);
     }
   }
+
+  return rings;
+}
+
+/**
+ * Build a set of ring bonds (as "atom1Idx,atom2Idx" key with min,max ordering).
+ * Uses DFS to find all rings, then collects all bond pairs in those rings.
+ */
+export function buildRingBondSet(
+  simpleAdj: Map<number, number[]>,
+  bonds: BondData[]
+): Set<string> {
+  const rings = findRings(simpleAdj);
 
   const ringBonds = new Set<string>();
   for (const ring of rings) {

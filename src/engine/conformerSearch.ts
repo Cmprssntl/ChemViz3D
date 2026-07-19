@@ -15,7 +15,7 @@
 import * as THREE from "three";
 import type { MoleculeData, BondData } from "../types/molecule";
 import { applyBondRotation, buildRingBondSet, buildAdj } from "./rotation";
-import { detectPlanarFragments, bestFitPlane } from "./coplanarity";
+import { detectPlanarFragments, bestFitPlane, planarityDeviation } from "./coplanarity";
 
 export interface ConformerResult {
   molecule: MoleculeData;
@@ -34,7 +34,15 @@ export function countMaxPlanarAtoms(mol: MoleculeData): {
   allIndices: number[];
 } {
   const fragments = detectPlanarFragments(mol);
-  const ANGLE_THRESH = THREE.MathUtils.degToRad(30);
+  // Tightened thresholds:
+  //  - angle: 10° (was 30°). 30° was so lenient that two fragments with
+  //    substantially different normals would still merge, producing
+  //    "coplanar" sets whose best-fit plane missed the actual atoms.
+  //  - post-merge deviation: 0.20 Å. After merging, re-fit a plane to
+  //    the union and reject if any atom is more than 0.20 Å off. This
+  //    ensures the final "largest coplanar set" is actually coplanar.
+  const ANGLE_THRESH = THREE.MathUtils.degToRad(10);
+  const POST_MERGE_DEVIATION_TOL = 0.20;
 
   // Merge overlapping fragments with similar normals
   const merged: Set<number>[] = [];
@@ -66,12 +74,32 @@ export function countMaxPlanarAtoms(mol: MoleculeData): {
     }
   }
 
-  // After merging, find the SINGLE largest group
+  // After merging, RE-VERIFY each merged set is actually coplanar.
+  // Re-fit a plane to all merged atoms and check max deviation. If any
+  // atom is too far off, split (discard) the merge. This prevents
+  // drawing a plane that visibly misses some marked atoms.
+  const finalMerged: Set<number>[] = [];
+  for (let g = 0; g < merged.length; g++) {
+    if (merged[g].size < 3) continue;
+    const positions = [...merged[g]].map(idx => {
+      const a = mol.atoms[idx];
+      return new THREE.Vector3(a.x, a.y, a.z);
+    });
+    const fit = bestFitPlane(positions);
+    const dev = planarityDeviation(positions, fit.normal, fit.center);
+    if (dev < POST_MERGE_DEVIATION_TOL) {
+      finalMerged.push(merged[g]);
+    }
+    // If deviation too large, this merge is invalid → drop it entirely
+    // rather than drawing a misleading plane.
+  }
+
+  // Find the SINGLE largest group from the validated merges
   let bestCount = 0;
   let bestIndices: number[] = [];
   const allAtoms = new Set<number>();
 
-  for (const set of merged) {
+  for (const set of finalMerged) {
     for (const idx of set) allAtoms.add(idx);
     if (set.size > bestCount) {
       bestCount = set.size;

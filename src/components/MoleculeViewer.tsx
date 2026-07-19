@@ -70,7 +70,10 @@ function addCoplanarityIndicators(
     // the plane "looking right" without sacrificing the count, because
     // the loop only removes atoms that are more than PLANE_TOL away from
     // the dominant plane.
-    const PLANE_TOL = 0.55; // Å
+    // PLANE_TOL tightened to 0.18 Å: previously 0.55 Å which let chair
+    // atoms (±0.30 Å) slip through and produced a plane that didn't pass
+    // through the marked atoms.
+    const PLANE_TOL = 0.18; // Å
     for (let iter = 0; iter < 5 && chosenIndices.length >= 4; iter++) {
       const distances = chosenIndices.map((idx) => {
         const a = molecule.atoms[idx];
@@ -201,7 +204,13 @@ function addCoplanarityIndicators(
   wire.quaternion.copy(plane.quaternion);
   hintGroup.add(wire);
 
-  // Atom rings (subtle highlight on planar atoms)
+  // Atom rings (subtle highlight on planar atoms).
+  // Aligned with the plane normal (via plane.quaternion) so each ring
+  // is tangent to the coplanar plane at the atom's position. Without
+  // this alignment, the rings default to the xy-plane and appear as
+  // random vertical strips at non-horizontal atom positions (e.g. for
+  // a chair, the atom rings at the "up" C's would be horizontal but
+  // the molecule is tilted).
   for (const idx of atomIndices) {
     const a = molecule.atoms[idx];
     const ring = new THREE.Mesh(
@@ -209,6 +218,7 @@ function addCoplanarityIndicators(
       new THREE.MeshBasicMaterial({ color, transparent: true, opacity: ringOpacity, side: THREE.DoubleSide, depthWrite: false, depthTest: false })
     );
     ring.position.set(a.x, a.y, a.z);
+    ring.quaternion.copy(plane.quaternion);
     hintGroup.add(ring);
   }
 
@@ -409,7 +419,8 @@ export const MoleculeViewer: React.FC = () => {
 
   return (
     <div ref={containerRef} style={{ width: "100%", height: "100%", cursor: "pointer", position: "relative" }}
-         onClick={handleClick} onPointerMove={handleHover} onContextMenu={handleContextMenu}>
+         onClick={handleClick} onPointerMove={handleHover} onContextMenu={handleContextMenu}
+         tabIndex={-1}>
       {isLoading && <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
           color: "#fff", fontSize: 18, background: "rgba(0,0,0,0.6)", padding: "12px 24px", borderRadius: 8, pointerEvents: "none" }}>
         {t('processingMol')}
