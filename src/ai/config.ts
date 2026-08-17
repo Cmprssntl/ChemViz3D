@@ -36,7 +36,9 @@ Rules:
 - Output heavy atoms only; implicit hydrogens are added by the local VSEPR builder.
 - Atom indices are zero-based and bonds must refer to existing, distinct atoms.
 - Bond order must be 1, 1.5, 2, or 3. Use hybridization sp/sp2/sp3 when known.
-- Describe one connected, neutral, ordinary molecule. Do not output multiple disconnected fragments.
+- For benzene-style six-member aromatic carbon rings, use alternating 1, 2, 1, 2, 1, 2 bonds; never make all six ring edges order 2.
+- For nitro groups, use [N+](=O)[O-] with explicit N+ and O- charges when needed.
+- Describe one connected ordinary molecule. Use formal charges when standard resonance notation requires them; do not output multiple disconnected fragments.
 - Do not invent 3D coordinates, formula fields, or SMILES fields.
 - If the request is ambiguous, choose the most common textbook interpretation and explain it in comment.`;
 

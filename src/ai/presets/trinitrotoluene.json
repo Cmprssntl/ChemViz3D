@@ -1,0 +1,34 @@
+{
+  "id": "2,4,6-trinitrotoluene",
+  "formula": "C7H5N3O6",
+  "inputs": [
+    "2,4,6-三硝基甲苯",
+    "2,4,6三硝基甲苯",
+    "三硝基甲苯",
+    "TNT",
+    "2,4,6-trinitrotoluene",
+    "trinitrotoluene"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": "2,4,6-trinitrotoluene",
+    "comment": "Kekule benzene ring with alternating single and double bonds.",
+    "atoms": [
+      { "el": "C", "hybridization": "sp2" }, { "el": "C", "hybridization": "sp2" },
+      { "el": "C", "hybridization": "sp2" }, { "el": "C", "hybridization": "sp2" },
+      { "el": "C", "hybridization": "sp2" }, { "el": "C", "hybridization": "sp2" },
+      { "el": "C", "hybridization": "sp3" },
+      { "el": "N", "hybridization": "sp2", "charge": 1 }, { "el": "O", "hybridization": "sp2" }, { "el": "O", "hybridization": "sp3", "charge": -1 },
+      { "el": "N", "hybridization": "sp2", "charge": 1 }, { "el": "O", "hybridization": "sp2" }, { "el": "O", "hybridization": "sp3", "charge": -1 },
+      { "el": "N", "hybridization": "sp2", "charge": 1 }, { "el": "O", "hybridization": "sp2" }, { "el": "O", "hybridization": "sp3", "charge": -1 }
+    ],
+    "bonds": [
+      { "i": [0, 1], "order": 1 }, { "i": [1, 2], "order": 2 }, { "i": [2, 3], "order": 1 },
+      { "i": [3, 4], "order": 2 }, { "i": [4, 5], "order": 1 }, { "i": [5, 0], "order": 2 },
+      { "i": [0, 6], "order": 1 },
+      { "i": [1, 7], "order": 1 }, { "i": [7, 8], "order": 2 }, { "i": [7, 9], "order": 1 },
+      { "i": [3, 10], "order": 1 }, { "i": [10, 11], "order": 2 }, { "i": [10, 12], "order": 1 },
+      { "i": [5, 13], "order": 1 }, { "i": [13, 14], "order": 2 }, { "i": [13, 15], "order": 1 }
+    ]
+  }
+}

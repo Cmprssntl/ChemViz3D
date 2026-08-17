@@ -14,6 +14,8 @@ export interface BondSpec {
    *  instead of inferring from bond orders. Required to distinguish
    *  sp2 aromatic rings from sp3 cycloalkanes. */
   hybridizations?: (Hybrid | undefined)[];
+  /** Per-atom formal charge, used to avoid adding implicit H to ions. */
+  charges?: (number | undefined)[];
 }
 
 // ── known bond specs indexed by canonical formula ──
@@ -74,11 +76,13 @@ type Hybrid = "sp" | "sp2" | "sp3";
 function getHybrid(el: string, bonds: [number,number,number][], idx: number): Hybrid {
   const my = bonds.filter(b => b[0]===idx || b[1]===idx);
   const maxOrd = Math.max(1, ...my.map(b=>b[2]));
-  const nHeavy = my.length;
   if (el === "C") {
     if (maxOrd >= 3) return "sp";
-    if (maxOrd === 2 && nHeavy === 2) return "sp";
-    if (maxOrd === 2) return "sp2";
+    const piBonds = my.reduce((sum, bond) => sum + Math.max(0, bond[2] - 1), 0);
+    // One pi bond means sp2 (C=C, C=O, or a Kekule aromatic carbon).
+    // Two pi bonds means sp (C=C=C or C#C).
+    if (piBonds >= 2) return "sp";
+    if (piBonds >= 1) return "sp2";
     return "sp3";
   }
   if (el === "O") {
@@ -127,6 +131,14 @@ function bondLen(el1: string, el2: string, order: number): number {
 
 /** Per-element valence (max number of bonds). Used for H counting. */
 const VALENCE_LOOKUP: Record<string, number> = { C: 4, N: 3, O: 2, H: 1, F: 1, Cl: 1, Br: 1, I: 1, S: 2, P: 3 };
+
+function valenceForAtom(element: string, charge: number | undefined): number {
+  const base = VALENCE_LOOKUP[element] ?? 4;
+  // Nitro groups are commonly represented as N+ and O-. Preserve that
+  // valence state so the implicit-hydrogen pass does not create N-H/O-H.
+  if (element === "N" || element === "O") return Math.max(0, base + (charge || 0));
+  return base;
+}
 
 export function buildFromBondSpec(spec: BondSpec, formula: string, smiles: string, jsonName?: string): MoleculeData {
   const n = spec.atoms.length;
@@ -551,6 +563,7 @@ export function buildFromBondSpec(spec: BondSpec, formula: string, smiles: strin
       x: p.x, y: p.y, z: p.z,
       covalentRadius: 76, vdwRadius: 170,
       hybridization: hy,
+      ...(spec.charges?.[i] !== undefined ? { charge: spec.charges[i] } : {}),
     });
   }
 
@@ -639,7 +652,7 @@ export function buildFromBondSpec(spec: BondSpec, formula: string, smiles: strin
       );
       const sigma = placedNbrs.length;
       const pi = placedNbrs.filter(b => b[2] >= 2).length;
-      const v = VALENCE_LOOKUP[el] ?? 4;
+      const v = valenceForAtom(el, spec.charges?.[atomIdx]);
       const maxH = Math.max(0, v - sigma - pi);
       if (maxH === 0) continue;
 
@@ -803,7 +816,6 @@ export function buildFromBondSpec(spec: BondSpec, formula: string, smiles: strin
   }
 
   // Fill remaining VSEPR slots with hydrogens (universal algorithm)
-  const VALENCE: Record<string,number> = { C:4, N:3, O:2, H:1, F:1, Cl:1, Br:1, I:1, S:2, P:3 };
   for (let i = 0; i < n; i++) {
     const el = spec.atoms[i];
     if (el === "H") continue;
@@ -811,7 +823,7 @@ export function buildFromBondSpec(spec: BondSpec, formula: string, smiles: strin
     if (ringHPlaced.has(i)) continue;
 
     const pBonds = spec.bonds.filter(b => b[0]===i || b[1]===i);
-    const v = VALENCE[el] ?? 4;
+    const v = valenceForAtom(el, spec.charges?.[i]);
     const sigma = pBonds.length;
     const pi = pBonds.filter(b => b[2] >= 2).length;
     const maxH = Math.max(0, v - sigma - pi);
@@ -1001,6 +1013,36 @@ export function buildFromBondSpec(spec: BondSpec, formula: string, smiles: strin
     atoms[i].x = uffAtoms[i].x;
     atoms[i].y = uffAtoms[i].y;
     atoms[i].z = uffAtoms[i].z;
+  }
+
+  // The simplified UFF implementation can distort terminal methyl groups in
+  // larger aromatic molecules. Restore their exact tetrahedral geometry from
+  // the optimized C-heavy-atom bond direction after relaxation.
+  for (let carbonIdx = 0; carbonIdx < n; carbonIdx++) {
+    if (spec.atoms[carbonIdx] !== "C" || hyb[carbonIdx] !== "sp3") continue;
+
+    const attachedBonds = bonds.filter(
+      (bond) => bond.atom1Idx === carbonIdx || bond.atom2Idx === carbonIdx,
+    );
+    const hydrogenIdxs = attachedBonds
+      .map((bond) => bond.atom1Idx === carbonIdx ? bond.atom2Idx : bond.atom1Idx)
+      .filter((idx) => atoms[idx].element === "H");
+    const heavyIdxs = attachedBonds
+      .map((bond) => bond.atom1Idx === carbonIdx ? bond.atom2Idx : bond.atom1Idx)
+      .filter((idx) => atoms[idx].element !== "H");
+
+    if (hydrogenIdxs.length !== 3 || heavyIdxs.length !== 1) continue;
+
+    const carbon = atoms[carbonIdx];
+    const heavy = atoms[heavyIdxs[0]];
+    const towardHeavy = new THREE.Vector3(heavy.x - carbon.x, heavy.y - carbon.y, heavy.z - carbon.z);
+    const hydrogenDirs = vseprPositions(towardHeavy, 4).slice(0, 3);
+    for (let h = 0; h < hydrogenIdxs.length; h++) {
+      const hydrogen = atoms[hydrogenIdxs[h]];
+      hydrogen.x = carbon.x + hydrogenDirs[h].x * BL_CH;
+      hydrogen.y = carbon.y + hydrogenDirs[h].y * BL_CH;
+      hydrogen.z = carbon.z + hydrogenDirs[h].z * BL_CH;
+    }
   }
 
   return { atoms, bonds, name, formula: actualFormula, smiles };

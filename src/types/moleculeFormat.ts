@@ -102,11 +102,15 @@ export function chemVZToBondSpec(mol: ChemVZMolecule): {
   formula: string;
   /** Per-atom hybridization hint; undefined = let builder infer */
   hybridizations?: ("sp" | "sp2" | "sp3" | undefined)[];
+  /** Per-atom formal charge, preserved for valence-aware H placement. */
+  charges?: (number | undefined)[];
 } {
   const atoms = mol.atoms.map((a) => a.el);
-  const bonds: [number, number, number][] = mol.bonds.map((b) => [b.i[0], b.i[1], b.order]);
+  const sourceBonds: [number, number, number][] = mol.bonds.map((b) => [b.i[0], b.i[1], b.order]);
+  const bonds = kekulizeAromaticRings(mol.atoms, sourceBonds);
   // Pass through explicit hybridizations from chemvz.json
   const hybridizations = mol.atoms.map((a) => a.hybridization);
+  const charges = mol.atoms.map((a) => a.charge);
 
   // Build formula from atom counts
   const counts = new Map<string, number>();
@@ -121,7 +125,72 @@ export function chemVZToBondSpec(mol: ChemVZMolecule): {
 
   // Only include hybridizations array if any atom has it set
   const hasHyb = hybridizations.some(h => h !== undefined);
-  return { atoms, bonds, formula, ...(hasHyb ? { hybridizations } : {}) };
+  const hasCharges = charges.some(charge => charge !== undefined);
+  return {
+    atoms,
+    bonds,
+    formula,
+    ...(hasHyb ? { hybridizations } : {}),
+    ...(hasCharges ? { charges } : {}),
+  };
+}
+
+/** Normalize benzene-style rings so aromatic edges do not all render as doubles. */
+function kekulizeAromaticRings(
+  atoms: ChemVZAtom[],
+  bonds: [number, number, number][],
+): [number, number, number][] {
+  // Aromatic molecular graphs are sparse. Do not run cycle enumeration on a
+  // malformed dense graph supplied by an imported file or AI response.
+  if (bonds.length > atoms.length * 4) return bonds;
+  const edgeKey = (a: number, b: number) => a < b ? `${a}-${b}` : `${b}-${a}`;
+  const edgeIndex = new Map<string, number>();
+  const adjacency = new Map<number, number[]>();
+  bonds.forEach((bond, index) => {
+    edgeIndex.set(edgeKey(bond[0], bond[1]), index);
+    for (const [from, to] of [[bond[0], bond[1]], [bond[1], bond[0]]]) {
+      const neighbors = adjacency.get(from) || [];
+      neighbors.push(to);
+      adjacency.set(from, neighbors);
+    }
+  });
+
+  const normalized = bonds.map((bond) => [...bond] as [number, number, number]);
+  const seen = new Set<string>();
+  const canonicalCycle = (cycle: number[]) => {
+    const rotations: string[] = [];
+    for (const ordered of [cycle, [...cycle].reverse()]) {
+      for (let offset = 0; offset < ordered.length; offset++) {
+        rotations.push([...ordered.slice(offset), ...ordered.slice(0, offset)].join(","));
+      }
+    }
+    return rotations.sort()[0];
+  };
+
+  const visit = (start: number, current: number, path: number[]) => {
+    if (path.length === 6) {
+      if (!edgeIndex.has(edgeKey(current, start))) return;
+      if (!path.every((index) => atoms[index].el === "C" && atoms[index].hybridization !== "sp3")) return;
+      const edgeIds = path.map((index, offset) => edgeIndex.get(edgeKey(index, path[(offset + 1) % path.length])));
+      if (edgeIds.some((index) => index === undefined)) return;
+      if (!edgeIds.every((index) => [1.5, 2].includes(bonds[index!][2]))) return;
+      const cycleId = canonicalCycle(path);
+      if (seen.has(cycleId)) return;
+      seen.add(cycleId);
+      edgeIds.forEach((index, offset) => { normalized[index!][2] = offset % 2 === 0 ? 1 : 2; });
+      return;
+    }
+    for (const next of adjacency.get(current) || []) {
+      if (next === start || path.includes(next)) continue;
+      const nextEdge = edgeIndex.get(edgeKey(current, next));
+      if (nextEdge === undefined || ![1.5, 2].includes(bonds[nextEdge][2])) continue;
+      if (atoms[next].el !== "C" || atoms[next].hybridization === "sp3") continue;
+      visit(start, next, [...path, next]);
+    }
+  };
+
+  for (let start = 0; start < atoms.length; start++) visit(start, start, [start]);
+  return normalized;
 }
 
 // ---- Convert MoleculeData back to ChemVZMolecule (export) ----
