@@ -82,7 +82,7 @@ python3 -m http.server 8080 --directory dist
 Windows 发布包
 -------------
 
-`release/ChemViz3D-v1.0.1/` 包含预构建的 `dist/`、`settings.int` 模板、`start.bat` 和 PowerShell 静态服务器。Windows 用户可双击 `start.bat`；Linux/macOS 用户可直接使用上面的 Python 静态服务器。
+预构建的 `dist/` 和压缩发布包不纳入版本控制。需要发布 Windows 包时，请先运行 `npm run build`，再将 `dist/` 与 `start.bat`、`server.ps1` 和 `settings.int` 模板一起打包。Windows 用户可双击 `start.bat`；Linux/macOS 用户可直接使用上面的 Python 静态服务器。
 
 Android
 -------

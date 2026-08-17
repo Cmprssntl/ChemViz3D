@@ -1,6 +1,0 @@
-{
-  "id": "ammonia",
-  "formula": "NH3",
-  "inputs": ["NH3", "氨", "ammonia"],
-  "chemvz": { "chemvz": 2, "name": "ammonia", "atoms": [{ "el": "N", "hybridization": "sp3" }], "bonds": [] }
-}

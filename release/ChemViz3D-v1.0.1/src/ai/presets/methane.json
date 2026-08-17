@@ -1,6 +1,0 @@
-{
-  "id": "methane",
-  "formula": "CH4",
-  "inputs": ["CH4", "甲烷", "methane"],
-  "chemvz": { "chemvz": 2, "name": "methane", "atoms": [{ "el": "C", "hybridization": "sp3" }], "bonds": [] }
-}

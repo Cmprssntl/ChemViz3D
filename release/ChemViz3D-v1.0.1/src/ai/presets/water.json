@@ -1,6 +1,0 @@
-{
-  "id": "water",
-  "formula": "H2O",
-  "inputs": ["H2O", "水", "water"],
-  "chemvz": { "chemvz": 2, "name": "water", "atoms": [{ "el": "O", "hybridization": "sp3" }], "bonds": [] }
-}
