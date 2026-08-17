@@ -1,6 +1,6 @@
 {
   "name": "chemviz3d",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Interactive 3D molecular visualization tool for chemistry learning",
   "type": "module",
   "scripts": {

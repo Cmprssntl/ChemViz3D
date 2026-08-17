@@ -1,0 +1,10 @@
+{
+  "id": "ethyne",
+  "formula": "C2H2",
+  "inputs": ["C2H2", "CH≡CH", "乙炔", "ethyne", "acetylene"],
+  "chemvz": {
+    "chemvz": 2, "name": "ethyne",
+    "atoms": [{ "el": "C", "hybridization": "sp" }, { "el": "C", "hybridization": "sp" }],
+    "bonds": [{ "i": [0, 1], "order": 3 }]
+  }
+}

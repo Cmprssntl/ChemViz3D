@@ -5,11 +5,12 @@ import { calcMoleculeProperties } from "../engine/properties";
 import type { MoleculeProperties } from "../engine/properties";
 
 interface LeftPanelProps {
-  onProcessFormula: (formula: string) => void;
+  onProcessInput: (input: string) => void;
   onProcessChemVZFile: (file: File) => void;
+  onOpenAISettings: () => void;
 }
 
-export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessFormula, onProcessChemVZFile }) => {
+export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessInput, onProcessChemVZFile, onOpenAISettings }) => {
   const inputFormula = useStore((s) => s.inputFormula);
   const setInputFormula = useStore((s) => s.setInputFormula);
   const displayMode = useStore((s) => s.displayMode);
@@ -30,7 +31,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessFormula, onProces
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputFormula.trim()) onProcessFormula(inputFormula.trim());
+    if (inputFormula.trim()) onProcessInput(inputFormula.trim());
   };
 
   const examples = ["CH4","C2H6","C2H4","C2H2","C6H6","C3H6","C4H8","C5H10","C6H12","C7H14","CH3OH","C2H5OH","CH3COOH","H2O","NH3","CO2"];
@@ -39,9 +40,12 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessFormula, onProces
     <form onSubmit={handleSubmit} className="input-form">
       <input type="text" value={inputFormula} onChange={(e) => setInputFormula(e.target.value)}
         placeholder={t("inputPlaceholder")} className="formula-input" disabled={isLoading} />
-      <button type="submit" className="btn btn-primary" disabled={isLoading || !inputFormula.trim()}>{isLoading ? t("processing") : t("visualize")}</button>
+      <button type="submit" className="btn btn-primary" disabled={isLoading || !inputFormula.trim()}>
+        {isLoading ? t("processing") : t("visualize")}
+      </button>
     </form>
     {error && <div className="error-banner">{error}</div>}
+    {infoMessage && <div className="info-banner">{infoMessage}</div>}
     <div className="section" style={{borderTop:"1px solid var(--border-color)"}}>
       <h3 className="section-title">{t("loadFromFile")}</h3>
       <label className="btn file-input-label" style={{width:"100%",textAlign:"center",cursor:"pointer"}}>
@@ -79,7 +83,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessFormula, onProces
       </div>
     </div>)}
     <div className="section"><h3 className="section-title">{t("examples")}</h3>
-      <div className="examples-grid">{examples.map((ex) => (<button key={ex} className="btn example-btn" onClick={() => {setInputFormula(ex);onProcessFormula(ex);}} disabled={isLoading}>{ex}</button>))}</div>
+      <div className="examples-grid">{examples.map((ex) => (<button key={ex} className="btn example-btn" onClick={() => {setInputFormula(ex);onProcessInput(ex);}} disabled={isLoading}>{ex}</button>))}</div>
     </div>
     <div className="section"><h3 className="section-title">{t("shortcuts")}</h3>
       <div className="info-list">
@@ -109,6 +113,13 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessFormula, onProces
           <option value="never">{t("labelNever")}</option>
         </select>
       </label>
+      <button type="button" className="btn settings-open-button" onClick={onOpenAISettings}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.7 1.7-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20h-2.4v-.2A1.7 1.7 0 0 0 11 18.24a1.7 1.7 0 0 0-1.88.34l-.06.06-1.7-1.7.06-.06A1.7 1.7 0 0 0 7.76 15 1.7 1.7 0 0 0 6.2 13.97H6v-2.4h.2A1.7 1.7 0 0 0 7.76 10a1.7 1.7 0 0 0-.34-1.88l-.06-.06 1.7-1.7.06.06A1.7 1.7 0 0 0 9.12 6.08 1.7 1.7 0 0 0 11 5.76V4h2.4v1.76a1.7 1.7 0 0 0 1.03.32 1.7 1.7 0 0 0 1.88-.34l.06-.06 1.7 1.7-.06.06A1.7 1.7 0 0 0 16.24 10a1.7 1.7 0 0 0 1.56 1.03H18v2.4h-.2A1.7 1.7 0 0 0 16.24 15Z" />
+        </svg>
+        {t("aiSettings")}
+      </button>
     </div>
   </div>)
 };

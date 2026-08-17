@@ -1,0 +1,10 @@
+{
+  "id": "acetone",
+  "formula": "C3H6O",
+  "inputs": ["CH3COCH3", "丙酮", "acetone", "propanone"],
+  "chemvz": {
+    "chemvz": 2, "name": "acetone",
+    "atoms": [{ "el": "C", "hybridization": "sp3" }, { "el": "C", "hybridization": "sp2" }, { "el": "C", "hybridization": "sp3" }, { "el": "O", "hybridization": "sp2" }],
+    "bonds": [{ "i": [0, 1], "order": 1 }, { "i": [1, 2], "order": 1 }, { "i": [1, 3], "order": 2 }]
+  }
+}

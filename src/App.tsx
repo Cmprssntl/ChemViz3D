@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { TopBar } from "./components/TopBar";
 import { LeftPanel } from "./components/LeftPanel";
 import { RightPanel } from "./components/RightPanel";
@@ -6,16 +6,32 @@ import { MoleculeViewer } from "./components/MoleculeViewer";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useMolecule } from "./hooks/useMolecule";
 import { useStore } from "./store/useStore";
+import { AISettingsDialog } from "./components/AISettingsDialog";
+import { hasTextAISettings } from "./ai/config";
 import { takeScreenshot, resetCameraView } from "./utils/screenshot";
 import "./App.css";
 
 const App: React.FC = () => {
-  const { processFormula, processChemVZFile } = useMolecule();
+  const { processChemVZFile, processInput } = useMolecule();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsRequired, setSettingsRequired] = useState(false);
+
+  useEffect(() => {
+    const required = !hasTextAISettings();
+    setSettingsRequired(required);
+    setSettingsOpen(required);
+  }, []);
 
   // Escape key → close window
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') window.close();
+      if (e.key === 'Escape') {
+        if (settingsOpen) {
+          if (!settingsRequired) setSettingsOpen(false);
+          return;
+        }
+        window.close();
+      }
     };
     // ---
     const kb = (e2: KeyboardEvent) => {
@@ -37,13 +53,19 @@ const App: React.FC = () => {
     window.addEventListener("keydown", handler);
     window.addEventListener("keydown", kb);
     return () => { window.removeEventListener("keydown", handler); window.removeEventListener("keydown", kb); };
-  }, []);
+  }, [settingsOpen, settingsRequired]);
+
+  const handleSettingsSaved = () => {
+    setSettingsRequired(false);
+    setSettingsOpen(false);
+  };
 
   return (
     <div className="app-container">
       <TopBar />
       <div className="main-content">
-        <LeftPanel onProcessFormula={processFormula} onProcessChemVZFile={processChemVZFile} />
+        <LeftPanel onProcessInput={processInput} onProcessChemVZFile={processChemVZFile}
+          onOpenAISettings={() => setSettingsOpen(true)} />
         <div className="viewer-container">
           <ErrorBoundary>
           <MoleculeViewer />
@@ -51,6 +73,8 @@ const App: React.FC = () => {
         </div>
         <RightPanel />
       </div>
+      <AISettingsDialog open={settingsOpen} required={settingsRequired}
+        onSaved={handleSettingsSaved} onCancel={() => setSettingsOpen(false)} />
     </div>
   );
 };

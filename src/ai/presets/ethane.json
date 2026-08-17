@@ -1,0 +1,10 @@
+{
+  "id": "ethane",
+  "formula": "C2H6",
+  "inputs": ["C2H6", "乙烷", "ethane"],
+  "chemvz": {
+    "chemvz": 2, "name": "ethane",
+    "atoms": [{ "el": "C", "hybridization": "sp3" }, { "el": "C", "hybridization": "sp3" }],
+    "bonds": [{ "i": [0, 1], "order": 1 }]
+  }
+}

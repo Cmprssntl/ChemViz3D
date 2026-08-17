@@ -9,6 +9,29 @@ export interface TranslationMap {
   exportJson: string;
   screenshot: string;
   exit: string;
+  aiSettings: string;
+  aiSettingsModels: string;
+  textModel: string;
+  imageModel: string;
+  aiSettingsHint: string;
+  aiSettingsRequiredHint: string;
+  aiSettingsRequired: string;
+  apiKey: string;
+  apiKeyPlaceholder: string;
+  model: string;
+  requestUrl: string;
+  fullRequestUrl: string;
+  maxRetries: string;
+  showApiKey: string;
+  imageSettingsReserved: string;
+  saveSettings: string;
+  saveSettingsFile: string;
+  cancel: string;
+  systemPrompt: string;
+  systemPromptHint: string;
+  systemPromptWarning: string;
+  editSystemPrompt: string;
+  systemPromptEditing: string;
 
   // LeftPanel
   inputPlaceholder: string;

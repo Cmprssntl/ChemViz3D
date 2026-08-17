@@ -33,3 +33,6 @@ test_*.cjs
 # Environment
 .env
 .env.local
+
+# Local developer AI credentials (never commit)
+settings.developer.int

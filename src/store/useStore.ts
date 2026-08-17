@@ -3,6 +3,49 @@ import type { MoleculeData, DisplayMode, SelectedEntity, LabelDisplayMode } from
 import type { LocaleKey } from "../i18n/index";
 import { setLocale } from "../i18n/index";
 
+const UI_SETTINGS_STORAGE_KEY = "chemviz3d.ui-settings.v1";
+const LOCALES = new Set<LocaleKey>(["zh-CN", "zh-TW", "en-US"]);
+const DISPLAY_MODES = new Set<DisplayMode>(["ball-and-stick", "space-filling"]);
+const LABEL_MODES = new Set<LabelDisplayMode>(["always", "hover", "never"]);
+
+interface PersistedUISettings {
+  locale?: unknown;
+  displayMode?: unknown;
+  labelDisplayMode?: unknown;
+}
+
+function readPersistedUISettings(): { locale: LocaleKey; displayMode: DisplayMode; labelDisplayMode: LabelDisplayMode } {
+  const fallback = { locale: "zh-CN" as LocaleKey, displayMode: "ball-and-stick" as DisplayMode, labelDisplayMode: "always" as LabelDisplayMode };
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = window.localStorage.getItem(UI_SETTINGS_STORAGE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw) as PersistedUISettings;
+    return {
+      locale: LOCALES.has(parsed.locale as LocaleKey) ? parsed.locale as LocaleKey : fallback.locale,
+      displayMode: DISPLAY_MODES.has(parsed.displayMode as DisplayMode) ? parsed.displayMode as DisplayMode : fallback.displayMode,
+      labelDisplayMode: LABEL_MODES.has(parsed.labelDisplayMode as LabelDisplayMode)
+        ? parsed.labelDisplayMode as LabelDisplayMode
+        : fallback.labelDisplayMode,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function persistUISettings(patch: Partial<PersistedUISettings>): void {
+  if (typeof window === "undefined") return;
+  try {
+    const current = readPersistedUISettings();
+    window.localStorage.setItem(UI_SETTINGS_STORAGE_KEY, JSON.stringify({ ...current, ...patch }));
+  } catch {
+    // Ignore unavailable browser storage.
+  }
+}
+
+const persistedUISettings = readPersistedUISettings();
+setLocale(persistedUISettings.locale);
+
 interface AppState {
   inputFormula: string;
   setInputFormula: (val: string) => void;
@@ -76,8 +119,8 @@ export const useStore = create<AppState>((set) => ({
   setInfoMessage: (msg) => set({ infoMessage: msg }),
   setRdkitReady: (ready) => set({ rdkitReady: ready }),
 
-  displayMode: "ball-and-stick",
-  setDisplayMode: (mode) => set({ displayMode: mode }),
+  displayMode: persistedUISettings.displayMode,
+  setDisplayMode: (mode) => { set({ displayMode: mode }); persistUISettings({ displayMode: mode }); },
 
   selected: null,
   setSelected: (sel) => set({ selected: sel }),
@@ -102,10 +145,10 @@ export const useStore = create<AppState>((set) => ({
   setMeasurePoints: (pts) => set({ measurePoints: pts }),
   clearMeasurePoints: () => set({ measurePoints: [] }),
 
-  locale: "zh-CN",
-  labelDisplayMode: "always",
-  setLabelDisplayMode: (mode) => set({ labelDisplayMode: mode }),
+  locale: persistedUISettings.locale,
+  labelDisplayMode: persistedUISettings.labelDisplayMode,
+  setLabelDisplayMode: (mode) => { set({ labelDisplayMode: mode }); persistUISettings({ labelDisplayMode: mode }); },
   conformerStats: null,
   setConformerStats: (stats) => set({ conformerStats: stats }),
-  setAppLocale: (l) => { set({ locale: l }); setLocale(l); },
+  setAppLocale: (l) => { set({ locale: l }); setLocale(l); persistUISettings({ locale: l }); },
 }));
