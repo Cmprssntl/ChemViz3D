@@ -79,10 +79,14 @@ OpenAI 兼容服务必须允许浏览器 CORS 请求。配置会被 Vite 注入�
 python3 -m http.server 8080 --directory dist
 ```
 
-Windows 发布包
+发布包与启动方式
 -------------
 
-预构建的 `dist/` 和压缩发布包不纳入版本控制。需要发布 Windows 包时，请先运行 `npm run build`，再将 `dist/` 与 `start.bat`、`server.ps1` 和 `settings.int` 模板一起打包。Windows 用户可双击 `start.bat`；Linux/macOS 用户可直接使用上面的 Python 静态服务器。
+预构建的 `dist/` 和压缩发布包不纳入版本控制。发布 ZIP 包含预构建 `dist/`、源码、`settings.int` 空配置模板、许可证、README 以及跨平台启动脚本，不包含开发者配置、依赖目录或 `CHANGELOG.md`。
+
+- Windows：双击 `start.bat`，使用 PowerShell 静态服务器。
+- Linux/macOS：先确认已安装 Python 3，在包目录运行 `./start.sh`；可用 `PORT=8081 ./start.sh` 修改端口。
+- 也可以直接运行 `python3 -m http.server 8080 --directory dist`。
 
 Android
 -------
