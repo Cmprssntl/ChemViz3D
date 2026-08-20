@@ -10,7 +10,6 @@ export function setScreenshotFn(fn: (() => string | undefined) | null): void {
   _renderer = fn;
 }
 
-/** Download the current 3D view as a PNG file. */
 /** Register a function that resets the camera to its initial position. */
 export function setResetCameraFn(fn: (() => void) | null): void {
   _resetCamera = fn;
@@ -22,12 +21,44 @@ export function resetCameraView(): void {
   _resetCamera?.();
 }
 
-export function takeScreenshot(filename = "screenshot.png"): void {
+/** Copy the current view and persist a PNG through the desktop bridge. */
+export async function takeScreenshot(filename = `screenshot-${Date.now()}.png`): Promise<void> {
   if (!_renderer) return;
   const dataUrl = _renderer();
   if (!dataUrl) return;
-  const a = document.createElement("a");
-  a.download = filename;
-  a.href = dataUrl;
-  a.click();
+  const android = window.ChemVizAndroid;
+  if (android?.saveScreenshot) {
+    const saved = android.saveScreenshot(filename, dataUrl);
+    const message = saved ? "截图已保存到相册" : "截图保存失败，请检查存储权限";
+    window.dispatchEvent(new CustomEvent("chemviz-toast", { detail: { message } }));
+    return;
+  }
+  const blob = await (await fetch(dataUrl)).blob();
+  let copied = false;
+  try {
+    if (navigator.clipboard && typeof ClipboardItem !== "undefined") {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      copied = true;
+    }
+  } catch (error) {
+    console.warn("Unable to copy screenshot to clipboard", error);
+  }
+  const bridge = window.__CHEMVIZ_DESKTOP_BRIDGE__;
+  let savedPath = "";
+  if (bridge?.version === 1 && bridge.token) {
+    try {
+      const response = await fetch("/__chemviz_bridge/screenshots", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-ChemViz-Bridge-Token": bridge.token },
+        body: JSON.stringify({ filename, dataUrl }),
+      });
+      if (response.ok) savedPath = ((await response.json()) as { path?: string }).path || "";
+    } catch (error) {
+      console.warn("Unable to save screenshot through desktop bridge", error);
+    }
+  }
+  const message = copied
+    ? (savedPath ? `截图已复制到剪贴板，并保存到 ${savedPath}` : "截图已复制到剪贴板")
+    : (savedPath ? `截图已保存到 ${savedPath}` : "截图保存失败，请检查桌面运行目录权限");
+  window.dispatchEvent(new CustomEvent("chemviz-toast", { detail: { message } }));
 }

@@ -11,7 +11,8 @@
   ],
   "chemvz": {
     "chemvz": 2,
-    "name": "2,4,6-trinitrotoluene",
+    "name": {"zh-CN": "2,4,6-三硝基甲苯", "zh-TW": "2,4,6-三硝基甲苯", "en-US": "2,4,6-trinitrotoluene"},
+    "smiles": "Cc1c([N+](=O)[O-])cc([N+](=O)[O-])c([N+](=O)[O-])1",
     "comment": "Kekule benzene ring with alternating single and double bonds.",
     "atoms": [
       { "el": "C", "hybridization": "sp2" }, { "el": "C", "hybridization": "sp2" },

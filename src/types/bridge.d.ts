@@ -13,5 +13,14 @@ interface Window {
     onStatus(message: string): void;
     onMoleculeInfo(info: string): void;
     onConsoleLog(message: string): void;
+    saveScreenshot?(filename: string, dataUrl: string): boolean;
+    /** Mobile persistence bridge. Methods are synchronous on the JS side. */
+    getSettings?(): string;
+    saveSettings?(content: string): boolean;
+    getCache?(key: string): string;
+    saveCache?(key: string, content: string): boolean;
+    deleteCache?(key: string): boolean;
+    clearCache?(): boolean;
+    requestChatCompletions?(requestId: string, url: string, apiKey: string, body: string): void;
   };
 }

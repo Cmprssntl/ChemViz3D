@@ -40,47 +40,42 @@ export function findRings(
   maxSize = 20
 ): number[][] {
   const rings: number[][] = [];
-  const visited = new Set<number>();
-
-  function dfs(start: number, current: number, path: number[]) {
-    visited.add(current);
-    const neighbors = simpleAdj.get(current) || [];
-    for (const next of neighbors) {
-      if (next === start && path.length >= 3 && path.length <= maxSize) {
-        const ring = [...path];
-        const minIdx = ring.indexOf(Math.min(...ring));
-        const fwd = [...ring.slice(minIdx), ...ring.slice(0, minIdx)];
-        // Compute normalized reverse to deduplicate rings found in
-        // opposite traversal directions (e.g. [0,1,2,3,4,5] and [0,5,4,3,2,1]
-        // are the same physical ring traversed in opposite directions).
-        const revRaw = [...fwd].reverse();
-        const revMinIdx = revRaw.indexOf(Math.min(...revRaw));
-        const rev = [...revRaw.slice(revMinIdx), ...revRaw.slice(0, revMinIdx)];
-        const fwdKey = fwd.join(",");
-        const revKey = rev.join(",");
-        const canonicalKey = fwdKey < revKey ? fwdKey : revKey;
-        if (!rings.some((r) => r.join(",") === canonicalKey)) {
-          rings.push(fwd);
-        }
-      } else if (!visited.has(next) && path.length < maxSize && next > start) {
-        if (next > start || !path.includes(next)) {
-          path.push(next);
-          dfs(start, next, path);
-          path.pop();
-        }
+  const seen = new Set<string>();
+  const canonical = (cycle: number[]) => {
+    const variants: string[] = [];
+    for (const ordered of [cycle, [...cycle].reverse()]) {
+      for (let offset = 0; offset < ordered.length; offset++) {
+        variants.push([...ordered.slice(offset), ...ordered.slice(0, offset)].join(","));
       }
     }
-    visited.delete(current);
-  }
-
-  for (const [node] of simpleAdj) {
-    visited.clear();
-    if (!rings.some((r) => r.includes(node))) {
-      dfs(node, node, [node]);
+    return variants.sort()[0];
+  };
+  const visit = (start: number, current: number, path: number[], used: Set<number>) => {
+    const neighbors = [...(simpleAdj.get(current) || [])].sort((a, b) => a - b);
+    for (const next of neighbors) {
+      if (next === start) {
+        if (path.length >= 3 && path.length <= maxSize) {
+          const key = canonical(path);
+          if (!seen.has(key)) {
+            seen.add(key);
+            rings.push([...path]);
+          }
+        }
+        continue;
+      }
+      if (next < start || used.has(next) || path.length >= maxSize) continue;
+      used.add(next);
+      path.push(next);
+      visit(start, next, path, used);
+      path.pop();
+      used.delete(next);
     }
-  }
+  };
 
-  return rings;
+  for (const start of [...simpleAdj.keys()].sort((a, b) => a - b)) {
+    visit(start, start, [start], new Set([start]));
+  }
+  return rings.sort((a, b) => a.length - b.length || canonical(a).localeCompare(canonical(b)));
 }
 
 /**

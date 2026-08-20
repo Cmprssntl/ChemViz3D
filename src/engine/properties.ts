@@ -172,7 +172,9 @@
  }
  
  /**
-  * Rotatable Bonds: count sp3-sp3 single bonds not in rings or terminal
+ * Rotatable Bonds: count non-terminal, non-ring single bonds. A bond to an
+ * sp2 atom (for example the methyl-carbonyl bond in acetic acid) is still
+ * rotatable; only linear sp atoms and multiple bonds are excluded here.
   *
   * A rotatable bond is any single non-ring bond between
   * tetrahedral atoms (sp3), excluding bonds to hydrogens,
@@ -192,11 +194,13 @@
      // Both atoms must have at least 2 heavy neighbors to be rotatable
      const h1 = heavyNeighborCount(b.atom1Idx, bonds, atoms);
      const h2 = heavyNeighborCount(b.atom2Idx, bonds, atoms);
-     if (h1 < 2 || h2 < 2) continue;
+    const carbonylAdjacent = a1.element === "C" && a2.element === "C" &&
+      ((a1.hybridization === "sp2" && a2.hybridization === "sp3") ||
+       (a1.hybridization === "sp3" && a2.hybridization === "sp2"));
+    if ((h1 < 2 || h2 < 2) && !carbonylAdjacent) continue;
  
-     // Skip if either is sp2/sp (double/triple bond compounds)
-     if (a1.hybridization === "sp" || a2.hybridization === "sp" ||
-         a1.hybridization === "sp2" || a2.hybridization === "sp2") continue;
+  // Linear sp centres cannot provide a normal torsional degree of freedom.
+  if (a1.hybridization === "sp" || a2.hybridization === "sp") continue;
  
      count++;
    }
@@ -251,7 +255,7 @@
    logP: "Octanol-water partition coefficient (Wildman-Crippen method)",
    hBondDonors: "Number of O-H and N-H bonds",
    hBondAcceptors: "Count of O, N, and F atoms (excluding positively charged)",
-   rotatableBonds: "Number of sp3-sp3 single bonds not in rings (non-terminal)",
+  rotatableBonds: "Number of non-terminal single bonds not in rings",
    tpsa: "Topological Polar Surface Area in squared angstroms (Ertl method)",
  };
  

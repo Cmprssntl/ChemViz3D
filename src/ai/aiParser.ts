@@ -1,6 +1,14 @@
 import type { ChemVZMolecule, ChemVZHybrid } from "../types/moleculeFormat";
 import { ATOMIC_DATA } from "../utils/formulaParser";
-import { DEFAULT_SYSTEM_PROMPT, getAIRequestUrl, getChatCompletionsUrl, type AIConfig } from "./config";
+import {
+  DEFAULT_SYSTEM_PROMPT,
+  getAIRequestUrl,
+  getChatCompletionsUrl,
+  getDesktopBridgeToken,
+  hasValidTextAISettings,
+  requestAISettings,
+  type AIConfig,
+} from "./config";
 
 const HYBRIDIZATIONS = new Set<ChemVZHybrid>(["sp", "sp2", "sp3"]);
 const BOND_ORDERS = new Set([1, 1.5, 2, 3]);
@@ -112,7 +120,15 @@ export function validateAIChemVZ(value: unknown): ChemVZMolecule {
 
   return {
     chemvz: 2,
-    ...(typeof object.name === "string" ? { name: object.name.slice(0, 160) } : {}),
+    ...(typeof object.name === "string"
+      ? { name: object.name.slice(0, 160) }
+      : (object.name && typeof object.name === "object"
+        ? { name: Object.fromEntries(Object.entries(object.name as Record<string, unknown>)
+          .filter(([key, value]) => typeof key === "string" && typeof value === "string")
+          .slice(0, 12)
+          .map(([key, value]) => [key, String(value).slice(0, 160)])) }
+        : {})),
+    ...(typeof object.smiles === "string" && object.smiles.trim() ? { smiles: object.smiles.trim().slice(0, 1000) } : {}),
     ...(typeof object.comment === "string" ? { comment: object.comment.slice(0, 500) } : {}),
     atoms,
     bonds,
@@ -140,7 +156,34 @@ async function requestCompletion(
 ): Promise<unknown> {
   let response: Response;
   try {
-    response = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+    const android = typeof window !== "undefined" ? window.ChemVizAndroid : undefined;
+    if (android?.requestChatCompletions && url.startsWith("http")) {
+      const requestId = `chat-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const result = await new Promise<{ status: number; body: string }>((resolve, reject) => {
+        const timeout = window.setTimeout(() => {
+          delete window.__chemvizAndroidChatResult;
+          reject(new Error("Android AI 请求超时"));
+        }, 120000);
+        window.__chemvizAndroidChatResult = (id, status, body) => {
+          if (id !== requestId) return;
+          window.clearTimeout(timeout);
+          delete window.__chemvizAndroidChatResult;
+          resolve({ status, body });
+        };
+        try {
+          // Keep the injected bridge object as the receiver. Android WebView
+          // rejects a JavaScriptInterface method invoked as a detached function.
+          android.requestChatCompletions!(requestId, url, headers.Authorization?.replace(/^Bearer\s+/i, "") || "", JSON.stringify(body));
+        } catch (error) {
+          window.clearTimeout(timeout);
+          delete window.__chemvizAndroidChatResult;
+          reject(error);
+        }
+      });
+      response = new Response(result.body, { status: result.status, headers: { "Content-Type": "application/json" } });
+    } else {
+      response = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+    }
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
     const hint = detail === "Failed to fetch"
@@ -152,19 +195,23 @@ async function requestCompletion(
   let payload: unknown = null;
   try { payload = raw ? JSON.parse(raw) : null; } catch { /* handled below */ }
   if (!response.ok) {
-    const message = asRecord(asRecord(payload).error).message;
-    const detail = typeof message === "string" ? message : "AI API 请求失败";
+    const errorValue = asRecord(payload).error;
+    const message = typeof errorValue === "string" ? errorValue : asRecord(errorValue).message;
+    const detail = typeof message === "string" ? message : `AI API 请求失败（HTTP ${response.status}）`;
     throw new AIParseError(`${detail}（HTTP ${response.status}）`, "network", response.status);
   }
   return payload;
 }
 
 async function parseOnce(input: string, config: AIConfig): Promise<ChemVZMolecule> {
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${config.apiKey}`,
-  };
   const url = getAIRequestUrl(config.baseUrl);
+  const bridgeToken = getDesktopBridgeToken();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (bridgeToken && url.startsWith("/__chemviz_bridge/")) {
+    headers["X-ChemViz-Bridge-Token"] = bridgeToken;
+  } else {
+    headers.Authorization = `Bearer ${config.apiKey}`;
+  }
   const displayUrl = getChatCompletionsUrl(config.baseUrl);
   const messages = [
     { role: "system", content: config.systemPrompt || DEFAULT_SYSTEM_PROMPT },
@@ -193,7 +240,12 @@ async function parseOnce(input: string, config: AIConfig): Promise<ChemVZMolecul
 }
 
 export async function parseWithAI(input: string, config: AIConfig): Promise<ChemVZMolecule> {
-  if (!config.baseUrl || !config.apiKey || !config.model) {
+  const desktopBridgeConfigured = Boolean(getDesktopBridgeToken());
+  if (!hasValidTextAISettings()) {
+    requestAISettings();
+    throw new AIParseError("AI 功能已禁用：没有有效的 API 配置。请检查 API 密钥、模型和请求地址；本地预设仍可使用。", "config");
+  }
+  if (!desktopBridgeConfigured && (!config.baseUrl || !config.apiKey || !config.model)) {
     throw new AIParseError("未配置文本模型，请填写 settings.int 或 settings.developer.int 的 text 配置", "config");
   }
 

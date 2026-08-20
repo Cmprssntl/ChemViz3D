@@ -18,7 +18,7 @@ interface PresetFile {
   chemvz: unknown;
 }
 
-const presetModules = import.meta.glob("./presets/*.json", { eager: true, import: "default" }) as Record<string, unknown>;
+const presetModules = import.meta.glob("/molecules/presets/*.json", { eager: true, import: "default" }) as Record<string, unknown>;
 
 function loadPresets(): Map<string, LocalPresetResult> {
   const byInput = new Map<string, LocalPresetResult>();

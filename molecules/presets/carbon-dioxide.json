@@ -3,7 +3,7 @@
   "formula": "CO2",
   "inputs": ["CO2", "O=C=O", "二氧化碳", "carbon dioxide"],
   "chemvz": {
-    "chemvz": 2, "name": "carbon dioxide",
+    "chemvz": 2, "name": {"zh-CN": "二氧化碳", "zh-TW": "二氧化碳", "en-US": "carbon dioxide"}, "smiles": "O=C=O",
     "atoms": [{ "el": "O", "hybridization": "sp2" }, { "el": "C", "hybridization": "sp" }, { "el": "O", "hybridization": "sp2" }],
     "bonds": [{ "i": [0, 1], "order": 2 }, { "i": [1, 2], "order": 2 }]
   }

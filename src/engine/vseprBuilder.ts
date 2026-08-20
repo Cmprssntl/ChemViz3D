@@ -5,6 +5,65 @@ import { vseprPositions, tetrahedralPositions } from "./geometry";
 import { findRings } from "./rotation";
 import { bestFitPlane } from "./coplanarity";
 import { uffRelax, buildTopology, type UFFAtom } from "./uff";
+
+/**
+ * Restore the defining geometry of trigonal-planar carbon after force-field
+ * relaxation.  The lightweight UFF model has bond and angle terms, but no
+ * improper/out-of-plane term, so a carbon can retain three nearly 120 degree
+ * angles while its three bond vectors are still skewed in 3D.  Projecting
+ * each neighbour vector onto a deterministic least-squares plane fixes that
+ * ambiguity while preserving every C-X bond length.
+ */
+function enforceSp2CarbonPlanarity(
+  atoms: AtomData[],
+  bonds: BondData[],
+): void {
+  const adjacency = new Map<number, number[]>();
+  for (const bond of bonds) {
+    if (!adjacency.has(bond.atom1Idx)) adjacency.set(bond.atom1Idx, []);
+    if (!adjacency.has(bond.atom2Idx)) adjacency.set(bond.atom2Idx, []);
+    adjacency.get(bond.atom1Idx)!.push(bond.atom2Idx);
+    adjacency.get(bond.atom2Idx)!.push(bond.atom1Idx);
+  }
+  for (const neighbors of adjacency.values()) neighbors.sort((a, b) => a - b);
+
+  const planarCarbons = atoms
+    .filter((atom) => atom.element === "C" && atom.hybridization === "sp2")
+    .map((atom) => atom.index)
+    .sort((a, b) => a - b);
+
+  // A few fixed projection rounds handle fused rings and conjugated chains,
+  // where correcting one centre also moves a shared sp2 neighbour.
+  for (let round = 0; round < 16; round++) {
+    for (const carbonIndex of planarCarbons) {
+      const carbon = atoms[carbonIndex];
+      const neighbors = (adjacency.get(carbonIndex) || []).filter((index) => index !== carbonIndex);
+      if (neighbors.length < 3) continue;
+
+      const center = new THREE.Vector3(carbon.x, carbon.y, carbon.z);
+      const points = [center, ...neighbors.map((index) => {
+        const atom = atoms[index];
+        return new THREE.Vector3(atom.x, atom.y, atom.z);
+      })];
+      const fit = bestFitPlane(points);
+      const normal = fit.normal.clone().normalize();
+      if (!Number.isFinite(normal.x) || normal.lengthSq() < 1e-12) continue;
+
+      for (const neighborIndex of neighbors) {
+        const neighbor = atoms[neighborIndex];
+        const vector = new THREE.Vector3(neighbor.x - carbon.x, neighbor.y - carbon.y, neighbor.z - carbon.z);
+        const length = vector.length();
+        if (length < 1e-8) continue;
+        vector.addScaledVector(normal, -vector.dot(normal));
+        if (vector.lengthSq() < 1e-12) continue;
+        vector.normalize().multiplyScalar(length);
+        neighbor.x = carbon.x + vector.x;
+        neighbor.y = carbon.y + vector.y;
+        neighbor.z = carbon.z + vector.z;
+      }
+    }
+  }
+}
 export interface BondSpec {
   /** Element symbols in atom order */
   atoms: string[];
@@ -1044,6 +1103,11 @@ export function buildFromBondSpec(spec: BondSpec, formula: string, smiles: strin
       hydrogen.z = carbon.z + hydrogenDirs[h].z * BL_CH;
     }
   }
+
+  // UFF does not include an improper torsion term.  Apply the exact local
+  // trigonal-planar constraint last so the displayed three bonds of every
+  // sp2 carbon (including its implicit H, when present) are truly coplanar.
+  enforceSp2CarbonPlanarity(atoms, bonds);
 
   return { atoms, bonds, name, formula: actualFormula, smiles };
 }

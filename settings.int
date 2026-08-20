@@ -1,4 +1,22 @@
 {
-  "text": {},
-  "image": {}
+  "text": {
+    "api": "",
+    "model": "",
+    "requestUrl": "",
+    "systemPrompt": "",
+    "maxRetries": 3
+  },
+  "image": {
+    "api": "",
+    "model": "",
+    "requestUrl": "",
+    "systemPrompt": "",
+    "maxRetries": 3
+  },
+  "ui": {
+    "locale": "zh-CN",
+    "displayMode": "ball-and-stick",
+    "labelDisplayMode": "always",
+    "conformerSearchQuality": "balanced"
+  }
 }

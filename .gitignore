@@ -9,6 +9,8 @@ Agent.md
 
 # Dependencies
 node_modules/
+__pycache__/
+*.py[cod]
 
 # Build output
 dist/
@@ -39,3 +41,6 @@ settings.developer.int
 
 # Locally generated release packages
 release/
+
+# Runtime AI cache (presets are tracked separately)
+molecules/cache/*.json

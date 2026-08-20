@@ -131,6 +131,23 @@
   border-bottom: 1px solid var(--border-color);
 }
 
+.screenshot-toast {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 10px 16px;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  font-size: 13px;
+  text-align: center;
+}
+
 .formula-input {
   width: 100%;
   padding: 10px 12px;
@@ -421,7 +438,20 @@
 .settings-open-button {
   width: 100%;
   justify-content: flex-start;
-  margin-top: 4px;
+  margin-top: 0;
+}
+
+.settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cache-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 0;
 }
 
 /* ===== Info List ===== */
@@ -570,4 +600,60 @@
 
 .panel::-webkit-scrollbar-thumb:hover {
   background: #3a3a5a;
+}
+
+.touch-tip {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.reset-view-button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+@media (orientation: portrait) {
+  .main-content { flex-direction: column; }
+  /* Keep a usable 3D viewport between the two scrollable touch panels. */
+  .viewer-container { flex: 1 1 0; min-height: 120px; }
+  .panel { flex: 0 1 28vh; max-height: 28vh; overflow-y: auto; width: 100% !important; }
+  .left-panel { border-right: none; border-bottom: 1px solid var(--border-color); }
+  .right-panel { border-left: none; border-top: 1px solid var(--border-color); }
+}
+
+.left-collapsed .left-panel,
+.right-collapsed .right-panel { display: none; }
+
+.panel-tab {
+  color: #aac6ff;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 5;
+  background: linear-gradient(#1f3060 0%, #16264a 100%);
+  border: 1px solid rgba(136, 170, 255, 0.4);
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  width: 18px;
+  height: 56px;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
+  display: flex;
+  position: relative;
+}
+
+.panel-tab:hover { color: #fff; background: linear-gradient(#2a4080 0%, #1d3060 100%); }
+.panel-tab:active { transform: scale(0.92); }
+.left-tab { border-left: none; border-radius: 0 8px 8px 0; box-shadow: 2px 0 6px rgba(0, 0, 0, 0.4); }
+.right-tab { border-right: none; border-radius: 8px 0 0 8px; box-shadow: -2px 0 6px rgba(0, 0, 0, 0.4); }
+
+@media (orientation: portrait) {
+  .panel-tab { width: 56px; height: 18px; }
+  .left-tab { border-top: none; border-left: 1px solid rgba(136, 170, 255, 0.4); border-radius: 0 0 8px 8px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); }
+  .right-tab { border-bottom: none; border-right: 1px solid rgba(136, 170, 255, 0.4); border-radius: 8px 8px 0 0; box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.4); }
 }

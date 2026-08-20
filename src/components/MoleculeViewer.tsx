@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from "react";
+import React, { useRef, useEffect, useCallback, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { useStore } from "../store/useStore";
@@ -49,57 +49,18 @@ function addCoplanarityIndicators(
 
   if (nonChainFragments.length > 0) {
     // ── Preferred path: chemically meaningful fragments exist ──
-    // Highlight the merged set (whatever countMaxPlanarAtoms returned) so
-    // the visual atom count matches the "可能共面" stat shown in the panel.
-    // The plane is the best-fit through exactly those atoms, so it always
-    // passes through the highlighted set.
+    // Highlight exactly the merged set reported by the conformer search.
+    // Do not apply a display-only tolerance here: that would make the 3D
+    // markers disagree with the "possible coplanar atoms" statistic.
     const sorted = [...nonChainFragments].sort((a, b) => b.atomIndices.length - a.atomIndices.length);
     const largest = sorted[0];
     const merged = countMaxPlanarAtoms(molecule);
-    const mergedSet = new Set(merged.largestIndices);
-    const pos = [...mergedSet].map((idx) => {
+    atomIndices = [...new Set(merged.largestIndices)].sort((a, b) => a - b);
+    const pos = atomIndices.map((idx) => {
       const a = molecule.atoms[idx];
       return new THREE.Vector3(a.x, a.y, a.z);
     });
-    let { normal: n, center: c } = bestFitPlane(pos);
-    let chosenIndices = [...mergedSet];
-
-    // Robustness: if the merged set includes a strongly off-plane atom
-    // (e.g. a chain that happened to be merged but lies in a different
-    // plane), iteratively drop the worst offender and re-fit. This keeps
-    // the plane "looking right" without sacrificing the count, because
-    // the loop only removes atoms that are more than PLANE_TOL away from
-    // the dominant plane.
-    // PLANE_TOL tightened to 0.18 Å: previously 0.55 Å which let chair
-    // atoms (±0.30 Å) slip through and produced a plane that didn't pass
-    // through the marked atoms.
-    const PLANE_TOL = 0.18; // Å
-    for (let iter = 0; iter < 5 && chosenIndices.length >= 4; iter++) {
-      const distances = chosenIndices.map((idx) => {
-        const a = molecule.atoms[idx];
-        return Math.abs(new THREE.Vector3(a.x - c.x, a.y - c.y, a.z - c.z).dot(n));
-      });
-      const maxDev = Math.max(...distances);
-      if (maxDev <= PLANE_TOL) break;
-      // Drop the worst atom
-      const worstIdx = distances.indexOf(maxDev);
-      chosenIndices = chosenIndices.filter((_, i) => i !== worstIdx);
-      if (chosenIndices.length < 3) {
-        chosenIndices = [...mergedSet];
-        break;
-      }
-      // Re-fit
-      const newPos = chosenIndices.map((idx) => {
-        const a = molecule.atoms[idx];
-        return new THREE.Vector3(a.x, a.y, a.z);
-      });
-      const refit = bestFitPlane(newPos);
-      n = refit.normal;
-      c = refit.center;
-    }
-    atomIndices = chosenIndices;
-    normal = n;
-    center = c;
+    ({ normal, center } = bestFitPlane(pos));
 
     // Color: ring=blue, alkene=orange, carbonyl=yellow-green
     const colorMap: Record<string, number> = {
@@ -111,44 +72,14 @@ function addCoplanarityIndicators(
     ringOpacity = 0.5;
   } else if (fragments.length > 0) {
     // ── Fallback: only chain fragments exist ──
-    // Use the merged set so the visual count matches the "可能共面" stat
-    // (e.g. ethanol's most-planar search reports 5 atoms). The merged set
-    // can include atoms from chains that share a bond axis but tilt in
-    // different directions; iteratively drop the worst offender and
-    // re-fit so the plane stays consistent with the marked atoms.
+    // Use exactly the merged set so the visual count matches the statistic.
     const merged = countMaxPlanarAtoms(molecule);
-    const mergedSet = new Set(merged.largestIndices);
-    const pos = [...mergedSet].map((idx) => {
+    atomIndices = [...new Set(merged.largestIndices)].sort((a, b) => a - b);
+    const pos = atomIndices.map((idx) => {
       const a = molecule.atoms[idx];
       return new THREE.Vector3(a.x, a.y, a.z);
     });
-    let { normal: n, center: c } = bestFitPlane(pos);
-    let chosenIndices = [...mergedSet];
-    const PLANE_TOL = 0.55; // Å
-    for (let iter = 0; iter < 5 && chosenIndices.length >= 4; iter++) {
-      const distances = chosenIndices.map((idx) => {
-        const a = molecule.atoms[idx];
-        return Math.abs(new THREE.Vector3(a.x - c.x, a.y - c.y, a.z - c.z).dot(n));
-      });
-      const maxDev = Math.max(...distances);
-      if (maxDev <= PLANE_TOL) break;
-      const worstIdx = distances.indexOf(maxDev);
-      chosenIndices = chosenIndices.filter((_, i) => i !== worstIdx);
-      if (chosenIndices.length < 3) {
-        chosenIndices = [...mergedSet];
-        break;
-      }
-      const newPos = chosenIndices.map((idx) => {
-        const a = molecule.atoms[idx];
-        return new THREE.Vector3(a.x, a.y, a.z);
-      });
-      const refit = bestFitPlane(newPos);
-      n = refit.normal;
-      c = refit.center;
-    }
-    atomIndices = chosenIndices;
-    normal = n;
-    center = c;
+    ({ normal, center } = bestFitPlane(pos));
     color = 0x44dddd; // cyan for chain
     planeOpacity = 0.12;
     ringOpacity = 0.45;
@@ -234,8 +165,10 @@ export const MoleculeViewer: React.FC = () => {
   const moleculeGroupRef = useRef<THREE.Group | null>(null);
   const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
+  const pointerTypeRef = useRef<string>("mouse");
   const molJsonRef = useRef<string>("");
   const originalPositionsRef = useRef<Array<{ x: number; y: number; z: number }> | null>(null);
+  const [isTouchLayout, setIsTouchLayout] = useState(false);
 
   const molecule = useStore((s) => s.molecule);
   const displayMode = useStore((s) => s.displayMode);
@@ -255,6 +188,15 @@ export const MoleculeViewer: React.FC = () => {
   const _locale = useStore((s) => s.locale);
 
   const rotatingBondKey = rotatingBond ? `bond-${rotatingBond.index}` : null;
+
+  useEffect(() => {
+    const updateTouchLayout = () => {
+      setIsTouchLayout(navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches);
+    };
+    updateTouchLayout();
+    window.addEventListener("resize", updateTouchLayout);
+    return () => window.removeEventListener("resize", updateTouchLayout);
+  }, []);
 
   // Init scene once
   useEffect(() => {
@@ -299,13 +241,27 @@ export const MoleculeViewer: React.FC = () => {
 
     const onResize = () => {
       if (!containerRef.current || !cameraRef.current || !rendererRef.current) return;
-      cameraRef.current.aspect = containerRef.current.clientWidth / containerRef.current.clientHeight;
+      const width = containerRef.current.clientWidth;
+      const height = containerRef.current.clientHeight;
+      if (width <= 0 || height <= 0) return;
+      cameraRef.current.aspect = width / height;
       cameraRef.current.updateProjectionMatrix();
-      rendererRef.current.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+      rendererRef.current.setSize(width, height);
     };
     window.addEventListener("resize", onResize);
+    const resizeObserver = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(onResize)
+      : null;
+    resizeObserver?.observe(container);
 
-    return () => { setScreenshotFn(null); window.removeEventListener("resize", onResize); cancelAnimationFrame(animId); renderer.dispose(); if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement); };
+    return () => {
+      setScreenshotFn(null);
+      window.removeEventListener("resize", onResize);
+      resizeObserver?.disconnect();
+      cancelAnimationFrame(animId);
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
   }, []);
 
   // Snapshot positions when rotation starts
@@ -328,7 +284,22 @@ export const MoleculeViewer: React.FC = () => {
 
   // ���� Scene rebuild when molecule/displayMode/label changes ����
   useEffect(() => {
-    if (!moleculeGroupRef.current || !molecule) return;
+    if (!moleculeGroupRef.current) return;
+    if (!molecule) {
+      const oldGroup = moleculeGroupRef.current.getObjectByName("molecule");
+      if (oldGroup) {
+        moleculeGroupRef.current.remove(oldGroup);
+        oldGroup.traverse((node) => {
+          if (node instanceof THREE.Mesh) {
+            node.geometry?.dispose();
+            if (Array.isArray(node.material)) node.material.forEach((material) => material.dispose());
+            else node.material?.dispose();
+          }
+        });
+      }
+      molJsonRef.current = "";
+      return;
+    }
     const key = JSON.stringify({ atoms: molecule.atoms, bonds: molecule.bonds, mode: displayMode, labelMode: labelDisplayMode });
     if (key === molJsonRef.current) return;
     molJsonRef.current = key;
@@ -340,7 +311,7 @@ export const MoleculeViewer: React.FC = () => {
   // ���� Refresh coplanarity indicators AFTER scene rebuild, on ANY change ����
   // This ensures coplanarity persists through bond rotation, conformer search, etc.
   useEffect(() => {
-    if (!moleculeGroupRef.current || !molecule) return;
+    if (!moleculeGroupRef.current) return;
     // ALWAYS remove the old coplanarity plane first, regardless of toggle state.
     // This ensures the plane updates immediately when the molecule changes
     // (old plane from previous molecule must not linger after a model switch).
@@ -351,6 +322,7 @@ export const MoleculeViewer: React.FC = () => {
         if (n instanceof THREE.Mesh) { n.geometry?.dispose(); (n.material as THREE.Material)?.dispose(); }
       });
     }
+    if (!molecule) return;
     // Then add the new plane if the toggle is on
     if (highlightCoplanar) {
       addCoplanarityIndicators(moleculeGroupRef.current, molecule);
@@ -387,13 +359,28 @@ export const MoleculeViewer: React.FC = () => {
       if (hit) {
         setSelected({ type: hit.type, index: hit.index });
         hit.mesh.traverse((node) => { if (node instanceof THREE.Mesh) { if (hit.type === "atom") highlightAtom(node, true); else highlightBond(node, true); } });
+        // Touch screens have no hover. Treat the existing "on hover" label
+        // mode as "show on tap" there (and on an explicit click), while
+        // keeping labels hidden until interaction.
+        if (hit.type === "atom" && labelDisplayMode === "hover"
+          && (isTouchLayout || pointerTypeRef.current === "touch")) {
+          moleculeGroupRef.current.traverse((node) => {
+            if (node.name.startsWith("label-")) (node as THREE.Sprite).visible = false;
+          });
+          const label = moleculeGroupRef.current.getObjectByName("label-" + hit.index);
+          if (label) label.visible = true;
+        }
       } else setSelected(null);
     }
-  }, [setSelected]);
+  }, [isTouchLayout, labelDisplayMode, setSelected]);
+
+  const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    pointerTypeRef.current = event.pointerType;
+  }, []);
 
   // Hover handler for atom labels
   const handleHover = useCallback((e: React.MouseEvent) => {
-    if (labelDisplayMode !== "hover" || !moleculeGroupRef.current || !cameraRef.current || !containerRef.current) return;
+    if (isTouchLayout || labelDisplayMode !== "hover" || !moleculeGroupRef.current || !cameraRef.current || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const mx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     const my = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -407,7 +394,7 @@ export const MoleculeViewer: React.FC = () => {
       const label = moleculeGroupRef.current.getObjectByName("label-" + hit.index);
       if (label) label.visible = true;
     }
-  }, [labelDisplayMode]);
+  }, [isTouchLayout, labelDisplayMode]);
 
   // Right-click cancels measurement
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -419,7 +406,7 @@ export const MoleculeViewer: React.FC = () => {
 
   return (
     <div ref={containerRef} style={{ width: "100%", height: "100%", cursor: "pointer", position: "relative" }}
-         onClick={handleClick} onPointerMove={handleHover} onContextMenu={handleContextMenu}
+         onClick={handleClick} onPointerDown={handlePointerDown} onPointerMove={handleHover} onContextMenu={handleContextMenu}
          tabIndex={-1}>
       {isLoading && <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
           color: "#fff", fontSize: 18, background: "rgba(0,0,0,0.6)", padding: "12px 24px", borderRadius: 8, pointerEvents: "none" }}>

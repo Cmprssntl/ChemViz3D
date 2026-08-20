@@ -6,7 +6,6 @@ export interface TranslationMap {
   rdkitOn: string;
   rdkitOff: string;
   active: string;
-  exportJson: string;
   screenshot: string;
   exit: string;
   aiSettings: string;
@@ -16,6 +15,7 @@ export interface TranslationMap {
   aiSettingsHint: string;
   aiSettingsRequiredHint: string;
   aiSettingsRequired: string;
+  aiDisabledWarning: string;
   apiKey: string;
   apiKeyPlaceholder: string;
   model: string;
@@ -95,6 +95,12 @@ export interface TranslationMap {
 
   // Keyboard
   shortcuts: string;
+  touchHelp: string;
+  touchDragRotate: string;
+  touchPinchZoom: string;
+  touchTapAtom: string;
+  touchTapVisualize: string;
+  resetView: string;
   shortcutReset: string;
   shortcutMeasure: string;
   shortcutFullscreen: string;
@@ -106,8 +112,15 @@ export interface TranslationMap {
   labelAlways: string;
   labelHover: string;
   labelNever: string;
+  conformerSearchQuality: string;
+  conformerSearchFast: string;
+  conformerSearchBalanced: string;
+  conformerSearchPrecise: string;
   rightClickCancel: string;
   clear: string;
+  clearCurrentCache: string;
+  clearAllCache: string;
+  regenerate: string;
 
   // Properties (new)
   properties: string;

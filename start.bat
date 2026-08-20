@@ -9,29 +9,41 @@ echo     ChemViz3D - Molecular Visualizer
 echo ============================================
 echo.
 
-where powershell >nul 2>nul
-if %errorlevel% equ 0 (
-    echo [Info] Starting HTTP server via PowerShell...
-    echo [URL]  http://localhost:8080
-    echo [Tip]  Press Ctrl+C to stop the server
-    echo.
-    powershell -ExecutionPolicy Bypass -NoProfile -File "%~dp0server.ps1"
-    goto :end
-)
+if exist "%~dp0ChemViz3D.exe" goto :run_executable
 
 where python >nul 2>nul
-if %errorlevel% equ 0 (
-    echo [Info] Starting HTTP server via Python...
-    echo.
-    start http://localhost:8080
-    python -m http.server 8080 -d "%~dp0dist"
-    goto :end
-)
+if errorlevel 1 goto :missing_runtime
 
-echo [ERROR] Neither PowerShell nor Python found!
+python -c "import PySide6" >nul 2>nul
+if not errorlevel 1 goto :run_python
+
+where uv >nul 2>nul
+if errorlevel 1 goto :missing_pyside
+echo [Info] PySide6 is not installed; starting it through uv...
+cd /d "%~dp0"
+uv run --with "PySide6>=6.7,<7" python -m desktop --root "%~dp0" --port 0
+goto :end
+
+:run_executable
+echo [Info] Starting the native ChemViz3D client...
+"%~dp0ChemViz3D.exe"
+goto :end
+
+:run_python
+echo [Info] Starting the native ChemViz3D client via Python...
 echo.
-echo PowerShell is built into Windows 7 and later.
-echo If missing, install Python or deploy dist/ to any web server.
+cd /d "%~dp0"
+python -m desktop --root "%~dp0" --port 0
+goto :end
+
+:missing_pyside
+echo [ERROR] PySide6 is required. Install desktop\requirements.txt first.
+goto :end
+
+:missing_runtime
+echo [ERROR] ChemViz3D.exe or Python 3 was not found!
+echo.
+echo Install Python 3 and PySide6, or use a platform executable build.
 echo.
 pause
 

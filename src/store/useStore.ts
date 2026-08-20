@@ -1,49 +1,23 @@
 import { create } from "zustand";
 import type { MoleculeData, DisplayMode, SelectedEntity, LabelDisplayMode } from "../types/molecule";
+import type { ConformerSearchQuality } from "../engine/conformerSearch";
 import type { LocaleKey } from "../i18n/index";
 import { setLocale } from "../i18n/index";
+import {
+  cacheUISettings,
+  getUISettings,
+  normalizeUISettings,
+  saveUISettingsToDesktopBridge,
+  type UISettings,
+} from "../ai/config";
 
-const UI_SETTINGS_STORAGE_KEY = "chemviz3d.ui-settings.v1";
-const LOCALES = new Set<LocaleKey>(["zh-CN", "zh-TW", "en-US"]);
-const DISPLAY_MODES = new Set<DisplayMode>(["ball-and-stick", "space-filling"]);
-const LABEL_MODES = new Set<LabelDisplayMode>(["always", "hover", "never"]);
-
-interface PersistedUISettings {
-  locale?: unknown;
-  displayMode?: unknown;
-  labelDisplayMode?: unknown;
+function persistUISettings(patch: Partial<UISettings>): UISettings {
+  const settings = cacheUISettings(normalizeUISettings({ ...getUISettings(), ...patch }));
+  void saveUISettingsToDesktopBridge(settings).catch((error) => console.error(error));
+  return settings;
 }
 
-function readPersistedUISettings(): { locale: LocaleKey; displayMode: DisplayMode; labelDisplayMode: LabelDisplayMode } {
-  const fallback = { locale: "zh-CN" as LocaleKey, displayMode: "ball-and-stick" as DisplayMode, labelDisplayMode: "always" as LabelDisplayMode };
-  if (typeof window === "undefined") return fallback;
-  try {
-    const raw = window.localStorage.getItem(UI_SETTINGS_STORAGE_KEY);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw) as PersistedUISettings;
-    return {
-      locale: LOCALES.has(parsed.locale as LocaleKey) ? parsed.locale as LocaleKey : fallback.locale,
-      displayMode: DISPLAY_MODES.has(parsed.displayMode as DisplayMode) ? parsed.displayMode as DisplayMode : fallback.displayMode,
-      labelDisplayMode: LABEL_MODES.has(parsed.labelDisplayMode as LabelDisplayMode)
-        ? parsed.labelDisplayMode as LabelDisplayMode
-        : fallback.labelDisplayMode,
-    };
-  } catch {
-    return fallback;
-  }
-}
-
-function persistUISettings(patch: Partial<PersistedUISettings>): void {
-  if (typeof window === "undefined") return;
-  try {
-    const current = readPersistedUISettings();
-    window.localStorage.setItem(UI_SETTINGS_STORAGE_KEY, JSON.stringify({ ...current, ...patch }));
-  } catch {
-    // Ignore unavailable browser storage.
-  }
-}
-
-const persistedUISettings = readPersistedUISettings();
+const persistedUISettings = getUISettings();
 setLocale(persistedUISettings.locale);
 
 interface AppState {
@@ -60,6 +34,9 @@ interface AppState {
   setLoading: (loading: boolean) => void;
   setError: (err: string | null) => void;
   setInfoMessage: (msg: string | null) => void;
+  parseSource: "preset" | "cache" | "ai" | null;
+  currentCacheInput: string | null;
+  setParseSource: (source: "preset" | "cache" | "ai" | null, input?: string | null) => void;
   setRdkitReady: (ready: boolean) => void;
 
   displayMode: DisplayMode;
@@ -98,9 +75,16 @@ interface AppState {
   locale: LocaleKey;
   labelDisplayMode: LabelDisplayMode;
   setLabelDisplayMode: (mode: LabelDisplayMode) => void;
+  conformerSearchQuality: ConformerSearchQuality;
+  setConformerSearchQuality: (quality: ConformerSearchQuality) => void;
   conformerStats: { possible: number; definite: number } | null;
   setConformerStats: (stats: { possible: number; definite: number } | null) => void;
+  leftCollapsed: boolean;
+  rightCollapsed: boolean;
+  setLeftCollapsed: (collapsed: boolean) => void;
+  setRightCollapsed: (collapsed: boolean) => void;
   setAppLocale: (l: LocaleKey) => void;
+  applyUISettings: (settings: unknown) => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -111,12 +95,15 @@ export const useStore = create<AppState>((set) => ({
   isLoading: false,
   error: null,
   infoMessage: null,
+  parseSource: null,
+  currentCacheInput: null,
   rdkitReady: false,
 
   setMolecule: (mol) => set({ molecule: mol }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (err) => set({ error: err }),
   setInfoMessage: (msg) => set({ infoMessage: msg }),
+  setParseSource: (source, input = null) => set({ parseSource: source, currentCacheInput: input }),
   setRdkitReady: (ready) => set({ rdkitReady: ready }),
 
   displayMode: persistedUISettings.displayMode,
@@ -148,7 +135,23 @@ export const useStore = create<AppState>((set) => ({
   locale: persistedUISettings.locale,
   labelDisplayMode: persistedUISettings.labelDisplayMode,
   setLabelDisplayMode: (mode) => { set({ labelDisplayMode: mode }); persistUISettings({ labelDisplayMode: mode }); },
+  conformerSearchQuality: persistedUISettings.conformerSearchQuality,
+  setConformerSearchQuality: (quality) => { set({ conformerSearchQuality: quality }); persistUISettings({ conformerSearchQuality: quality }); },
   conformerStats: null,
   setConformerStats: (stats) => set({ conformerStats: stats }),
+  leftCollapsed: false,
+  rightCollapsed: false,
+  setLeftCollapsed: (collapsed) => set({ leftCollapsed: collapsed }),
+  setRightCollapsed: (collapsed) => set({ rightCollapsed: collapsed }),
   setAppLocale: (l) => { set({ locale: l }); setLocale(l); persistUISettings({ locale: l }); },
+  applyUISettings: (value) => {
+    const settings = cacheUISettings(normalizeUISettings(value));
+    setLocale(settings.locale);
+    set({
+      locale: settings.locale,
+      displayMode: settings.displayMode,
+      labelDisplayMode: settings.labelDisplayMode,
+      conformerSearchQuality: settings.conformerSearchQuality,
+    });
+  },
 }));

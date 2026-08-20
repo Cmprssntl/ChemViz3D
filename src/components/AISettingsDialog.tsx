@@ -3,6 +3,8 @@ import {
   DEFAULT_SYSTEM_PROMPT,
   getAISettings,
   getChatCompletionsUrl,
+  hasDesktopDeveloperSettings,
+  hasTextAISettings,
   saveAISettings,
   saveAISettingsFile,
   type AIEndpointSettings,
@@ -28,6 +30,7 @@ export const AISettingsDialog: React.FC<AISettingsDialogProps> = ({ open, requir
   const [showApi, setShowApi] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [editingPromptTab, setEditingPromptTab] = useState<SettingsTab | null>(null);
+  const [promptBeforeEdit, setPromptBeforeEdit] = useState<Partial<Record<SettingsTab, string>>>({});
 
   useEffect(() => {
     if (!open) return;
@@ -36,9 +39,11 @@ export const AISettingsDialog: React.FC<AISettingsDialogProps> = ({ open, requir
     setShowApi(false);
     setValidationError(null);
     setEditingPromptTab(null);
+    setPromptBeforeEdit({});
   }, [open]);
 
   const endpoint = draft[tab];
+  const developerConfigured = hasDesktopDeveloperSettings();
   const fullRequestUrl = useMemo(
     () => tab === "text"
       ? getChatCompletionsUrl(endpoint.requestUrl)
@@ -55,14 +60,25 @@ export const AISettingsDialog: React.FC<AISettingsDialogProps> = ({ open, requir
 
   const handleEnableSystemPromptEditing = () => {
     if (window.confirm(t("systemPromptWarning"))) {
+      setPromptBeforeEdit((current) => ({ ...current, [tab]: endpoint.systemPrompt }));
       setEditingPromptTab(tab);
     }
   };
 
+  const handleCancelSystemPromptEditing = () => {
+    const original = promptBeforeEdit[tab];
+    if (typeof original === "string") updateEndpoint({ systemPrompt: original });
+    setEditingPromptTab(null);
+    setPromptBeforeEdit((current) => {
+      const next = { ...current };
+      delete next[tab];
+      return next;
+    });
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const text = draft.text;
-    if (!text.api.trim() || !text.model.trim() || !text.requestUrl.trim()) {
+    if (!hasTextAISettings(draft)) {
       setTab("text");
       setValidationError(t("aiSettingsRequired"));
       return;
@@ -84,13 +100,11 @@ export const AISettingsDialog: React.FC<AISettingsDialogProps> = ({ open, requir
             <h2 id="ai-settings-title">{t("aiSettings")}</h2>
             <p>{required ? t("aiSettingsRequiredHint") : t("aiSettingsHint")}</p>
           </div>
-          {!required && (
-            <button type="button" className="btn btn-icon" title={t("cancel")} onClick={onCancel}>
+          <button type="button" className="btn btn-icon" title={t("cancel")} onClick={onCancel}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
-            </button>
-          )}
+          </button>
         </div>
 
         <div className="settings-tabs" role="tablist" aria-label={t("aiSettingsModels")}>
@@ -106,19 +120,19 @@ export const AISettingsDialog: React.FC<AISettingsDialogProps> = ({ open, requir
 
         <form onSubmit={handleSubmit} className="settings-form">
           <label className="settings-field">
-            <span>{t("apiKey")}{tab === "text" ? " *" : ""}</span>
+            <span>{t("apiKey")}{tab === "text" && !developerConfigured ? " *" : ""}</span>
             <input type={showApi ? "text" : "password"} value={endpoint.api}
               onChange={(event) => updateEndpoint({ api: event.target.value })}
               autoComplete="off" placeholder={t("apiKeyPlaceholder")} />
           </label>
           <label className="settings-field">
-            <span>{t("model")}{tab === "text" ? " *" : ""}</span>
+            <span>{t("model")}{tab === "text" && !developerConfigured ? " *" : ""}</span>
             <input type="text" value={endpoint.model}
               onChange={(event) => updateEndpoint({ model: event.target.value })}
               placeholder={tab === "text" ? "gpt-4o-mini" : "gpt-image-1"} />
           </label>
           <label className="settings-field">
-            <span>{t("requestUrl")}{tab === "text" ? " *" : ""}</span>
+            <span>{t("requestUrl")}{tab === "text" && !developerConfigured ? " *" : ""}</span>
             <input type="url" value={endpoint.requestUrl}
               onChange={(event) => updateEndpoint({ requestUrl: event.target.value })}
               placeholder="https://api.openai.com/v1" />
@@ -140,10 +154,15 @@ export const AISettingsDialog: React.FC<AISettingsDialogProps> = ({ open, requir
                 rows={10} spellCheck={false} />
               <span className="settings-muted">{t("systemPromptHint")}</span>
             </>}
-            <button type="button" className="btn settings-open-button" onClick={handleEnableSystemPromptEditing}
-              disabled={editingPromptTab === tab}>
-              {editingPromptTab === tab ? t("systemPromptEditing") : t("editSystemPrompt")}
-            </button>
+            {editingPromptTab === tab ? (
+              <button type="button" className="btn settings-open-button" onClick={handleCancelSystemPromptEditing}>
+                {t("cancel")}
+              </button>
+            ) : (
+              <button type="button" className="btn settings-open-button" onClick={handleEnableSystemPromptEditing}>
+                {t("editSystemPrompt")}
+              </button>
+            )}
           </div>
           <label className="settings-check">
             <input type="checkbox" checked={showApi} onChange={(event) => setShowApi(event.target.checked)} />
@@ -152,8 +171,8 @@ export const AISettingsDialog: React.FC<AISettingsDialogProps> = ({ open, requir
           {tab === "image" && <p className="settings-muted">{t("imageSettingsReserved")}</p>}
           {validationError && <div className="error-banner settings-error">{validationError}</div>}
           <div className="settings-actions">
-            {!required && <button type="button" className="btn" onClick={onCancel}>{t("cancel")}</button>}
-            <button type="submit" className="btn btn-primary">{t("saveSettingsFile")}</button>
+            <button type="button" className="btn" onClick={onCancel}>{t("cancel")}</button>
+            <button type="submit" className="btn btn-primary">{t("saveSettings")}</button>
           </div>
         </form>
       </section>

@@ -3,7 +3,7 @@
   "formula": "C7H8",
   "inputs": ["C7H8", "C6H5CH3", "甲苯", "toluene"],
   "chemvz": {
-    "chemvz": 2, "name": "toluene",
+    "chemvz": 2, "name": {"zh-CN": "甲苯", "zh-TW": "甲苯", "en-US": "toluene"}, "smiles": "Cc1ccccc1",
     "atoms": [
       { "el": "C", "hybridization": "sp2" }, { "el": "C", "hybridization": "sp2" },
       { "el": "C", "hybridization": "sp2" }, { "el": "C", "hybridization": "sp2" },

@@ -3,7 +3,7 @@
   "formula": "C2H6",
   "inputs": ["C2H6", "乙烷", "ethane"],
   "chemvz": {
-    "chemvz": 2, "name": "ethane",
+    "chemvz": 2, "name": {"zh-CN": "乙烷", "zh-TW": "乙烷", "en-US": "ethane"}, "smiles": "CC",
     "atoms": [{ "el": "C", "hybridization": "sp3" }, { "el": "C", "hybridization": "sp3" }],
     "bonds": [{ "i": [0, 1], "order": 1 }]
   }

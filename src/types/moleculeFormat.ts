@@ -52,8 +52,10 @@
 export interface ChemVZMolecule {
   /** Format version (currently 2) */
   chemvz: 2;
-  /** Optional human-readable name */
-  name?: string;
+  /** Optional human-readable name, optionally localized by locale key. */
+  name?: string | Record<string, string>;
+  /** Canonical SMILES supplied by the preset or AI. */
+  smiles?: string;
   /** Optional comment */
   comment?: string;
   /** Atoms in the molecule */

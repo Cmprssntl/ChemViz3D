@@ -15,6 +15,7 @@ export const RightPanel: React.FC = () => {
   const setHighlightCoplanar = useStore((s) => s.setHighlightCoplanar);
   const conformerStats = useStore((s) => s.conformerStats);
   const setConformerStats = useStore((s) => s.setConformerStats);
+  const conformerSearchQuality = useStore((s) => s.conformerSearchQuality);
   const setMolecule = useStore((s) => s.setMolecule);
   const measureMode = useStore((s) => s.measureMode);
   const measureType = useStore((s) => s.measureType);
@@ -42,7 +43,7 @@ export const RightPanel: React.FC = () => {
   }, [selected, planarFragments, highlightCoplanar]);
 
   // Cache last search result to avoid recomputation
-  const lastSearchRef = React.useRef<{ molKey: string; result: any } | null>(null);
+  const lastSearchRef = React.useRef<{ sourceKey: string; resultKeys: Set<string>; quality: typeof conformerSearchQuality; result: ReturnType<typeof searchExtremeConformations> } | null>(null);
 
   const handleConformerSearch = useCallback((mode: "most" | "least") => {
     if (!molecule) return;
@@ -50,11 +51,20 @@ export const RightPanel: React.FC = () => {
     // Build a key to check if the molecule has changed since last search
     const molKey = JSON.stringify({ atoms: molecule.atoms, bonds: molecule.bonds });
     let result;
-    if (lastSearchRef.current?.molKey === molKey) {
+    if (lastSearchRef.current?.quality === conformerSearchQuality
+      && (lastSearchRef.current.sourceKey === molKey || lastSearchRef.current.resultKeys.has(molKey))) {
       result = lastSearchRef.current.result;
     } else {
-      result = searchExtremeConformations(molecule);
-      lastSearchRef.current = { molKey, result };
+      result = searchExtremeConformations(molecule, { quality: conformerSearchQuality });
+      lastSearchRef.current = {
+        sourceKey: molKey,
+        quality: conformerSearchQuality,
+        result,
+        resultKeys: new Set([
+          JSON.stringify({ atoms: result.mostPlanar.molecule.atoms, bonds: result.mostPlanar.molecule.bonds }),
+          JSON.stringify({ atoms: result.leastPlanar.molecule.atoms, bonds: result.leastPlanar.molecule.bonds }),
+        ]),
+      };
     }
 
     // Set molecule to the requested conformation
@@ -69,7 +79,7 @@ export const RightPanel: React.FC = () => {
       definite: result.leastPlanar.coplanarAtomCount,
     });
     setHighlightCoplanar(true);
-  }, [molecule, setMolecule, setConformerStats, setHighlightCoplanar]);
+  }, [molecule, conformerSearchQuality, setMolecule, setConformerStats, setHighlightCoplanar]);
 
   if (!molecule) {
     return (
@@ -232,6 +242,10 @@ export const RightPanel: React.FC = () => {
         <div className="section">
           <h3 className="section-title">{t("conformerSearch")}</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <div className="info-item">
+              <span className="info-label">{t("conformerSearchQuality")}</span>
+              <span className="info-value">{t(`conformerSearch${conformerSearchQuality[0].toUpperCase()}${conformerSearchQuality.slice(1)}`)}</span>
+            </div>
             <button className="btn btn-small" onClick={() => handleConformerSearch("most")} style={{ width: "100%", fontSize: 11 }}>
               {t("searchMostPlanar")}
             </button>

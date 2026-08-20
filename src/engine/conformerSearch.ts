@@ -1,21 +1,14 @@
-/**
- * Conformation search for ChemViz3D
- *
- * Searches for conformations with maximum and minimum coplanarity
- * by rotating all rotatable bonds and evaluating planar fragment counts.
- *
- * ¿ÉÄÜ¹²ÃæÔ­×ÓÊý = max over conformations of (max atoms in any single plane)
- * Ò»¶¨¹²ÃæÔ­×ÓÊý = min over conformations of (max atoms in any single plane)
- *
- * Ëã·¨£º
- * 1. Ã¶¾ÙËùÓÐ¿ÉÐý×ª¼üµÄÐý×ª½Ç×éºÏ£¨¡Ü3¼üÈ«Ã¶¾Ù£¬>3¼ü½üËÆËÑË÷£©
- * 2. ¶ÔÃ¿¸ö¹¹Ïó¼ÆËã×î´ó¹²ÃæÔ­×ÓÊý
- * 3. È¡×î´ó/×îÐ¡Öµ
- */
+/** Deterministic conformer search for maximum and minimum coplanarity. */
 import * as THREE from "three";
-import type { MoleculeData, BondData } from "../types/molecule";
-import { applyBondRotation, buildRingBondSet, buildAdj } from "./rotation";
-import { detectPlanarFragments, bestFitPlane, planarityDeviation } from "./coplanarity";
+import type { BondData, MoleculeData } from "../types/molecule";
+import { applyBondRotation, buildAdj, buildRingBondSet } from "./rotation";
+import {
+  bestFitPlane,
+  detectPlanarFragments,
+  planarityDeviation,
+  planarityRmsDeviation,
+  type CoplanarSet,
+} from "./coplanarity";
 
 export interface ConformerResult {
   molecule: MoleculeData;
@@ -24,142 +17,293 @@ export interface ConformerResult {
   allCoplanarIndices: number[];
 }
 
-/**
- * Count unique atoms that are part of the LARGEST merged planar fragment.
- * This represents the maximum number of atoms that can lie in a single plane.
- */
-export function countMaxPlanarAtoms(mol: MoleculeData): {
-  largestCount: number;
-  largestIndices: number[];
+export type ConformerSearchQuality = "fast" | "balanced" | "precise";
+
+export interface ConformerSearchOptions {
+  quality?: ConformerSearchQuality;
+}
+
+interface SearchBudget {
+  gridSteps: number;
+  sampleCount: number;
+  beamWidth: number;
+  refineStarts: number;
+  refineRounds: number;
+  refineSteps: number[];
+}
+
+const SEARCH_BUDGETS: Record<ConformerSearchQuality, SearchBudget> = {
+  fast: { gridSteps: 12, sampleCount: 256, beamWidth: 8, refineStarts: 4, refineRounds: 2, refineSteps: [15, 3] },
+  balanced: { gridSteps: 24, sampleCount: 1024, beamWidth: 16, refineStarts: 8, refineRounds: 3, refineSteps: [15, 5, 1] },
+  precise: { gridSteps: 36, sampleCount: 4096, beamWidth: 32, refineStarts: 16, refineRounds: 4, refineSteps: [15, 5, 1, 0.5] },
+};
+
+interface PlanarScore {
+  /** Chemically meaningful count; the 3-atom geometric floor is excluded. */
+  count: number;
+  indices: number[];
   allIndices: number[];
-} {
-  const fragments = detectPlanarFragments(mol);
-  // Tightened thresholds:
-  //  - angle: 10° (was 30°). 30° was so lenient that two fragments with
-  //    substantially different normals would still merge, producing
-  //    "coplanar" sets whose best-fit plane missed the actual atoms.
-  //  - post-merge deviation: 0.20 Å. After merging, re-fit a plane to
-  //    the union and reject if any atom is more than 0.20 Å off. This
-  //    ensures the final "largest coplanar set" is actually coplanar.
-  const ANGLE_THRESH = THREE.MathUtils.degToRad(10);
-  const POST_MERGE_DEVIATION_TOL = 0.20;
+  maxDeviation: number;
+  rmsDeviation: number;
+  continuity: number;
+}
 
-  // Merge overlapping fragments with similar normals
-  const merged: Set<number>[] = [];
-  const mergedNorms: THREE.Vector3[] = [];
+interface Candidate {
+  angles: number[];
+  score: PlanarScore;
+}
 
-  for (const f of fragments) {
-    let added = false;
-    for (let g = 0; g < merged.length; g++) {
-      const overlaps = [...merged[g]].some(idx => f.atomIndices.includes(idx));
-      // Guard: zero-length normals (shouldn't happen after bestFitPlane fix, but safety check)
-      const nLen = f.normal.length();
-      const mnLen = mergedNorms[g].length();
-      if (nLen < 0.0001 || mnLen < 0.0001) {
-        // If normal is degenerate, merge based on overlap alone
-        if (overlaps) {
-          for (const idx of f.atomIndices) merged[g].add(idx);
-          added = true;
-          break;
-        }
-      } else if (overlaps && mergedNorms[g].angleTo(f.normal) < ANGLE_THRESH) {
-        for (const idx of f.atomIndices) merged[g].add(idx);
-        added = true;
-        break;
-      }
-    }
-    if (!added) {
-      merged.push(new Set(f.atomIndices));
-      mergedNorms.push(f.normal.clone());
-    }
-  }
+interface MergeState {
+  indices: number[];
+  fragmentIds: number[];
+  maxDeviation: number;
+  rmsDeviation: number;
+  continuity: number;
+  tolerance: number;
+}
 
-  // After merging, RE-VERIFY each merged set is actually coplanar.
-  // Re-fit a plane to all merged atoms and check max deviation. If any
-  // atom is too far off, split (discard) the merge. This prevents
-  // drawing a plane that visibly misses some marked atoms.
-  const finalMerged: Set<number>[] = [];
-  for (let g = 0; g < merged.length; g++) {
-    if (merged[g].size < 3) continue;
-    const positions = [...merged[g]].map(idx => {
-      const a = mol.atoms[idx];
-      return new THREE.Vector3(a.x, a.y, a.z);
-    });
-    const fit = bestFitPlane(positions);
-    const dev = planarityDeviation(positions, fit.normal, fit.center);
-    if (dev < POST_MERGE_DEVIATION_TOL) {
-      finalMerged.push(merged[g]);
-    }
-    // If deviation too large, this merge is invalid → drop it entirely
-    // rather than drawing a misleading plane.
-  }
+// A fragment's own tolerance describes the geometry of that chemical unit.
+// Once separate fragments are combined, use a substantially tighter bound:
+// otherwise two nearby but visibly different planes can be accepted by the
+// least-squares fit and reported/highlighted as one coplanar set.
+const MERGE_DEVIATION_TOL = 0.08;
+const MERGE_BEAM_WIDTH = 48;
+const HALTON_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53];
 
-  // Find the SINGLE largest group from the validated merges
-  let bestCount = 0;
-  let bestIndices: number[] = [];
-  const allAtoms = new Set<number>();
+function cloneMol(mol: MoleculeData): MoleculeData {
+  return { ...mol, atoms: mol.atoms.map((atom) => ({ ...atom })) };
+}
 
-  for (const set of finalMerged) {
-    for (const idx of set) allAtoms.add(idx);
-    if (set.size > bestCount) {
-      bestCount = set.size;
-      bestIndices = [...set];
+function normalizeAngle(angle: number): number {
+  const wrapped = ((angle + 180) % 360 + 360) % 360 - 180;
+  return Math.abs(wrapped) < 1e-9 ? 0 : wrapped;
+}
+
+function angleKey(angles: number[]): string {
+  return angles.map((angle) => normalizeAngle(angle).toFixed(3)).join(",");
+}
+
+function applyRotations(molecule: MoleculeData, bonds: BondData[], angles: number[]): MoleculeData {
+  let current = cloneMol(molecule);
+  for (let index = 0; index < bonds.length; index++) {
+    const angle = normalizeAngle(angles[index] || 0);
+    if (Math.abs(angle) > 0.5) {
+      current = applyBondRotation(current, bonds[index].atom1Idx, bonds[index].atom2Idx, angle);
     }
   }
+  return current;
+}
 
-  // Geometric floor: any 3 atoms in 3D space are always coplanar.
-  // If no chemically-detected planar fragment was found but the molecule
-  // has >=3 atoms, return 3 as the guaranteed minimum (using the first
-  // 3 atom indices as a representative coplanar triple).
-  if (bestCount < 3 && mol.atoms.length >= 3) {
-    bestCount = 3;
-    bestIndices = [0, 1, 2];
-  }
+function atomPositions(molecule: MoleculeData, indices: number[]): THREE.Vector3[] {
+  return indices.map((index) => {
+    const atom = molecule.atoms[index];
+    return new THREE.Vector3(atom.x, atom.y, atom.z);
+  });
+}
 
+function hasCarbonylNeighbor(molecule: MoleculeData, atomIndex: number): boolean {
+  return molecule.bonds.some((bond) => {
+    if (bond.order !== 2) return false;
+    const other = bond.atom1Idx === atomIndex ? bond.atom2Idx : bond.atom2Idx === atomIndex ? bond.atom1Idx : -1;
+    return other >= 0 && molecule.atoms[other]?.element === "O";
+  });
+}
+
+function getRotatableBonds(molecule: MoleculeData): BondData[] {
+  const adj = buildAdj(molecule.bonds);
+  const ringBonds = buildRingBondSet(adj, molecule.bonds);
+  return molecule.bonds.filter((bond) => {
+    if (bond.order !== 1) return false;
+    const first = molecule.atoms[bond.atom1Idx];
+    const second = molecule.atoms[bond.atom2Idx];
+    if (!first || !second || first.element === "H" || second.element === "H") return false;
+    const key = `${Math.min(bond.atom1Idx, bond.atom2Idx)},${Math.max(bond.atom1Idx, bond.atom2Idx)}`;
+    if (ringBonds.has(key)) return false;
+    // Amide C-N bonds have appreciable partial-double-bond character and
+    // should remain planar rather than being treated as free rotors.
+    const amide = (first.element === "C" && second.element === "N" && hasCarbonylNeighbor(molecule, bond.atom1Idx))
+      || (second.element === "C" && first.element === "N" && hasCarbonylNeighbor(molecule, bond.atom2Idx));
+    return !amide;
+  });
+}
+
+function fragmentContinuity(indices: number[], bonds: BondData[]): number {
+  const members = new Set(indices);
+  return bonds.reduce((total, bond) => total + (members.has(bond.atom1Idx) && members.has(bond.atom2Idx) ? 1 : 0), 0);
+}
+
+function mergeState(molecule: MoleculeData, fragments: CoplanarSet[], fragmentIds: number[]): MergeState | null {
+  const indices = [...new Set(fragmentIds.flatMap((id) => fragments[id].atomIndices))].sort((a, b) => a - b);
+  if (indices.length < 3) return null;
+  const positions = atomPositions(molecule, indices);
+  const fit = bestFitPlane(positions);
+  const maxDeviation = planarityDeviation(positions, fit.normal, fit.center);
+  const fragmentTolerances = fragmentIds.map((id) => fragments[id].tolerance ?? MERGE_DEVIATION_TOL);
+  // A single fragment is already validated by detectPlanarFragments and may
+  // use its chemistry-specific tolerance. For a union, the strictest member
+  // controls the result; taking the loosest tolerance was the source of
+  // visibly off-plane atoms being merged into a highlighted set.
+  const tolerance = fragmentIds.length === 1
+    ? fragmentTolerances[0]
+    : Math.min(MERGE_DEVIATION_TOL, ...fragmentTolerances);
+  if (maxDeviation >= tolerance) return null;
   return {
-    largestCount: bestCount,
-    largestIndices: bestIndices,
-    allIndices: [...allAtoms],
+    indices,
+    fragmentIds: [...fragmentIds].sort((a, b) => a - b),
+    maxDeviation,
+    rmsDeviation: planarityRmsDeviation(positions, fit.normal, fit.center),
+    continuity: fragmentContinuity(indices, molecule.bonds),
+    tolerance,
   };
 }
 
-/**
- * Build adjacency from bonds (includes all atoms including H)
- */
-function _buildAdj(bonds: BondData[]): Map<number, number[]> {
-  const adj = new Map<number, number[]>();
-  for (const b of bonds) {
-    if (!adj.has(b.atom1Idx)) adj.set(b.atom1Idx, []);
-    if (!adj.has(b.atom2Idx)) adj.set(b.atom2Idx, []);
-    adj.get(b.atom1Idx)!.push(b.atom2Idx);
-    adj.get(b.atom2Idx)!.push(b.atom1Idx);
-  }
-  return adj;
+function compareMergeState(a: MergeState, b: MergeState): number {
+  return b.indices.length - a.indices.length
+    || a.maxDeviation - b.maxDeviation
+    || a.rmsDeviation - b.rmsDeviation
+    || b.continuity - a.continuity
+    || a.fragmentIds.join(",").localeCompare(b.fragmentIds.join(","));
 }
 
-/**
- * Get rotatable bonds for conformation search.
- * Excludes ring bonds and bonds to H.
- */
-function getRotatableBonds(mol: MoleculeData): BondData[] {
-  const adj = _buildAdj(mol.bonds);
-  const ringBonds = buildRingBondSet(adj, mol.bonds);
+function connectedFragments(a: CoplanarSet, b: CoplanarSet, bonds: BondData[]): boolean {
+  const first = new Set(a.atomIndices);
+  const second = new Set(b.atomIndices);
+  if (a.atomIndices.some((index) => second.has(index))) return true;
+  return bonds.some((bond) => (first.has(bond.atom1Idx) && second.has(bond.atom2Idx))
+    || (first.has(bond.atom2Idx) && second.has(bond.atom1Idx)));
+}
 
-  return mol.bonds.filter((b) => {
-    if (b.order !== 1) return false;
-    // Skip ring bonds
-    const key = Math.min(b.atom1Idx, b.atom2Idx) + "," + Math.max(b.atom1Idx, b.atom2Idx);
-    if (ringBonds.has(key)) return false;
-    const a1 = mol.atoms[b.atom1Idx];
-    const a2 = mol.atoms[b.atom2Idx];
-    if (!a1 || !a2) return false;
-    // Skip bonds involving H
-    if (a1.element === "H" || a2.element === "H") return false;
-    // Only C-C, C-O, O-C
-    return (a1.element === "C" && a2.element === "C") ||
-           (a1.element === "C" && a2.element === "O") ||
-           (a1.element === "O" && a2.element === "C");
+function selectPlanarSet(molecule: MoleculeData, fragments: CoplanarSet[]): PlanarScore {
+  if (fragments.length === 0) {
+    return { count: 0, indices: [], allIndices: [], maxDeviation: 0, rmsDeviation: 0, continuity: 0 };
+  }
+
+  const allIndices = [...new Set(fragments.flatMap((fragment) => fragment.atomIndices))].sort((a, b) => a - b);
+  let states = fragments.map((_, id) => mergeState(molecule, fragments, [id])).filter((state): state is MergeState => Boolean(state));
+  for (let pass = 0; pass < fragments.length; pass++) {
+    const expanded = [...states];
+    for (const state of states) {
+      for (let id = 0; id < fragments.length; id++) {
+        if (state.fragmentIds.includes(id)
+          || !state.fragmentIds.some((existingId) => connectedFragments(fragments[existingId], fragments[id], molecule.bonds))) continue;
+        const candidate = mergeState(molecule, fragments, [...state.fragmentIds, id]);
+        if (candidate) expanded.push(candidate);
+      }
+    }
+    const deduped = new Map<string, MergeState>();
+    for (const state of expanded) {
+      const key = state.indices.join(",");
+      const previous = deduped.get(key);
+      if (!previous || compareMergeState(state, previous) < 0) deduped.set(key, state);
+    }
+    states = [...deduped.values()].sort(compareMergeState).slice(0, MERGE_BEAM_WIDTH);
+    if (states.length === 0) break;
+  }
+
+  const best = states.sort(compareMergeState)[0];
+  if (!best) return { count: 0, indices: [], allIndices, maxDeviation: 0, rmsDeviation: 0, continuity: 0 };
+  return {
+    count: best.indices.length,
+    indices: best.indices,
+    allIndices,
+    maxDeviation: best.maxDeviation,
+    rmsDeviation: best.rmsDeviation,
+    continuity: best.continuity,
+  };
+}
+
+/** Count the largest chemically meaningful coplanar set. */
+export function countMaxPlanarAtoms(molecule: MoleculeData): {
+  largestCount: number;
+  largestIndices: number[];
+  allIndices: number[];
+  maxDeviation?: number;
+  rmsDeviation?: number;
+  continuity?: number;
+} {
+  const score = selectPlanarSet(molecule, detectPlanarFragments(molecule));
+  if (score.count >= 3) {
+    return {
+      largestCount: score.count,
+      largestIndices: score.indices,
+      allIndices: score.allIndices,
+      maxDeviation: score.maxDeviation,
+      rmsDeviation: score.rmsDeviation,
+      continuity: score.continuity,
+    };
+  }
+  // Three points are always geometrically coplanar, but this fallback is
+  // deliberately applied after semantic scoring so it cannot win a search.
+  const fallback = molecule.atoms.length >= 3 ? [0, 1, 2] : [];
+  return {
+    largestCount: fallback.length,
+    largestIndices: fallback,
+    allIndices: score.allIndices,
+    maxDeviation: 0,
+    rmsDeviation: 0,
+    continuity: 0,
+  };
+}
+
+function scoreCoplanarity(molecule: MoleculeData): PlanarScore {
+  const fragments = detectPlanarFragments(molecule);
+  const score = selectPlanarSet(molecule, fragments);
+  return score;
+}
+
+function compareScore(a: PlanarScore, b: PlanarScore, mode: "most" | "least"): number {
+  if (a.count !== b.count) return mode === "most" ? b.count - a.count : a.count - b.count;
+  if (Math.abs(a.maxDeviation - b.maxDeviation) > 1e-9) {
+    return mode === "most" ? a.maxDeviation - b.maxDeviation : b.maxDeviation - a.maxDeviation;
+  }
+  if (Math.abs(a.rmsDeviation - b.rmsDeviation) > 1e-9) {
+    return mode === "most" ? a.rmsDeviation - b.rmsDeviation : b.rmsDeviation - a.rmsDeviation;
+  }
+  if (a.continuity !== b.continuity) return mode === "most" ? b.continuity - a.continuity : a.continuity - b.continuity;
+  return a.indices.join(",").localeCompare(b.indices.join(","));
+}
+
+function radicalInverse(index: number, base: number): number {
+  let value = 0;
+  let factor = 1 / base;
+  let current = index;
+  while (current > 0) {
+    value += (current % base) * factor;
+    current = Math.floor(current / base);
+    factor /= base;
+  }
+  return value;
+}
+
+function deterministicAngles(sample: number, bondCount: number, steps: number): number[] {
+  return Array.from({ length: bondCount }, (_, dimension) => {
+    const prime = HALTON_PRIMES[dimension] ?? 59 + dimension * 2;
+    const index = Math.floor(radicalInverse(sample + 1, prime) * steps) % steps;
+    return index * 360 / steps;
   });
+}
+
+function isBetterCandidate(a: Candidate, b: Candidate, mode: "most" | "least"): boolean {
+  const comparison = compareScore(a.score, b.score, mode);
+  return comparison < 0 || (comparison === 0 && angleKey(a.angles) < angleKey(b.angles));
+}
+
+function insertCandidate(pool: Candidate[], candidate: Candidate, mode: "most" | "least", width: number): void {
+  const key = angleKey(candidate.angles);
+  if (pool.some((item) => angleKey(item.angles) === key)) return;
+  pool.push(candidate);
+  pool.sort((a, b) => compareScore(a.score, b.score, mode) || angleKey(a.angles).localeCompare(angleKey(b.angles)));
+  if (pool.length > width) pool.length = width;
+}
+
+function createResult(molecule: MoleculeData, score: PlanarScore): ConformerResult {
+  const output = score.count >= 3 ? score.indices : molecule.atoms.length >= 3 ? [0, 1, 2] : [];
+  return {
+    molecule,
+    coplanarAtomCount: output.length,
+    coplanarAtomIndices: output,
+    allCoplanarIndices: score.allIndices,
+  };
 }
 
 export interface ConformerSearchResult {
@@ -168,276 +312,89 @@ export interface ConformerSearchResult {
   totalSearched: number;
 }
 
-// For >3 bonds: use random sampling (Monte Carlo)
-const MONTE_CARLO_SAMPLES = 500;
+export function searchExtremeConformations(
+  molecule: MoleculeData,
+  options: ConformerSearchOptions = {},
+): ConformerSearchResult {
+  const quality = options.quality ?? "balanced";
+  const budget = SEARCH_BUDGETS[quality] ?? SEARCH_BUDGETS.balanced;
+  const bonds = getRotatableBonds(molecule);
+  const cache = new Map<string, Candidate>();
+  const mostPool: Candidate[] = [];
+  const leastPool: Candidate[] = [];
+  let totalSearched = 0;
 
-/**
- * Clone a molecule (deep copy atoms)
- */
-function cloneMol(mol: MoleculeData): MoleculeData {
-  return { ...mol, atoms: mol.atoms.map(a => ({ ...a })) };
-}
+  const evaluate = (rawAngles: number[]): Candidate => {
+    const angles = rawAngles.map(normalizeAngle);
+    const key = angleKey(angles);
+    const cached = cache.get(key);
+    if (cached) return cached;
+    const score = scoreCoplanarity(applyRotations(molecule, bonds, angles));
+    const candidate = { angles, score };
+    cache.set(key, candidate);
+    totalSearched++;
+    insertCandidate(mostPool, candidate, "most", budget.beamWidth);
+    insertCandidate(leastPool, candidate, "least", budget.beamWidth);
+    return candidate;
+  };
 
-/**
- * Apply a set of rotation angles to a molecule.
- * Each rotation is applied sequentially.
- */
-function applyRotations(
-  mol: MoleculeData,
-  bonds: BondData[],
-  angles: number[]
-): MoleculeData {
-  let cur = cloneMol(mol);
-  for (let i = 0; i < bonds.length; i++) {
-    if (Math.abs(angles[i]) > 0.5) {
-      cur = applyBondRotation(cur, bonds[i].atom1Idx, bonds[i].atom2Idx, angles[i]);
+  const evaluateGrid = (index: number, angles: number[]) => {
+    if (index === bonds.length) {
+      evaluate(angles);
+      return;
+    }
+    for (let step = 0; step < budget.gridSteps; step++) {
+      angles.push(step * 360 / budget.gridSteps);
+      evaluateGrid(index + 1, angles);
+      angles.pop();
+    }
+  };
+
+  evaluate(new Array(bonds.length).fill(0));
+  if (bonds.length <= 3) {
+    evaluateGrid(0, []);
+  } else {
+    // Fixed anchors improve coverage of common staggered/eclipsed regions.
+    for (const anchor of [0, 60, 120, 180, 240, 300]) {
+      evaluate(new Array(bonds.length).fill(anchor));
+    }
+    for (let sample = 0; sample < budget.sampleCount; sample++) {
+      evaluate(deterministicAngles(sample, bonds.length, budget.gridSteps));
     }
   }
-  return cur;
-}
 
-/**
- * Continuous coplanarity score for a molecule.
- *
- * Returns:
- * - count  : the size of the largest merged planar fragment
- *            (i.e. the discrete "coplanar atom count").
- * - dev    : the max distance of any atom in that fragment from the
- *            best-fit plane through the fragment. Lower = more truly
- *            planar. Returns 0 if the count is below the geometric floor.
- *
- * Used as a fine-grained score for the refinement phase of the
- * coarse-to-fine search: among conformations with the same `count`,
- * the one with the smaller `dev` is more coplanar.
- */
-function scoreCoplanarity(mol: MoleculeData): { count: number; dev: number } {
-  const { largestCount, largestIndices } = countMaxPlanarAtoms(mol);
-  if (largestCount < 3) return { count: largestCount, dev: 0 };
-  const positions = largestIndices.map((idx) => {
-    const a = mol.atoms[idx];
-    return new THREE.Vector3(a.x, a.y, a.z);
-  });
-  const { normal, center } = bestFitPlane(positions);
-  let maxDev = 0;
-  for (const p of positions) {
-    const d = Math.abs(p.clone().sub(center).dot(normal));
-    if (d > maxDev) maxDev = d;
-  }
-  return { count: largestCount, dev: maxDev };
-}
-
-/**
- * Compare two (count, dev) pairs.
- *   A is better than B if A.count > B.count, or
- *   if A.count === B.count and A.dev < B.dev.
- * For "least planar" we invert the comparison.
- */
-function isBetter(aCount: number, aDev: number, bCount: number, bDev: number, mode: "most" | "least"): boolean {
-  if (mode === "most") {
-    if (aCount !== bCount) return aCount > bCount;
-    return aDev < bDev;
-  } else {
-    if (aCount !== bCount) return aCount < bCount;
-    return aDev > bDev;
-  }
-}
-
-/**
- * Alternating 1D line search: for each bond, sweep a small range around
- * the current best angle and keep the best. Iterate until no further
- * improvement. This is the refinement phase of the coarse-to-fine search.
- *
- * Cost: O(iters * bonds * FINE_STEPS) evaluations, typically 1-2 iters.
- */
-function refineAngles(
-  molecule: MoleculeData,
-  bonds: BondData[],
-  startAngles: number[],
-  mode: "most" | "least",
-  FINE_RANGE: number,
-  FINE_STEPS: number
-): { angles: number[]; count: number; dev: number } {
-  const step = (2 * FINE_RANGE) / (FINE_STEPS - 1);
-  let angles = [...startAngles];
-  const baseScore = scoreCoplanarity(applyRotations(molecule, bonds, angles));
-  let bestCount = baseScore.count;
-  let bestDev = baseScore.dev;
-
-  for (let iter = 0; iter < 5; iter++) {
-    let iterImproved = false;
-    for (let b = 0; b < bonds.length; b++) {
-      let localBestAngle = angles[b];
-      const others = angles.slice(0, b).concat(angles.slice(b + 1));
-      // Pre-build the trial: vary only bond `b`, keep the others fixed
-      const trialBase = [...angles];
-      for (let s = 0; s < FINE_STEPS; s++) {
-        const offset = -FINE_RANGE + s * step;
-        trialBase[b] = angles[b] + offset;
-        const rotated = applyRotations(molecule, bonds, trialBase);
-        const sc = scoreCoplanarity(rotated);
-        if (isBetter(sc.count, sc.dev, bestCount, bestDev, mode)) {
-          bestCount = sc.count;
-          bestDev = sc.dev;
-          localBestAngle = trialBase[b];
-          iterImproved = true;
+  const refine = (start: Candidate, mode: "most" | "least"): Candidate => {
+    let best = start;
+    for (let round = 0; round < budget.refineRounds; round++) {
+      const step = budget.refineSteps[Math.min(round, budget.refineSteps.length - 1)];
+      let improved = false;
+      for (let bondIndex = 0; bondIndex < bonds.length; bondIndex++) {
+        const trials = [0, -step, step, -2 * step, 2 * step].map((offset) => {
+          const angles = [...best.angles];
+          angles[bondIndex] = normalizeAngle(angles[bondIndex] + offset);
+          return evaluate(angles);
+        });
+        const local = trials.reduce((candidate, trial) => isBetterCandidate(trial, candidate, mode) ? trial : candidate, best);
+        if (isBetterCandidate(local, best, mode)) {
+          best = local;
+          improved = true;
         }
       }
-      angles[b] = localBestAngle;
-      // (Best molecule is rebuilt from the final angles outside this function)
+      if (!improved) break;
     }
-    if (!iterImproved) break;
-  }
-  return { angles, count: bestCount, dev: bestDev };
-}
+    return best;
+  };
 
-/**
- * Search for the most and least planar conformations.
- *
- * Algorithm (coarse-to-fine):
- * - Phase 1 (coarse): full enumeration at 15° step (24 angles per bond).
- *   Up to 24^3 = 13,824 evaluations. Finds the best *region*.
- * - Phase 2 (refine): alternating 1D line search around the coarse
- *   optimum, with 0.5° step in a ±5° window. Typically converges in
- *   1-2 iterations, ~60 evaluations per bond. Uses a continuous score
- *   (count + max deviation of merged atoms) so the truly-most-planar
- *   conformation wins the tie.
- * - >3 rotatable bonds: Monte Carlo random sampling (500 samples).
- */
-export function searchExtremeConformations(molecule: MoleculeData): ConformerSearchResult {
-  const bonds = getRotatableBonds(molecule);
+  const mostStarts = [...mostPool].slice(0, budget.refineStarts);
+  const leastStarts = [...leastPool].slice(0, budget.refineStarts);
+  for (const candidate of mostStarts) refine(candidate, "most");
+  for (const candidate of leastStarts) refine(candidate, "least");
 
-  // Base evaluation (no rotation)
-  const baseResult = countMaxPlanarAtoms(molecule);
-
-  if (bonds.length === 0) {
-    return {
-      mostPlanar: {
-        molecule: cloneMol(molecule),
-        coplanarAtomCount: baseResult.largestCount,
-        coplanarAtomIndices: baseResult.largestIndices,
-        allCoplanarIndices: baseResult.allIndices,
-      },
-      leastPlanar: {
-        molecule: cloneMol(molecule),
-        coplanarAtomCount: baseResult.largestCount,
-        coplanarAtomIndices: baseResult.largestIndices,
-        allCoplanarIndices: baseResult.allIndices,
-      },
-      totalSearched: 1,
-    };
-  }
-
-  // ── Phase 1: coarse grid (15° step, 24 angles) for ≤3 bonds, ──
-  //            or Monte Carlo for >3 bonds.
-  const COARSE_STEPS = 24;
-  const coarseStepAngle = 360 / COARSE_STEPS;
-
-  let bestMostAngles: number[] = bonds.map(() => 0);
-  let bestMostCount = baseResult.largestCount;
-  let bestMostDev = 0;
-  let bestLeastAngles: number[] = bonds.map(() => 0);
-  let bestLeastCount = baseResult.largestCount;
-  let bestLeastDev = 0;
-  let totalSearched = 1;
-
-  if (bonds.length <= 3) {
-    // Full enumeration at 15° step
-    const angleCache: number[][] = [];
-    function generate(idx: number, current: number[]) {
-      if (idx === bonds.length) {
-        angleCache.push([...current]);
-        return;
-      }
-      for (let s = 0; s < COARSE_STEPS; s++) {
-        current.push(s * coarseStepAngle);
-        generate(idx + 1, current);
-        current.pop();
-      }
-    }
-    if (bonds.length > 0) generate(0, []);
-
-    for (const angles of angleCache) {
-      const rotated = applyRotations(molecule, bonds, angles);
-      const sc = scoreCoplanarity(rotated);
-      totalSearched++;
-
-      if (isBetter(sc.count, sc.dev, bestMostCount, bestMostDev, "most")) {
-        bestMostCount = sc.count;
-        bestMostDev = sc.dev;
-        bestMostAngles = angles;
-      }
-      if (isBetter(sc.count, sc.dev, bestLeastCount, bestLeastDev, "least")) {
-        bestLeastCount = sc.count;
-        bestLeastDev = sc.dev;
-        bestLeastAngles = angles;
-      }
-    }
-  } else {
-    // Monte Carlo random sampling for >3 bonds
-    for (let i = 0; i < MONTE_CARLO_SAMPLES; i++) {
-      const angles = bonds.map(() => Math.floor(Math.random() * COARSE_STEPS) * coarseStepAngle);
-      const rotated = applyRotations(molecule, bonds, angles);
-      const sc = scoreCoplanarity(rotated);
-      totalSearched++;
-      if (isBetter(sc.count, sc.dev, bestMostCount, bestMostDev, "most")) {
-        bestMostCount = sc.count;
-        bestMostDev = sc.dev;
-        bestMostAngles = angles;
-      }
-      if (isBetter(sc.count, sc.dev, bestLeastCount, bestLeastDev, "least")) {
-        bestLeastCount = sc.count;
-        bestLeastDev = sc.dev;
-        bestLeastAngles = angles;
-      }
-    }
-  }
-
-  // ── Phase 2: refine around the coarse optimum ──
-  // 0.5° step in a ±5° window (21 evaluations per bond per iteration).
-  // Only for ≤3 bonds; Monte Carlo results are not refined.
-  if (bonds.length <= 3) {
-    const FINE_RANGE = 5; // degrees
-    const FINE_STEPS = 21;
-
-    const mostRefined = refineAngles(
-      molecule, bonds, bestMostAngles, "most", FINE_RANGE, FINE_STEPS
-    );
-    if (isBetter(mostRefined.count, mostRefined.dev, bestMostCount, bestMostDev, "most")) {
-      bestMostCount = mostRefined.count;
-      bestMostDev = mostRefined.dev;
-      bestMostAngles = mostRefined.angles;
-    }
-    totalSearched += FINE_STEPS * bonds.length * 2; // rough estimate
-
-    const leastRefined = refineAngles(
-      molecule, bonds, bestLeastAngles, "least", FINE_RANGE, FINE_STEPS
-    );
-    if (isBetter(leastRefined.count, leastRefined.dev, bestLeastCount, bestLeastDev, "least")) {
-      bestLeastCount = leastRefined.count;
-      bestLeastDev = leastRefined.dev;
-      bestLeastAngles = leastRefined.angles;
-    }
-  }
-
-  // Rebuild the final molecules from the best angle vectors
-  const bestMostMol = applyRotations(molecule, bonds, bestMostAngles);
-  const bestLeastMol = applyRotations(molecule, bonds, bestLeastAngles);
-  const mostResult = countMaxPlanarAtoms(bestMostMol);
-  const leastResult = countMaxPlanarAtoms(bestLeastMol);
-
+  const most = mostPool[0] ?? evaluate(new Array(bonds.length).fill(0));
+  const least = leastPool[0] ?? most;
   return {
-    mostPlanar: {
-      molecule: bestMostMol,
-      coplanarAtomCount: mostResult.largestCount,
-      coplanarAtomIndices: mostResult.largestIndices,
-      allCoplanarIndices: mostResult.allIndices,
-    },
-    leastPlanar: {
-      molecule: bestLeastMol,
-      coplanarAtomCount: leastResult.largestCount,
-      coplanarAtomIndices: leastResult.largestIndices,
-      allCoplanarIndices: leastResult.allIndices,
-    },
+    mostPlanar: createResult(applyRotations(molecule, bonds, most.angles), most.score),
+    leastPlanar: createResult(applyRotations(molecule, bonds, least.angles), least.score),
     totalSearched,
   };
 }

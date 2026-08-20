@@ -1,16 +1,20 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { t } from "../i18n/index";
 import { useStore } from "../store/useStore";
 import { calcMoleculeProperties } from "../engine/properties";
 import type { MoleculeProperties } from "../engine/properties";
 
 interface LeftPanelProps {
-  onProcessInput: (input: string) => void;
+  onProcessInput: (input: string, forceAI?: boolean) => void;
   onProcessChemVZFile: (file: File) => void;
   onOpenAISettings: () => void;
+  onClearCurrentCache: (input: string) => Promise<void>;
+  onClearAllCache: () => Promise<void>;
+  aiUnavailable: boolean;
 }
 
-export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessInput, onProcessChemVZFile, onOpenAISettings }) => {
+export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessInput, onProcessChemVZFile, onOpenAISettings, onClearCurrentCache, onClearAllCache, aiUnavailable }) => {
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const inputFormula = useStore((s) => s.inputFormula);
   const setInputFormula = useStore((s) => s.setInputFormula);
   const displayMode = useStore((s) => s.displayMode);
@@ -23,6 +27,19 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessInput, onProcessC
   const setAppLocale = useStore((s) => s.setAppLocale);
   const labelDisplayMode = useStore((s) => s.labelDisplayMode);
   const setLabelDisplayMode = useStore((s) => s.setLabelDisplayMode);
+  const conformerSearchQuality = useStore((s) => s.conformerSearchQuality);
+  const setConformerSearchQuality = useStore((s) => s.setConformerSearchQuality);
+  const parseSource = useStore((s) => s.parseSource);
+  const currentCacheInput = useStore((s) => s.currentCacheInput);
+
+  useEffect(() => {
+    const update = () => setIsTouchDevice(
+      navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches,
+    );
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   const molProps = useMemo<MoleculeProperties | null>(() => {
     if (!molecule) return null;
@@ -37,6 +54,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessInput, onProcessC
   const examples = ["CH4","C2H6","C2H4","C2H2","C6H6","C3H6","C4H8","C5H10","C6H12","C7H14","CH3OH","C2H5OH","CH3COOH","H2O","NH3","CO2"];
 
   return (<div className="panel left-panel"><h2 className="panel-title">Input</h2>
+    {aiUnavailable && <div className="info-banner" role="status">{t("aiDisabledWarning")}</div>}
     <form onSubmit={handleSubmit} className="input-form">
       <input type="text" value={inputFormula} onChange={(e) => setInputFormula(e.target.value)}
         placeholder={t("inputPlaceholder")} className="formula-input" disabled={isLoading} />
@@ -85,41 +103,65 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessInput, onProcessC
     <div className="section"><h3 className="section-title">{t("examples")}</h3>
       <div className="examples-grid">{examples.map((ex) => (<button key={ex} className="btn example-btn" onClick={() => {setInputFormula(ex);onProcessInput(ex);}} disabled={isLoading}>{ex}</button>))}</div>
     </div>
-    <div className="section"><h3 className="section-title">{t("shortcuts")}</h3>
-      <div className="info-list">
-        <div className="info-item"><span className="info-label">R</span><span className="info-value">{t("shortcutReset")}</span></div>
-        <div className="info-item"><span className="info-label">M</span><span className="info-value">{t("shortcutMeasure")}</span></div>
-        <div className="info-item"><span className="info-label">F</span><span className="info-value">{t("shortcutFullscreen")}</span></div>
-        <div className="info-item"><span className="info-label">Ctrl+S</span><span className="info-value">{t("shortcutScreenshot")}</span></div>
-        <div className="info-item"><span className="info-label">Esc</span><span className="info-value">{t("shortcutExit")}</span></div>
-      </div>
+    <div className="section"><h3 className="section-title">{t(isTouchDevice ? "touchHelp" : "shortcuts")}</h3>
+      {isTouchDevice ? (
+        <div className="info-list">
+          <div className="touch-tip">{t("touchDragRotate")}</div>
+          <div className="touch-tip">{t("touchPinchZoom")}</div>
+          <div className="touch-tip">{t("touchTapAtom")}</div>
+          <div className="touch-tip">{t("touchTapVisualize")}</div>
+        </div>
+      ) : (
+        <div className="info-list">
+          <div className="info-item"><span className="info-label">R</span><span className="info-value">{t("shortcutReset")}</span></div>
+          <div className="info-item"><span className="info-label">Ctrl+S</span><span className="info-value">{t("shortcutScreenshot")}</span></div>
+        </div>
+      )}
     </div>
     <div className="section"><h3 className="section-title">{t("settings")}</h3>
-      <label className="toggle-label" style={{marginBottom:8}}>
-        <span style={{fontSize:12}}>{t("language")}</span>
-        <select value={locale} onChange={(e) => setAppLocale(e.target.value as any)}
-          style={{marginLeft:"auto",padding:"2px 6px",fontSize:11,background:"var(--bg-tertiary)",color:"var(--text-primary)",border:"1px solid var(--border-color)",borderRadius:4}}>
-          <option value="zh-CN">简体中文</option>
-          <option value="zh-TW">繁體中文</option>
-          <option value="en-US">English</option>
-        </select>
-      </label>
-      <label className="toggle-label">
-        <span style={{fontSize:12}}>{t("labelDisplay")}</span>
-        <select value={labelDisplayMode} onChange={(e) => setLabelDisplayMode(e.target.value as any)}
-          style={{marginLeft:"auto",padding:"2px 6px",fontSize:11,background:"var(--bg-tertiary)",color:"var(--text-primary)",border:"1px solid var(--border-color)",borderRadius:4}}>
-          <option value="always">{t("labelAlways")}</option>
-          <option value="hover">{t("labelHover")}</option>
-          <option value="never">{t("labelNever")}</option>
-        </select>
-      </label>
-      <button type="button" className="btn settings-open-button" onClick={onOpenAISettings}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.7 1.7-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20h-2.4v-.2A1.7 1.7 0 0 0 11 18.24a1.7 1.7 0 0 0-1.88.34l-.06.06-1.7-1.7.06-.06A1.7 1.7 0 0 0 7.76 15 1.7 1.7 0 0 0 6.2 13.97H6v-2.4h.2A1.7 1.7 0 0 0 7.76 10a1.7 1.7 0 0 0-.34-1.88l-.06-.06 1.7-1.7.06.06A1.7 1.7 0 0 0 9.12 6.08 1.7 1.7 0 0 0 11 5.76V4h2.4v1.76a1.7 1.7 0 0 0 1.03.32 1.7 1.7 0 0 0 1.88-.34l.06-.06 1.7 1.7-.06.06A1.7 1.7 0 0 0 16.24 10a1.7 1.7 0 0 0 1.56 1.03H18v2.4h-.2A1.7 1.7 0 0 0 16.24 15Z" />
-        </svg>
-        {t("aiSettings")}
-      </button>
+      <div className="settings-stack">
+        <label className="toggle-label">
+          <span style={{fontSize:12}}>{t("language")}</span>
+          <select value={locale} onChange={(e) => setAppLocale(e.target.value as any)}
+            style={{marginLeft:"auto",padding:"2px 6px",fontSize:11,background:"var(--bg-tertiary)",color:"var(--text-primary)",border:"1px solid var(--border-color)",borderRadius:4}}>
+            <option value="zh-CN">简体中文</option>
+            <option value="zh-TW">繁體中文</option>
+            <option value="en-US">English</option>
+          </select>
+        </label>
+        <label className="toggle-label">
+          <span style={{fontSize:12}}>{t("labelDisplay")}</span>
+          <select value={labelDisplayMode} onChange={(e) => setLabelDisplayMode(e.target.value as any)}
+            style={{marginLeft:"auto",padding:"2px 6px",fontSize:11,background:"var(--bg-tertiary)",color:"var(--text-primary)",border:"1px solid var(--border-color)",borderRadius:4}}>
+            <option value="always">{t("labelAlways")}</option>
+            <option value="hover">{t("labelHover")}</option>
+            <option value="never">{t("labelNever")}</option>
+          </select>
+        </label>
+        <label className="toggle-label">
+          <span style={{fontSize:12}}>{t("conformerSearchQuality")}</span>
+          <select value={conformerSearchQuality} onChange={(e) => setConformerSearchQuality(e.target.value as "fast" | "balanced" | "precise")}
+            style={{marginLeft:"auto",padding:"2px 6px",fontSize:11,background:"var(--bg-tertiary)",color:"var(--text-primary)",border:"1px solid var(--border-color)",borderRadius:4}}>
+            <option value="fast">{t("conformerSearchFast")}</option>
+            <option value="balanced">{t("conformerSearchBalanced")}</option>
+            <option value="precise">{t("conformerSearchPrecise")}</option>
+          </select>
+        </label>
+        <button type="button" className="btn settings-open-button" onClick={onOpenAISettings}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.7 1.7-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20h-2.4v-.2A1.7 1.7 0 0 0 11 18.24a1.7 1.7 0 0 0-1.88.34l-.06.06-1.7-1.7.06-.06A1.7 1.7 0 0 0 7.76 15 1.7 1.7 0 0 0 6.2 13.97H6v-2.4h.2A1.7 1.7 0 0 0 7.76 10a1.7 1.7 0 0 0-.34-1.88l-.06-.06 1.7-1.7.06.06A1.7 1.7 0 0 0 9.12 6.08 1.7 1.7 0 0 0 11 5.76V4h2.4v1.76a1.7 1.7 0 0 0 1.03.32 1.7 1.7 0 0 0 1.88-.34l.06-.06 1.7 1.7-.06.06A1.7 1.7 0 0 0 16.24 10a1.7 1.7 0 0 0 1.56 1.03H18v2.4h-.2A1.7 1.7 0 0 0 16.24 15Z" />
+          </svg>
+          {t("aiSettings")}
+        </button>
+        <div className="cache-actions">
+          {currentCacheInput && (parseSource === "cache" || parseSource === "ai") && <>
+            {parseSource === "ai" && <button type="button" className="btn settings-open-button" onClick={() => onProcessInput(currentCacheInput, true)} disabled={isLoading}>{t("regenerate")}</button>}
+            <button type="button" className="btn settings-open-button" onClick={() => void onClearCurrentCache(currentCacheInput)} disabled={isLoading}>{t("clearCurrentCache")}</button>
+          </>}
+          <button type="button" className="btn settings-open-button" onClick={() => void onClearAllCache()} disabled={isLoading}>{t("clearAllCache")}</button>
+        </div>
+      </div>
     </div>
   </div>)
 };
