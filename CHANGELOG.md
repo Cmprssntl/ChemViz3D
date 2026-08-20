@@ -7,7 +7,7 @@
 ### 新增
 
 - Windows、macOS、Debian/Ubuntu 桌面客户端启动和打包入口。
-- Linux Debian 安装包、Debian 便携版和 AppImage 便携版。
+- Linux Debian 安装包、Debian 便携版和包含配套文件的 AppImage 组合便携包。
 - 工作目录中的 `settings.int`、分子预设、运行缓存和截图目录管理。
 - 本地预设优先的 AI/文本结构解析，支持 OpenAI 格式兼容服务。
 - 独立的文本模型和图像模型设置，以及设置保存后的内存配置快照。

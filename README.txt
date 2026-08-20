@@ -1,78 +1,72 @@
-ChemViz3D —— 化学结构可视化
-============================
+ChemViz3D v1.0.0 —— 桌面版使用说明
+=================================
 
-ChemViz3D 是面向化学学习的交互式 3D 分子结构可视化工具。输入化学式、常用名称或结构描述，即可生成并观察分子模型。
+ChemViz3D 是一个面向化学学习的本地桌面程序。它不再依赖浏览器：启动后会打开原生窗口，设置、缓存和截图都保存在工作目录。
 
-快速开始
---------
+一、选择安装方式
+----------------
 
-下载发布包并解压后：
+Debian/Ubuntu 安装包：
 
-- Windows：双击 `start.bat`。
-- Linux/macOS：确认已安装 Python 3，在包目录运行 `./start.sh`。
+```bash
+sudo apt install ./ChemViz3D-v1.0.0-debian-amd64.deb
+chemviz3d
+```
 
-程序会在 ChemViz3D 桌面窗口中打开。也可以将 `dist/` 部署到任意静态网站服务器。
+Debian/Ubuntu 便携版：解压 `ChemViz3D-v1.0.0-deb-portable.tar.gz`，进入解压目录并运行：
 
-AI 解析设置
------------
+```bash
+./ChemViz3D
+```
 
-首次使用 AI 解析时，程序会打开 AI 设置。填写文本模型的 API Key、模型名称和 API 请求地址即可；请求地址填写到服务商提供的 `/v1` 即可，完整接口地址会在界面中显示。
+Linux AppImage 组合包：解压 `ChemViz3D-v1.0.0-linux-appimage-bundle.tar.gz`，进入组合包目录并运行 AppImage：
 
-桌面客户端会自动保存 AI、语言和显示设置；Web 模式会在当前浏览器中保留设置。之后可从左侧底部的“设置”区域打开“AI 设置”修改。系统提示词会影响解析结果；除非你知道如何编写提示词，否则请保留默认值。
+```bash
+cd ChemViz3D-v1.0.0-linux-appimage
+./ChemViz3D-v1.0.0-x86_64.AppImage
+```
 
-桌面便携版会将 `settings.int`、`molecules/presets/` 和 `molecules/cache/` 保存在程序工作目录；截图保存在工作目录的 `screenshots/`。安装到只读系统目录时，设置和缓存会回退到当前用户的配置目录。
+组合包同时包含 AppImage、`README.txt`、`LICENSE`、`settings.int`、`molecules/presets/` 和空的 `molecules/cache/`，请保持这些文件在同一个解压目录。
 
-主要功能
---------
+二、首次启动和 AI 设置
+----------------------
 
-- 本地预设优先的结构解析，未命中时可使用 OpenAI 格式兼容 API 进行 AI 解析
-- 球棍模型与空间填充模型显示
-- 旋转、平移、缩放，以及原子和化学键查看
-- 单键旋转、共面性提示和构象搜索
-- 原子间距离、键角和二面角测量
-- PNG 截图导出
-- 分子式、分子量、logP、氢键供体/受体、TPSA 等属性
-- 可选 IUPAC 命名和 `chemvz.json` 导入
+程序启动后即可使用本地分子预设。输入化学式、常用名称或结构描述，点击“可视化”。
 
-操作提示
---------
+需要 AI 解析时，在左侧设置中填写文本模型的 API Key、模型名和 OpenAI 格式兼容的请求地址（通常填写到 `/v1`）。保存后配置会立即载入内存。空值或无效配置会在请求前被拦截，并自动打开 AI 设置，不会卡住可视化。
 
-- 在左侧输入内容后点击“可视化”。
-- 鼠标拖动可旋转视角，滚轮可缩放；选中原子或化学键可查看其属性。
-- 通过左侧工具切换显示模式、测量、构象搜索和截图。
+开发者文件 `settings.developer.int` 不属于发行包，也不会被自动创建。发行版使用工作目录中的 `settings.int` 作为默认模板。
 
-快捷键：`R` 复位视角，`Ctrl+S` 保存截图。
+三、工作目录文件
+----------------
 
-从源码运行
+- `settings.int`：AI 和界面默认配置；可在程序中修改。
+- `molecules/presets/`：本地分子预设，只读使用。
+- `molecules/cache/`：运行时 AI/分子缓存。
+- `screenshots/`：截图自动保存目录；截图同时会复制到系统剪贴板。
+
+程序会优先写入当前工作目录。若目录只读，则回退到当前用户的配置目录。请从可写目录启动便携版，以便设置和缓存随包保存。
+
+四、常用操作
 ------------
 
-需要 Node.js 18 或更高版本：
+- 鼠标拖动旋转，滚轮缩放，点击原子或化学键查看属性。
+- 左侧工具可切换球棍/空间填充显示、测量、构象搜索和截图。
+- 顶部截图旁的复位按钮恢复视角；顶部 X 清空当前渲染区。
+- 快捷键仅保留：`R` 复位视角，`Ctrl+S`（macOS 为 `Cmd+S`）截图。
+
+五、运行环境
+------------
+
+发行包已包含 Python、PySide6、Qt WebEngine 和前端运行所需文件。Debian/Ubuntu 若启动时报 Qt xcb 依赖缺失，请执行：
 
 ```bash
-npm install
-npm run dev
+sudo apt install libxcb-cursor0
 ```
 
-开发服务器默认地址为 `http://localhost:5173`。
+Windows 和 macOS 的安装包必须在对应系统原生构建；Linux 环境不会伪造跨平台二进制。源码开发需要 Node.js 18+、Python 3 和 PySide6，可运行 `npm install`、`npm run build` 后使用 `python3 -m desktop`。
 
-也可以先构建 Web 资源，再通过 Python 桌面客户端启动。源码运行需要安装 Python 3 和 PySide6：
+六、许可和安全提示
+------------------
 
-```bash
-npm run build
-python3 -m pip install -r desktop/requirements.txt
-python3 -m desktop
-```
-
-Linux/macOS 的 `start.sh` 检测到系统未安装 PySide6 时，会在已安装 `uv` 的情况下自动临时准备依赖。
-Ubuntu/Debian 若提示缺少 Linux 图形库，请先运行 `sudo apt install libxcb-cursor0`。
-桌面客户端会在本机运行服务，直接保存设置并代发 AI 请求，不需要浏览器文件保存确认。
-
-许可
-----
-
-本项目基于 GNU GPL v3.0 或更高版本发布，详见 `LICENSE`。
-
-免责声明
---------
-
-本软件仅供学习、演示和结构可视化参考。AI 解析和自动生成的结构、构象、命名及属性可能存在误差，不应替代权威化学数据库、专业软件、实验验证或安全评估。请勿据此直接进行危险化学操作、实验设计或医疗、工业和安全决策。
+本项目基于 GNU GPL v3.0 或更高版本发布，详见 `LICENSE`。AI 解析、结构生成、构象、命名和属性仅供学习参考，不应替代专业数据库、实验验证或安全评估。
