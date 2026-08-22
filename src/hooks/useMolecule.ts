@@ -9,6 +9,7 @@ import { getAIConfig, hasValidTextAISettings, requestAISettings } from "../ai/co
 import { AIParseError, parseWithAI } from "../ai/aiParser";
 import type { ChemVZMolecule } from "../types/moleculeFormat";
 import { clearAllCachedChemVZ, clearCachedChemVZ, getCachedChemVZ, saveCachedChemVZ } from "../ai/cache";
+import { t } from "../i18n/index";
 
 let rdkitModule: any = null;
 
@@ -68,12 +69,12 @@ export function useMolecule() {
     try {
       const obj = JSON.parse(await file.text());
       if (!isChemVZ(obj)) {
-        setError("Invalid chemvz.json format (chemvz: 1, atoms[], bonds[] required)");
+        setError(t("invalidChemvzFile"));
         return;
       }
       setMolecule(buildMoleculeFromChemVZObject(obj, locale));
     } catch (error) {
-      setError("File error: " + (error instanceof Error ? error.message : String(error)));
+      setError(t("fileErrorPrefix") + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLoading(false);
     }
@@ -86,14 +87,14 @@ export function useMolecule() {
       if (local) {
         setMolecule(buildMoleculeFromChemVZObject(local.chemvz, locale));
         setParseSource("preset");
-        setInfoMessage(`本地预设：${local.presetId}`);
+        setInfoMessage(t("localPresetLoaded", { id: local.presetId }));
         return;
       }
 
       // Reject unavailable AI before touching the desktop cache bridge. This
       // keeps an unconfigured desktop responsive even when its bridge is slow.
       if (!hasValidTextAISettings()) {
-        requestAISettings("AI 功能已禁用：请先填写有效的 API 配置。");
+        requestAISettings(t("aiDisabledMessage"));
         return;
       }
 
@@ -103,7 +104,7 @@ export function useMolecule() {
           if (cached) {
             setMolecule(buildMoleculeFromChemVZObject(cached.chemvz, locale));
             setParseSource("cache", input);
-            setInfoMessage("已从 AI 缓存加载");
+            setInfoMessage(t("aiCacheLoaded"));
             return;
           }
         } catch (cacheError) {
@@ -119,14 +120,15 @@ export function useMolecule() {
       } catch (cacheError) {
         console.warn("Unable to save AI cache", cacheError);
       }
-      setInfoMessage(chemvz.comment ? `AI：${chemvz.comment}` : "AI 解析完成");
+      setInfoMessage(chemvz.comment ? t("aiParsingComment", { comment: chemvz.comment }) : t("aiParsingComplete"));
     } catch (error) {
       if (error instanceof AIParseError) setError(error.message);
-      else setError("AI 解析失败：" + (error instanceof Error ? error.message : String(error)));
+      else setError(t("aiParsingFailed") + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLoading(false);
     }
   }, [locale, setError, setInfoMessage, setLoading, setMolecule, setParseSource, setRotatingBond, setConformerStats]);
+
 
   const clearCurrentCache = useCallback(async (input: string) => {
     await clearCachedChemVZ(input);

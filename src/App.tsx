@@ -16,6 +16,8 @@ import {
   setRuntimeAISettings,
 } from "./ai/config";
 import { takeScreenshot, resetCameraView } from "./utils/screenshot";
+import { t } from "./i18n/index";
+import { loadExternalPresets } from "./ai/localParser";
 import "./App.css";
 
 const App: React.FC = () => {
@@ -122,6 +124,7 @@ const App: React.FC = () => {
       // The desktop bridge may replace it with the effective on-disk settings.
       setRuntimeAISettings(getAISettings(), hasDesktopDeveloperSettings());
       try {
+        await loadExternalPresets();
         const uiSettings = await loadAISettingsFromDesktopBridge();
         if (uiSettings) useStore.getState().applyUISettings(uiSettings);
       } catch (error) {
@@ -166,7 +169,7 @@ const App: React.FC = () => {
         <LeftPanel onProcessInput={processInput} onProcessChemVZFile={processChemVZFile}
           onOpenAISettings={() => setSettingsOpen(true)} onClearCurrentCache={clearCurrentCache}
           onClearAllCache={clearAllCache} aiUnavailable={aiUnavailable} />
-        <button className="panel-tab left-tab" onClick={() => setLeftCollapsed(!leftCollapsed)} title={leftCollapsed ? "Expand" : "Collapse"}>
+        <button className="panel-tab left-tab" onClick={() => setLeftCollapsed(!leftCollapsed)} title={t(leftCollapsed ? "expandPanel" : "collapsePanel")}>
           {leftCollapsed ? (orientation === "portrait" ? "▼" : "▸") : (orientation === "portrait" ? "▲" : "◂")}
         </button>
         <div className="viewer-container">
@@ -174,7 +177,7 @@ const App: React.FC = () => {
           <MoleculeViewer />
           </ErrorBoundary>
         </div>
-        <button className="panel-tab right-tab" onClick={() => setRightCollapsed(!rightCollapsed)} title={rightCollapsed ? "Expand" : "Collapse"}>
+        <button className="panel-tab right-tab" onClick={() => setRightCollapsed(!rightCollapsed)} title={t(rightCollapsed ? "expandPanel" : "collapsePanel")}>
           {rightCollapsed ? (orientation === "portrait" ? "▲" : "◂") : (orientation === "portrait" ? "▼" : "▸")}
         </button>
         <RightPanel />

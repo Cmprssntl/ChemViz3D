@@ -25,6 +25,13 @@ export const RightPanel: React.FC = () => {
   // Language reactivity: force re-render when locale changes
   const _locale = useStore((s) => s.locale);
 
+  const coplanarTypeLabel = (type: CoplanarSet["type"]): string => {
+    if (type === "ring") return t("coplanarRing");
+    if (type === "alkene") return t("coplanarAlkene");
+    if (type === "carbonyl") return t("coplanarCarbonyl");
+    return t("coplanarOther");
+  };
+
   // Prevent the 3D viewer from capturing pointer events on the right panel.
   // The OrbitControls calls domElement.setPointerCapture() on pointerdown,
   // which can keep capturing events even after the pointer leaves the canvas.
@@ -125,7 +132,7 @@ export const RightPanel: React.FC = () => {
             {selectedAtom.mass && <div className="info-item"><span className="info-label">{t("mass")}</span><span className="info-value">{selectedAtom.mass.toFixed(3)}</span></div>}
             <div className="info-item"><span className="info-label">{t("position")}</span><span className="info-value">({selectedAtom.x.toFixed(2)}, {selectedAtom.y.toFixed(2)}, {selectedAtom.z.toFixed(2)})</span></div>
             {selectedAtomFragment && (
-              <div className="info-item"><span className="info-label">{t("coplanar")}</span><span className="info-value">{selectedAtomFragment.type}</span></div>
+              <div className="info-item"><span className="info-label">{t("coplanar")}</span><span className="info-value">{coplanarTypeLabel(selectedAtomFragment.type)}</span></div>
             )}
           </div>
         </div>
@@ -192,8 +199,8 @@ export const RightPanel: React.FC = () => {
           {planarFragments.filter(f => f.type !== "chain" && f.type !== "other").slice(0, 8).map((frag, fi) => (
             <div key={fi} className="info-list" style={{ marginBottom: 6 }}>
               <div className="info-item" style={{ color: frag.type === "ring" ? "#44aaff" : frag.type === "carbonyl" ? "#88dd44" : "#ffaa44" }}>
-                <span className="info-label">{frag.type}</span>
-                <span className="info-value">{frag.atomIndices.length} atoms</span>
+                <span className="info-label">{coplanarTypeLabel(frag.type)}</span>
+                <span className="info-value">{frag.atomIndices.length} {t("atomsLabel")}</span>
               </div>
             </div>
           ))}
@@ -203,8 +210,8 @@ export const RightPanel: React.FC = () => {
             if (chainCount === 0) return null;
             return (
               <div className="info-item" style={{ color: "#666688", fontSize: 11, marginTop: 2 }}>
-                <span className="info-label">chains</span>
-                <span className="info-value">{chainCount} fragments</span>
+                <span className="info-label">{t("coplanarChainLabel")}</span>
+                <span className="info-value">{t("coplanarFragmentCount", { count: chainCount })}</span>
               </div>
             );
           })()}

@@ -137,6 +137,34 @@ def _cache_key(value: str) -> bool:
     return bool(re.fullmatch(r"v1-[0-9a-f]{8}", value))
 
 
+def _preset_files(root: Path) -> list[dict[str, Any]]:
+    presets: list[dict[str, Any]] = []
+    preset_root = root / "presets"
+    if not preset_root.is_dir():
+        return presets
+    for path in sorted(preset_root.glob("*.json")):
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(value, dict):
+            presets.append(value)
+    return presets
+
+
+def _seed_presets(source: Path, target: Path) -> None:
+    if not source.is_dir():
+        return
+    target.mkdir(parents=True, exist_ok=True)
+    for path in source.glob("*.json"):
+        destination = target / path.name
+        if not destination.exists():
+            try:
+                shutil.copy2(path, destination)
+            except OSError:
+                continue
+
+
 class BridgeHandler(BaseHTTPRequestHandler):
     server: "BridgeHTTPServer"
 
@@ -195,6 +223,10 @@ class BridgeHandler(BaseHTTPRequestHandler):
                     self._send_json(HTTPStatus.OK, settings)
                 except ValueError as exc:
                     self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+            return
+        if self.path == f"{BRIDGE_PREFIX}/presets":
+            if self._authorized():
+                self._send_json(HTTPStatus.OK, {"presets": _preset_files(self.server.preset_root)})
             return
         parsed = urllib.parse.urlsplit(self.path)
         prefix = f"{BRIDGE_PREFIX}/cache/"
@@ -358,6 +390,7 @@ class BridgeHandler(BaseHTTPRequestHandler):
                     "token": self.server.bridge_token,
                     "version": 1,
                     "developerConfigured": self.server.developer_text_configured,
+                    "presetsUrl": f"{BRIDGE_PREFIX}/presets",
                 },
                 ensure_ascii=True,
                 separators=(",", ":"),
@@ -390,8 +423,12 @@ class BridgeHTTPServer(ThreadingHTTPServer):
                 self.settings_path.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(bundled_settings, self.settings_path)
         self.cache_root = resolved_config / "molecules" / "cache"
+        self.preset_root = resolved_config / "molecules" / "presets"
+        bundled_presets = self.app_root / "molecules" / "presets"
+        _seed_presets(bundled_presets, self.preset_root)
+        self.cache_root.mkdir(parents=True, exist_ok=True)
         self.developer_settings_path = self.app_root / "settings.developer.int"
-        self.screenshot_root = Path.cwd() / "screenshots"
+        self.screenshot_root = resolved_config / "screenshots"
         self.bridge_token = token or secrets.token_urlsafe(32)
         effective_text = _merged_text_settings(self.settings_path, self.developer_settings_path)
         self.developer_text_configured = bool(

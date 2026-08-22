@@ -3,6 +3,7 @@ export interface TranslationMap {
   // App / TopBar
   appTitle: string;
   appSubtitle: string;
+  inputPanel: string;
   rdkitOn: string;
   rdkitOff: string;
   active: string;
@@ -121,6 +122,31 @@ export interface TranslationMap {
   clearCurrentCache: string;
   clearAllCache: string;
   regenerate: string;
+  expandPanel: string;
+  collapsePanel: string;
+  viewerErrorTitle: string;
+  viewerErrorDescription: string;
+  retry: string;
+  coplanarChainLabel: string;
+  coplanarFragmentCount: string;
+  coplanarRing: string;
+  coplanarAlkene: string;
+  coplanarCarbonyl: string;
+  coplanarOther: string;
+  localPresetLoaded: string;
+  aiCacheLoaded: string;
+  aiParsingComplete: string;
+  aiParsingComment: string;
+  invalidChemvzFile: string;
+  fileErrorPrefix: string;
+  aiParsingFailed: string;
+  aiDisabledMessage: string;
+  screenshotSavedToAlbum: string;
+  screenshotSaveAlbumFailed: string;
+  screenshotCopiedAndSaved: string;
+  screenshotCopied: string;
+  screenshotSaved: string;
+  screenshotSaveFailed: string;
 
   // Properties (new)
   properties: string;

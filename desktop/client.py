@@ -34,26 +34,15 @@ def _default_config_dir(root: Path) -> Path:
         if not explicit_path.exists() and os.access(explicit_path.parent, os.W_OK):
             return explicit_path
 
-    # Source runs use the project/working directory. Frozen builds use the
-    # current working directory as the portable data directory whenever it is
-    # writable, so settings, presets, and AI cache stay together.
+    # Source runs use the project directory. Portable frozen builds keep all
+    # mutable files beside the executable; installed Debian builds set
+    # CHEMVIZ_CONFIG_DIR from /usr/bin/chemviz3d to use ~/.config/ChemViz3D.
     if not getattr(sys, "frozen", False):
         return root
-    working_dir = Path.cwd()
-    if os.access(working_dir, os.W_OK):
-        return working_dir
     executable_dir = Path(sys.executable).resolve().parent
-    packaged_settings = executable_dir / "settings.int"
-    if packaged_settings.is_file() and os.access(executable_dir, os.W_OK):
-        return executable_dir
-
-    if sys.platform == "win32":
-        base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
-    elif sys.platform == "darwin":
-        base = Path.home() / "Library" / "Application Support"
-    else:
-        base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    return base / "ChemViz3D"
+    # A portable bundle is intentionally self-contained. The caller should
+    # place it in a writable directory; never silently redirect its state.
+    return executable_dir
 
 
 def _parser() -> argparse.ArgumentParser:

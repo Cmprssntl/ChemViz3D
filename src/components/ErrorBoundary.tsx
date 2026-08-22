@@ -1,4 +1,5 @@
 import React from "react";
+import { t } from "../i18n/index";
 
 interface Props {
   children: React.ReactNode;
@@ -35,9 +36,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
           background: "#0d0d1a",
           padding: 40, textAlign: "center",
         }}>
-          <h2 style={{ marginBottom: 12, color: "#ff4444" }}>3D Viewer Error</h2>
+          <h2 style={{ marginBottom: 12, color: "#ff4444" }}>{t("viewerErrorTitle")}</h2>
           <p style={{ marginBottom: 16, color: "#8888aa", fontSize: 13, maxWidth: 400 }}>
-            {this.state.error?.message || "An unexpected error occurred in the 3D scene."}
+            {this.state.error?.message || t("viewerErrorDescription")}
           </p>
           <button
             onClick={this.handleReset}
@@ -46,7 +47,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
               background: "#4a7aff", color: "#fff", cursor: "pointer", fontSize: 13,
             }}
           >
-            Retry
+            {t("retry")}
           </button>
         </div>
       );

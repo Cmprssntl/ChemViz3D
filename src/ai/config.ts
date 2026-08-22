@@ -1,3 +1,5 @@
+import { t } from "../i18n/index";
+
 export interface AIConfig {
   /** API root or a complete Chat Completions URL. */
   baseUrl: string;
@@ -108,7 +110,7 @@ export function getRuntimeAISettings(): AISettings {
   return runtimeSettings ? cloneSettings(runtimeSettings) : getAISettings();
 }
 
-export function requestAISettings(message = "AI 功能已禁用：请先填写有效的 API 配置。") {
+export function requestAISettings(message = t("aiDisabledMessage")) {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("chemviz-ai-settings-required", {
       detail: { message, openSettings: true },

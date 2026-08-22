@@ -13,6 +13,7 @@ interface Window {
     token: string;
     version: number;
     developerConfigured?: boolean;
+    presetsUrl?: string;
   };
   __chemvizAndroidChatResult?: (requestId: string, status: number, body: string) => void;
 }

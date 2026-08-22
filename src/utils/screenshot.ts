@@ -2,6 +2,7 @@
  * Module-level WebGL renderer reference for screenshot capture.
  * Avoids polluting Zustand store or passing refs through props.
  */
+import { t } from "../i18n/index";
 
 let _renderer: (() => string | undefined) | null = null;
 
@@ -29,7 +30,7 @@ export async function takeScreenshot(filename = `screenshot-${Date.now()}.png`):
   const android = window.ChemVizAndroid;
   if (android?.saveScreenshot) {
     const saved = android.saveScreenshot(filename, dataUrl);
-    const message = saved ? "截图已保存到相册" : "截图保存失败，请检查存储权限";
+    const message = saved ? t("screenshotSavedToAlbum") : t("screenshotSaveAlbumFailed");
     window.dispatchEvent(new CustomEvent("chemviz-toast", { detail: { message } }));
     return;
   }
@@ -58,7 +59,7 @@ export async function takeScreenshot(filename = `screenshot-${Date.now()}.png`):
     }
   }
   const message = copied
-    ? (savedPath ? `截图已复制到剪贴板，并保存到 ${savedPath}` : "截图已复制到剪贴板")
-    : (savedPath ? `截图已保存到 ${savedPath}` : "截图保存失败，请检查桌面运行目录权限");
+    ? (savedPath ? t("screenshotCopiedAndSaved", { path: savedPath }) : t("screenshotCopied"))
+    : (savedPath ? t("screenshotSaved", { path: savedPath }) : t("screenshotSaveFailed"));
   window.dispatchEvent(new CustomEvent("chemviz-toast", { detail: { message } }));
 }

@@ -25,7 +25,7 @@ def run_window(root: Path, config_dir: Path, port: int) -> int:
         app = QApplication([])
     app.setApplicationName("ChemViz3D")
     app.setOrganizationName("ChemViz3D")
-    icon_path = root / "ChatGPT Image 2026年8月19日 21_56_31.png"
+    icon_path = root / "ICO.png"
     if icon_path.is_file():
         app.setWindowIcon(QIcon(str(icon_path)))
     server, thread, url = _start_server(root, config_dir, port)
