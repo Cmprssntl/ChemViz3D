@@ -1,0 +1,10 @@
+{
+  "id": "butane",
+  "formula": "C4H10",
+  "inputs": ["C4H10", "丁烷", "butane", "n-butane"],
+  "chemvz": {
+    "chemvz": 2, "name": {"zh-CN": "丁烷", "zh-TW": "丁烷", "en-US": "butane"}, "smiles": "CCCC",
+    "atoms": [{ "el": "C", "hybridization": "sp3" }, { "el": "C", "hybridization": "sp3" }, { "el": "C", "hybridization": "sp3" }, { "el": "C", "hybridization": "sp3" }],
+    "bonds": [{ "i": [0, 1], "order": 1 }, { "i": [1, 2], "order": 1 }, { "i": [2, 3], "order": 1 }]
+  }
+}

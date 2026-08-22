@@ -1,0 +1,18 @@
+{
+  "id": "benzene",
+  "formula": "C6H6",
+  "inputs": ["C6H6", "苯", "benzene"],
+  "chemvz": {
+    "chemvz": 2, "name": {"zh-CN": "苯", "zh-TW": "苯", "en-US": "benzene"}, "smiles": "c1ccccc1",
+    "atoms": [
+      { "el": "C", "hybridization": "sp2" }, { "el": "C", "hybridization": "sp2" },
+      { "el": "C", "hybridization": "sp2" }, { "el": "C", "hybridization": "sp2" },
+      { "el": "C", "hybridization": "sp2" }, { "el": "C", "hybridization": "sp2" }
+    ],
+    "bonds": [
+      { "i": [0, 1], "order": 1 }, { "i": [1, 2], "order": 2 },
+      { "i": [2, 3], "order": 1 }, { "i": [3, 4], "order": 2 },
+      { "i": [4, 5], "order": 1 }, { "i": [5, 0], "order": 2 }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "cyclohexane",
+  "formula": "C6H12",
+  "inputs": ["C6H12", "环己烷", "cyclohexane"],
+  "chemvz": {
+    "chemvz": 2, "name": {"zh-CN": "环己烷", "zh-TW": "環己烷", "en-US": "cyclohexane"}, "smiles": "C1CCCCC1",
+    "atoms": [{ "el": "C", "hybridization": "sp3" }, { "el": "C", "hybridization": "sp3" }, { "el": "C", "hybridization": "sp3" }, { "el": "C", "hybridization": "sp3" }, { "el": "C", "hybridization": "sp3" }, { "el": "C", "hybridization": "sp3" }],
+    "bonds": [{ "i": [0, 1], "order": 1 }, { "i": [1, 2], "order": 1 }, { "i": [2, 3], "order": 1 }, { "i": [3, 4], "order": 1 }, { "i": [4, 5], "order": 1 }, { "i": [5, 0], "order": 1 }]
+  }
+}

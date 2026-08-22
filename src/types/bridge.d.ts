@@ -1,0 +1,27 @@
+interface ChemVizBridge {
+  loadMolecule(formula: string, canonical: string, smiles: string, name: string): void;
+  sendMeasurement(type: string, values: any): void;
+  sendStatus(message: string): void;
+  sendMoleculeInfo(info: any): void;
+}
+
+interface Window {
+  __chemviz?: ChemVizBridge;
+  ChemVizAndroid?: {
+    onReady(): void;
+    onMeasurement(type: string, values: string): void;
+    onStatus(message: string): void;
+    onMoleculeInfo(info: string): void;
+    onConsoleLog(message: string): void;
+    saveScreenshot?(filename: string, dataUrl: string): boolean;
+    /** Mobile persistence bridge. Methods are synchronous on the JS side. */
+    getSettings?(): string;
+    saveSettings?(content: string): boolean;
+    getCache?(key: string): string;
+    saveCache?(key: string, content: string): boolean;
+    deleteCache?(key: string): boolean;
+    clearCache?(): boolean;
+    requestChatCompletions?(requestId: string, url: string, apiKey: string, body: string): void;
+    openImageChooser?(): void;
+  };
+}

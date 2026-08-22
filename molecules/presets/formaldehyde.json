@@ -1,0 +1,10 @@
+{
+  "id": "formaldehyde",
+  "formula": "CH2O",
+  "inputs": ["CH2O", "HCHO", "甲醛", "formaldehyde"],
+  "chemvz": {
+    "chemvz": 2, "name": {"zh-CN": "甲醛", "zh-TW": "甲醛", "en-US": "formaldehyde"}, "smiles": "C=O",
+    "atoms": [{ "el": "C", "hybridization": "sp2" }, { "el": "O", "hybridization": "sp2" }],
+    "bonds": [{ "i": [0, 1], "order": 2 }]
+  }
+}

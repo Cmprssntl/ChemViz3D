@@ -1,0 +1,10 @@
+{
+  "id": "methanol",
+  "formula": "CH4O",
+  "inputs": ["CH3OH", "甲醇", "methanol"],
+  "chemvz": {
+    "chemvz": 2, "name": {"zh-CN": "甲醇", "zh-TW": "甲醇", "en-US": "methanol"}, "smiles": "CO",
+    "atoms": [{ "el": "C", "hybridization": "sp3" }, { "el": "O", "hybridization": "sp3" }],
+    "bonds": [{ "i": [0, 1], "order": 1 }]
+  }
+}

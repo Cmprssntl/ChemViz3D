@@ -9,6 +9,10 @@
 bin/
 gen/
 out/
+dist/
+node_modules/
+tsconfig.tsbuildinfo
+artifacts/
 
 # Gradle files
 .gradle/
