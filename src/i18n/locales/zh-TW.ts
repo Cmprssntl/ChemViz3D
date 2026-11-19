@@ -163,4 +163,5 @@ export const zhTW: TranslationMap = {
   conformerFailed: "無法為該結構產生三維構象",
   conformerBackendFallback: "已回退到幾何後備方案",
   iupacName: "IUPAC 名稱",
+  fromImageParse: "從圖片解析",
 };

@@ -1,11 +1,12 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import type { MoleculeData } from "../types/molecule";
 import { ConformerError, ConformerService } from "../engine/conformer/ConformerService";
 import { isChemVZ, chemVZToBondSpec } from "../types/moleculeFormat";
 import { useStore } from "../store/useStore";
 import { parseLocalInput } from "../ai/localParser";
 import { getAIConfig, hasValidTextAISettings, requestAISettings } from "../ai/config";
-import { AIParseError, parseWithAI } from "../ai/aiParser";
+import { AIParseError, parseImageWithAI, parseWithAI } from "../ai/aiParser";
+import { imageCacheInput } from "../ai/image";
 import type { ChemVZMolecule } from "../types/moleculeFormat";
 import { clearAllCachedChemVZ, clearCachedChemVZ, getCachedChemVZ, saveCachedChemVZ } from "../ai/cache";
 import { iupacNamer } from "../domain/naming/IupacNamer";
@@ -69,6 +70,8 @@ export function useMolecule() {
   const setConformerStats = useStore(s => s.setConformerStats);
   const setParseSource = useStore(s => s.setParseSource);
   const locale = useStore(s => s.locale);
+  /** Last imported image, so "regenerate" repeats the vision request. */
+  const lastImageRef = useRef<{ cacheInput: string; dataUrl: string } | null>(null);
 
   const resetInputState = () => {
     setLoading(true); setError(null); setInfoMessage(null); setMolecule(null);
@@ -144,6 +147,45 @@ export function useMolecule() {
   }, [locale, setError, setInfoMessage, setLoading, setMolecule, setParseSource, setRotatingBond, setConformerStats]);
 
 
+  /**
+   * Runs the vision model on an image data URL. Shares the cache and error
+   * handling of the text path so both behave identically.
+   */
+  const processImageData = useCallback(async (dataUrl: string, forceAI = false) => {
+    resetInputState();
+    try {
+      const cacheInput = await imageCacheInput(dataUrl);
+      lastImageRef.current = { cacheInput, dataUrl };
+      if (!forceAI) {
+        try {
+          const cached = await getCachedChemVZ(cacheInput);
+          if (cached) {
+            setMolecule(buildMoleculeFromChemVZObject(cached.chemvz, locale));
+            setParseSource("cache", cacheInput);
+            setInfoMessage(t("aiCacheLoaded"));
+            return;
+          }
+        } catch (cacheError) {
+          console.warn("Unable to read image AI cache; continuing with AI parsing", cacheError);
+        }
+      }
+      const chemvz = await parseImageWithAI(dataUrl);
+      setMolecule(buildMoleculeFromChemVZObject(chemvz, locale));
+      setParseSource("ai", cacheInput);
+      try {
+        await saveCachedChemVZ(cacheInput, chemvz);
+      } catch (cacheError) {
+        console.warn("Unable to save image AI cache", cacheError);
+      }
+      setInfoMessage(chemvz.comment ? t("aiParsingComment", { comment: chemvz.comment }) : t("aiParsingComplete"));
+    } catch (error) {
+      if (error instanceof AIParseError) setError(error.message);
+      else setError(t("aiParsingFailed") + (error instanceof Error ? error.message : String(error)));
+    } finally {
+      setLoading(false);
+    }
+  }, [locale, setError, setInfoMessage, setLoading, setMolecule, setParseSource, setRotatingBond, setConformerStats]);
+
   const clearCurrentCache = useCallback(async (input: string) => {
     await clearCachedChemVZ(input);
     setParseSource(null);
@@ -154,5 +196,13 @@ export function useMolecule() {
     setParseSource(null);
   }, [setParseSource]);
 
-  return { processChemVZFile, processInput, clearCurrentCache, clearAllCache };
+  const regenerate = useCallback(async (input: string) => {
+    if (lastImageRef.current?.cacheInput === input) {
+      await processImageData(lastImageRef.current.dataUrl, true);
+      return;
+    }
+    await processInput(input, true);
+  }, [processImageData, processInput]);
+
+  return { processChemVZFile, processInput, processImageData, regenerate, clearCurrentCache, clearAllCache };
 }

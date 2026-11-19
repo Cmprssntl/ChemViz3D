@@ -539,6 +539,24 @@ export function hasValidTextAISettings(settings = getRuntimeAISettings()): boole
 }
 
 /** Text settings used by the chemistry parser. Image settings are reserved for a later image workflow. */
+/** The image endpoint has its own model; a text-only setup cannot read images. */
+export function hasValidImageAISettings(settings = getRuntimeAISettings()): boolean {
+  const { image } = settings;
+  return Boolean(image.api.trim() && image.model.trim() && isValidAIRequestUrl(image.requestUrl))
+    || runtimeDeveloperConfigured;
+}
+
+export function getImageAIConfig(): AIConfig {
+  const image = getRuntimeAISettings().image;
+  return {
+    baseUrl: image.requestUrl,
+    apiKey: image.api,
+    model: image.model,
+    maxRetries: image.maxRetries,
+    systemPrompt: image.systemPrompt,
+  };
+}
+
 export function getAIConfig(): AIConfig {
   const settings = getRuntimeAISettings();
   const text = settings.text;

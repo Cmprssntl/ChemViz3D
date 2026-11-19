@@ -18,4 +18,5 @@ interface Window {
     presetsUrl?: string;
   };
   __chemvizAndroidChatResult?: (requestId: string, status: number, body: string) => void;
+  __chemvizAndroidImageResult?: (dataUrl: string) => void;
 }

@@ -8,13 +8,18 @@ import { platform } from "../platform";
 interface LeftPanelProps {
   onProcessInput: (input: string, forceAI?: boolean) => void;
   onProcessChemVZFile: (file: File) => void;
+  onProcessImage: () => void;
+  onRegenerate: (input: string) => void;
   onOpenAISettings: () => void;
   onClearCurrentCache: (input: string) => Promise<void>;
   onClearAllCache: () => Promise<void>;
   aiUnavailable: boolean;
 }
 
-export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessInput, onProcessChemVZFile, onOpenAISettings, onClearCurrentCache, onClearAllCache, aiUnavailable }) => {
+export const LeftPanel: React.FC<LeftPanelProps> = ({
+  onProcessInput, onProcessChemVZFile, onProcessImage, onRegenerate,
+  onOpenAISettings, onClearCurrentCache, onClearAllCache, aiUnavailable,
+}) => {
   const [isTouchDevice, setIsTouchDevice] = useState(platform.capabilities.touchFirst);
   const inputFormula = useStore((s) => s.inputFormula);
   const setInputFormula = useStore((s) => s.setInputFormula);
@@ -75,6 +80,12 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessInput, onProcessC
         {t("openFile")}
         <input type="file" accept=".json" style={{display:"none"}} disabled={isLoading} onChange={(e) => {const f = e.target.files?.[0]; if (f) { onProcessChemVZFile(f); e.target.value = "";}}} />
       </label>
+      <button type="button" className="btn file-input-label image-parse-btn" onClick={onProcessImage} disabled={isLoading}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" />
+        </svg>
+        {t("fromImageParse")}
+      </button>
     </div>
     <div className="section"><h3 className="section-title">{t("displayMode")}</h3>
       <div className="mode-toggle">
@@ -158,7 +169,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessInput, onProcessC
         </button>
         <div className="cache-actions">
           {currentCacheInput && (parseSource === "cache" || parseSource === "ai") && <>
-            {parseSource === "ai" && <button type="button" className="btn settings-open-button" onClick={() => onProcessInput(currentCacheInput, true)} disabled={isLoading}>{t("regenerate")}</button>}
+            {parseSource === "ai" && <button type="button" className="btn settings-open-button" onClick={() => onRegenerate(currentCacheInput)} disabled={isLoading}>{t("regenerate")}</button>}
             <button type="button" className="btn settings-open-button" onClick={() => void onClearCurrentCache(currentCacheInput)} disabled={isLoading}>{t("clearCurrentCache")}</button>
           </>}
           <button type="button" className="btn settings-open-button" onClick={() => void onClearAllCache()} disabled={isLoading}>{t("clearAllCache")}</button>

@@ -19,6 +19,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Touch shells (Android) should not show the grey tap flash. */
+[data-touch="true"] * {
+  -webkit-tap-highlight-color: transparent;
+}
+
 input, button, textarea, select {
   font-family: inherit;
   font-size: inherit;

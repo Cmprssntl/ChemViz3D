@@ -276,3 +276,11 @@
 - `atoms.ts` 移除已废弃的 `createAtomMesh` / `createAtomLabel` / `getElementColor`。
 - `tests/i18n.test.ts`：三语言 key 集合一致性、空值检查、插值检查。
 - 浏览器实测：乙醇 → 苯 → 乙酸 → 环己烷 → 甲苯 连续切换，渲染正常、控制台无错误。
+
+### P3 Android 迁移（完成）
+- 共享源码新增 `ai/image.ts`（缩放/缓存键）、`ai/aiParser.ts` 的 `parseImageWithAI`、`ai/config.ts` 的 `hasValidImageAISettings/getImageAIConfig`、`platform/imageInput.ts`（Android 原生选择器 / 其他平台文件对话框）、`platform/android/bridge.ts`（控制台转发 + onReady）。
+- `useMolecule` 新增 `processImageData` / `regenerate`；`App` 统一入口 `handleProcessImage`；`LeftPanel` 增加「从图片解析」按钮（三语文案）。
+- Android 壳：`WebViewAssetLoader` + `https://appassets.androidplatform.net/assets/webapp/index.html`，关闭 `allowFileAccess`/页面缩放，新增 `androidx.webkit:webkit:1.10.0`。
+- Android 仓库只保留外壳：删除 `src/`、`vite.config.ts`、`package.json`、`index.html`、`public/`、`dist/`、`node_modules/`、`molecules/`、RDKit 资产、`_archive/` 与未使用的 Kotlin 引擎/渲染包（共 1839 行）。
+- 新增 `sync-webapp.sh`（校验 `import.meta`/module 脚本后同步 `release/android`），`BUILD.md`/`README.txt` 更新为新流程。
+- 实测：`./build-apk.sh` 成功，APK 7.8 MB，`assets/webapp/assets/main.js` 与 `release/android` 哈希一致。

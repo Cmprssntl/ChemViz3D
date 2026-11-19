@@ -163,4 +163,5 @@ export const zhCN: TranslationMap = {
   conformerFailed: "无法为该结构生成三维构象",
   conformerBackendFallback: "已回退到几何后备方案",
   iupacName: "IUPAC 名称",
+  fromImageParse: "从图片解析",
 };

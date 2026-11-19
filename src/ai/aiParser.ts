@@ -5,7 +5,9 @@ import {
   getAIRequestUrl,
   getChatCompletionsUrl,
   getDesktopBridgeToken,
+  getImageAIConfig,
   getQtSettingsApi,
+  hasValidImageAISettings,
   hasValidTextAISettings,
   requestAISettings,
   type AIConfig,
@@ -260,6 +262,81 @@ async function parseOnce(input: string, config: AIConfig): Promise<ChemVZMolecul
   }
   const message = asRecord(asRecord(choices[0]).message);
   return validateAIChemVZ(extractJson(message.content));
+}
+
+const IMAGE_SYSTEM_PROMPT = "You identify the molecule shown in an image and return ChemViz3D's chemvz: 2 JSON structure.";
+
+/**
+ * Vision request. Shares the transport and validation of the text path but
+ * sends an image content part; the image endpoint is configured separately.
+ */
+async function parseImageOnce(imageDataUrl: string, config: AIConfig): Promise<ChemVZMolecule> {
+  const url = getAIRequestUrl(config.baseUrl);
+  const bridgeToken = getDesktopBridgeToken();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (bridgeToken && url.startsWith("/__chemviz_bridge/")) {
+    headers["X-ChemViz-Bridge-Token"] = bridgeToken;
+  } else {
+    headers.Authorization = `Bearer ${config.apiKey}`;
+  }
+
+  const displayUrl = getChatCompletionsUrl(config.baseUrl);
+  const messages = [
+    { role: "system", content: config.systemPrompt || IMAGE_SYSTEM_PROMPT },
+    {
+      role: "user",
+      content: [
+        { type: "text", text: "Identify the molecule in this image and return its ChemViz3D chemvz: 2 JSON structure." },
+        { type: "image_url", image_url: { url: imageDataUrl } },
+      ],
+    },
+  ];
+  const baseBody = { model: config.model, temperature: 0, messages };
+  let payload: unknown;
+  try {
+    payload = await requestCompletion(url, headers, { ...baseBody, response_format: { type: "json_object" } }, displayUrl);
+  } catch (error) {
+    if (!(error instanceof AIParseError) || ![400, 422].includes(error.httpStatus || 0)) throw error;
+    payload = await requestCompletion(url, headers, baseBody, displayUrl);
+  }
+
+  const choices = asRecord(payload).choices;
+  if (!Array.isArray(choices) || choices.length === 0) {
+    throw new AIParseError("AI 响应缺少 choices", "response");
+  }
+  const message = asRecord(asRecord(choices[0]).message);
+  return validateAIChemVZ(extractJson(message.content));
+}
+
+export async function parseImageWithAI(imageDataUrl: string): Promise<ChemVZMolecule> {
+  if (!hasValidImageAISettings()) {
+    requestAISettings("图像 AI 功能已禁用：请先配置有效的图像模型 API、模型和请求地址。");
+    throw new AIParseError("图像 AI 功能已禁用：没有有效的图像模型配置。", "config");
+  }
+  if (!/^data:image\/(?:jpeg|jpg|png|webp);base64,/i.test(imageDataUrl)) {
+    throw new AIParseError("图片格式无效，请选择 JPEG、PNG 或 WebP 图片。", "response");
+  }
+
+  const config = getImageAIConfig();
+  const maxRetries = Number.isInteger(config.maxRetries) ? Math.min(10, Math.max(0, config.maxRetries)) : 2;
+  let lastError: AIParseError | null = null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await parseImageOnce(imageDataUrl, config);
+    } catch (error) {
+      const normalized = error instanceof AIParseError
+        ? error
+        : new AIParseError(error instanceof Error ? error.message : String(error), "response");
+      if (normalized.kind === "config") throw normalized;
+      lastError = normalized;
+    }
+  }
+  const retryText = maxRetries > 0 ? `，已重试 ${maxRetries} 次` : "";
+  throw new AIParseError(
+    `图像解析失败${retryText}：${lastError?.message || "未知错误"}`,
+    lastError?.kind || "response",
+    lastError?.httpStatus,
+  );
 }
 
 export async function parseWithAI(input: string, config: AIConfig): Promise<ChemVZMolecule> {

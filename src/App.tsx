@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { TopBar } from "./components/TopBar";
 import { LeftPanel } from "./components/LeftPanel";
 import { RightPanel } from "./components/RightPanel";
@@ -20,10 +20,11 @@ import {
 import { takeScreenshot, resetCameraView } from "./utils/screenshot";
 import { t } from "./i18n/index";
 import { loadExternalPresets } from "./ai/localParser";
+import { acquireImageDataUrl } from "./platform/imageInput";
 import "./App.css";
 
 const App: React.FC = () => {
-  const { processChemVZFile, processInput, clearCurrentCache, clearAllCache } = useMolecule();
+  const { processChemVZFile, processInput, processImageData, regenerate, clearCurrentCache, clearAllCache } = useMolecule();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsRequired, setSettingsRequired] = useState(false);
   const [aiUnavailable, setAiUnavailable] = useState(true);
@@ -33,6 +34,21 @@ const App: React.FC = () => {
     window.innerWidth < window.innerHeight ? "portrait" : "landscape",
   );
   const leftCollapsed = useStore((s) => s.leftCollapsed);
+  const setError = useStore((s) => s.setError);
+
+  /**
+   * One entry point for image import: the Android shell opens the native
+   * camera/gallery sheet, every other platform uses a file dialog. Both return
+   * the same downscaled JPEG data URL.
+   */
+  const handleProcessImage = useCallback(async () => {
+    try {
+      const dataUrl = await acquireImageDataUrl();
+      if (dataUrl) await processImageData(dataUrl);
+    } catch (error) {
+      setError(t("aiParsingFailed") + (error instanceof Error ? error.message : String(error)));
+    }
+  }, [processImageData, setError]);
   const rightCollapsed = useStore((s) => s.rightCollapsed);
   const setLeftCollapsed = useStore((s) => s.setLeftCollapsed);
   const setRightCollapsed = useStore((s) => s.setRightCollapsed);
@@ -177,6 +193,7 @@ const App: React.FC = () => {
       {screenshotNotice && <div className="screenshot-toast" role="status">{screenshotNotice}</div>}
       <div className="main-content">
         <LeftPanel onProcessInput={processInput} onProcessChemVZFile={processChemVZFile}
+          onProcessImage={handleProcessImage} onRegenerate={regenerate}
           onOpenAISettings={() => setSettingsOpen(true)} onClearCurrentCache={clearCurrentCache}
           onClearAllCache={clearAllCache} aiUnavailable={aiUnavailable} />
         <button className="panel-tab left-tab" onClick={() => setLeftCollapsed(!leftCollapsed)} title={t(leftCollapsed ? "expandPanel" : "collapsePanel")}>

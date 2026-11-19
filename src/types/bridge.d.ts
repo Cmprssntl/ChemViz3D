@@ -22,5 +22,8 @@ interface Window {
     deleteCache?(key: string): boolean;
     clearCache?(): boolean;
     requestChatCompletions?(requestId: string, url: string, apiKey: string, body: string): void;
+    /** Opens the native camera/gallery sheet; the result arrives via
+     *  `window.__chemvizAndroidImageResult`. */
+    openImageChooser?(): void;
   };
 }
