@@ -1,0 +1,50 @@
+{
+  "id": "1-nitro-c1",
+  "formula": "NO2",
+  "inputs": [
+    "NO2",
+    "一-1-硝基甲烷",
+    "1-nitro甲烷"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "一-1-硝基甲烷",
+      "zh-TW": "一-1-硝基甲烷",
+      "en-US": "1-nitro甲烷"
+    },
+    "smiles": "O=[N+][O-]",
+    "atoms": [
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp2",
+        "charge": 1
+      },
+      {
+        "el": "O",
+        "hybridization": "sp2",
+        "charge": -1
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "id": "ethylene-glycol",
+  "formula": "C2H6O2",
+  "inputs": [
+    "C2H6O2",
+    "乙二醇",
+    "ethylene glycol",
+    "1,2-乙二醇",
+    "ethanediol"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "乙二醇",
+      "zh-TW": "乙二醇",
+      "en-US": "ethylene glycol"
+    },
+    "smiles": "OCCO",
+    "atoms": [
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "id": "ethanethiol",
+  "formula": "C2H6S",
+  "inputs": [
+    "C2H6S",
+    "乙硫醇",
+    "ethanethiol"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "乙硫醇",
+      "zh-TW": "乙硫醇",
+      "en-US": "ethanethiol"
+    },
+    "smiles": "CCS",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "S",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

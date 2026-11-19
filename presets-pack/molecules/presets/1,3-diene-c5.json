@@ -1,0 +1,70 @@
+{
+  "id": "1,3-diene-c5",
+  "formula": "C5H8",
+  "inputs": [
+    "C5H8",
+    "五1,3-二烯",
+    "五1,3-diene"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "五1,3-二烯",
+      "zh-TW": "五1,3-二烯",
+      "en-US": "五1,3-diene"
+    },
+    "smiles": "C=CCC=C",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

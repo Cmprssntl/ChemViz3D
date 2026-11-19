@@ -1,0 +1,38 @@
+{
+  "id": "methylamine",
+  "formula": "CH5N",
+  "inputs": [
+    "CH5N",
+    "甲胺",
+    "methylamine",
+    "CH3NH2"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "甲胺",
+      "zh-TW": "甲胺",
+      "en-US": "methylamine"
+    },
+    "smiles": "CN",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

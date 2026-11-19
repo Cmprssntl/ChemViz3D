@@ -1,0 +1,121 @@
+{
+  "id": "di-sub-benzene-4-5-4",
+  "formula": "C7H9NO",
+  "inputs": [
+    "C7H9NO",
+    "对甲氧基氨基苯",
+    "对-甲氧基氨基benzene"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "对甲氧基氨基苯",
+      "zh-TW": "对甲氧基氨基苯",
+      "en-US": "对-甲氧基氨基benzene"
+    },
+    "smiles": "COc1ccc(N)cc1",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          7
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          7,
+          8
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          8,
+          2
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

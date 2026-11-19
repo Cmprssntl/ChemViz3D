@@ -1,0 +1,48 @@
+{
+  "id": "1,1-diF-c1",
+  "formula": "CH2F2",
+  "inputs": [
+    "CH2F2",
+    "1,1-二氟甲烷",
+    "1,1-diF甲烷"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "1,1-二氟甲烷",
+      "zh-TW": "1,1-二氟甲烷",
+      "en-US": "1,1-diF甲烷"
+    },
+    "smiles": "FCF",
+    "atoms": [
+      {
+        "el": "F",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "F",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "id": "diethyl-sulfide",
+  "formula": "C4H10S",
+  "inputs": [
+    "C4H10S",
+    "二乙基硫醚",
+    "diethyl sulfide"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "二乙基硫醚",
+      "zh-TW": "二乙基硫醚",
+      "en-US": "diethyl sulfide"
+    },
+    "smiles": "CCSCC",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "S",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

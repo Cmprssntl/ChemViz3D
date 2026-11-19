@@ -1,0 +1,140 @@
+{
+  "id": "naphthalene",
+  "formula": "C10H8",
+  "inputs": [
+    "C10H8",
+    "萘",
+    "naphthalene",
+    "naphthalene"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "萘",
+      "zh-TW": "萘",
+      "en-US": "naphthalene"
+    },
+    "smiles": "c1ccc2ccccc2c1",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          7,
+          8
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          8,
+          9
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          9,
+          0
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          8,
+          3
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

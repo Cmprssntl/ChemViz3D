@@ -1,0 +1,77 @@
+{
+  "id": "pyrrolidine",
+  "formula": "C4H9N",
+  "inputs": [
+    "C4H9N",
+    "吡咯烷",
+    "pyrrolidine"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "吡咯烷",
+      "zh-TW": "吡咯烷",
+      "en-US": "pyrrolidine"
+    },
+    "smiles": "C1CCNC1",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          0
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

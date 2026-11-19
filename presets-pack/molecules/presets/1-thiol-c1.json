@@ -1,0 +1,25 @@
+{
+  "id": "1-thiol-c1",
+  "formula": "H2S",
+  "inputs": [
+    "H2S",
+    "-1-硫醇",
+    "1-甲烷thiol"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "-1-硫醇",
+      "zh-TW": "-1-硫醇",
+      "en-US": "1-甲烷thiol"
+    },
+    "smiles": "S",
+    "atoms": [
+      {
+        "el": "S",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": []
+  }
+}

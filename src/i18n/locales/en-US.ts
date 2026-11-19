@@ -4,8 +4,6 @@ export const enUS: TranslationMap = {
   appTitle: "ChemViz3D",
   appSubtitle: "Molecular Structure Viewer",
   inputPanel: "Input",
-  rdkitOn: "RDKit: ON",
-  rdkitOff: "RDKit: OFF",
   active: "Active",
   screenshot: "Screenshot (Ctrl+S)",
   exit: "Exit (Esc)",
@@ -162,4 +160,6 @@ export const enUS: TranslationMap = {
   possibleCoplanar: "Possible Coplanar Atoms",
   noCoplanarFound: "No coplanar atoms",
   definiteCoplanar: "Definite Coplanar Atoms",
+  conformerFailed: "Could not generate a 3D conformer for this structure",
+  conformerBackendFallback: "Fell back to the geometric placement backend",
 };

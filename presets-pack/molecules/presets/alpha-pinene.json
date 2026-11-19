@@ -1,0 +1,128 @@
+{
+  "id": "alpha-pinene",
+  "formula": "C9H14",
+  "inputs": [
+    "C9H14",
+    "α-蒎烯",
+    "alpha-pinene"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "α-蒎烯",
+      "zh-TW": "α-蒎烯",
+      "en-US": "alpha-pinene"
+    },
+    "smiles": "CC1(C)C2C=CC1CC2",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          7,
+          8
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          8,
+          3
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

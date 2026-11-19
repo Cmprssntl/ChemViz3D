@@ -1,0 +1,70 @@
+{
+  "id": "tert-butylamine",
+  "formula": "C4H11N",
+  "inputs": [
+    "C4H11N",
+    "叔丁胺",
+    "tert-butylamine"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "叔丁胺",
+      "zh-TW": "叔丁胺",
+      "en-US": "tert-butylamine"
+    },
+    "smiles": "CC(C)(C)N",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          4
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

@@ -28,7 +28,6 @@ interface AppState {
   isLoading: boolean;
   error: string | null;
   infoMessage: string | null;
-  rdkitReady: boolean;
 
   setMolecule: (mol: MoleculeData | null) => void;
   setLoading: (loading: boolean) => void;
@@ -37,7 +36,6 @@ interface AppState {
   parseSource: "preset" | "cache" | "ai" | null;
   currentCacheInput: string | null;
   setParseSource: (source: "preset" | "cache" | "ai" | null, input?: string | null) => void;
-  setRdkitReady: (ready: boolean) => void;
 
   displayMode: DisplayMode;
   setDisplayMode: (mode: DisplayMode) => void;
@@ -97,14 +95,12 @@ export const useStore = create<AppState>((set) => ({
   infoMessage: null,
   parseSource: null,
   currentCacheInput: null,
-  rdkitReady: false,
 
   setMolecule: (mol) => set({ molecule: mol }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (err) => set({ error: err }),
   setInfoMessage: (msg) => set({ infoMessage: msg }),
   setParseSource: (source, input = null) => set({ parseSource: source, currentCacheInput: input }),
-  setRdkitReady: (ready) => set({ rdkitReady: ready }),
 
   displayMode: persistedUISettings.displayMode,
   setDisplayMode: (mode) => { set({ displayMode: mode }); persistUISettings({ displayMode: mode }); },

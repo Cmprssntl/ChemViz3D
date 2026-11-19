@@ -1,0 +1,60 @@
+{
+  "id": "trimethylamine",
+  "formula": "C3H9N",
+  "inputs": [
+    "C3H9N",
+    "三甲胺",
+    "trimethylamine",
+    "trimethylamine"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "三甲胺",
+      "zh-TW": "三甲胺",
+      "en-US": "trimethylamine"
+    },
+    "smiles": "CN(C)C",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          3
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

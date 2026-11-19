@@ -5,6 +5,7 @@ import {
   getAIRequestUrl,
   getChatCompletionsUrl,
   getDesktopBridgeToken,
+  getQtSettingsApi,
   hasValidTextAISettings,
   requestAISettings,
   type AIConfig,
@@ -182,7 +183,29 @@ async function requestCompletion(
       });
       response = new Response(result.body, { status: result.status, headers: { "Content-Type": "application/json" } });
     } else {
-      response = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+      // Packaged desktop shell: prefer the native QtWebChannel transport so
+      // AI calls work even when QtWebEngine's network service cannot deliver
+      // fetch() responses back to the page ("Failed to fetch").
+      const qtApi = await getQtSettingsApi();
+      if (qtApi) {
+        const resultText = await new Promise<string>((resolve, reject) => {
+          const timeout = window.setTimeout(() => reject(new Error("AI 请求超时")), 120000);
+          qtApi.chatCompletions(JSON.stringify(body), (result) => {
+            window.clearTimeout(timeout);
+            resolve(result);
+          });
+        });
+        const forwarded = JSON.parse(resultText) as { status: number; body: string; error?: string };
+        if (forwarded.error) {
+          throw new AIParseError(`AI API 网络请求失败：${forwarded.error}`, "network");
+        }
+        response = new Response(forwarded.body, {
+          status: forwarded.status,
+          headers: { "Content-Type": "application/json" },
+        });
+      } else {
+        response = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+      }
     }
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);

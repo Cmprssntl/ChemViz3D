@@ -1,0 +1,89 @@
+{
+  "id": "pyrimidine",
+  "formula": "C4H4N2",
+  "inputs": [
+    "C4H4N2",
+    "嘧啶",
+    "pyrimidine",
+    "pyrimidine"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "嘧啶",
+      "zh-TW": "嘧啶",
+      "en-US": "pyrimidine"
+    },
+    "smiles": "c1cncnc1",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          5,
+          0
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

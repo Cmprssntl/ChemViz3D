@@ -1,0 +1,38 @@
+{
+  "id": "chloromethane",
+  "formula": "CH3Cl",
+  "inputs": [
+    "CH3Cl",
+    "氯甲烷",
+    "chloromethane",
+    "甲基氯"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "氯甲烷",
+      "zh-TW": "氯甲烷",
+      "en-US": "chloromethane"
+    },
+    "smiles": "CCl",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "Cl",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "id": "2,2,2-trifluoroethanol",
+  "formula": "C2H3F3O",
+  "inputs": [
+    "C2H3F3O",
+    "三氟乙醇",
+    "2,2,2-trifluoroethanol"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "三氟乙醇",
+      "zh-TW": "三氟乙醇",
+      "en-US": "2,2,2-trifluoroethanol"
+    },
+    "smiles": "OCC(F)(F)F",
+    "atoms": [
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "F",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "F",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "F",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          5
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "id": "1,1-diBr-c4",
+  "formula": "C3H6Br2",
+  "inputs": [
+    "C3H6Br2",
+    "1,1-二溴丁烷",
+    "1,1-diBr丁烷"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "1,1-二溴丁烷",
+      "zh-TW": "1,1-二溴丁烷",
+      "en-US": "1,1-diBr丁烷"
+    },
+    "smiles": "CCC(Br)Br",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "Br",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "Br",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          4
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

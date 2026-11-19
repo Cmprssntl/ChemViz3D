@@ -1,0 +1,100 @@
+{
+  "id": "furfural",
+  "formula": "C5H4O2",
+  "inputs": [
+    "C5H4O2",
+    "糠醛",
+    "furfural",
+    "2-呋喃甲醛"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "糠醛",
+      "zh-TW": "糠醛",
+      "en-US": "furfural"
+    },
+    "smiles": "O=Cc1ccco1",
+    "atoms": [
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          2
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

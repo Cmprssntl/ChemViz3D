@@ -1,0 +1,110 @@
+{
+  "id": "di-sub-benzene-1-1-3",
+  "formula": "C6H4Cl2",
+  "inputs": [
+    "C6H4Cl2",
+    "间氯氯苯",
+    "间-氯氯benzene"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "间氯氯苯",
+      "zh-TW": "间氯氯苯",
+      "en-US": "间-氯氯benzene"
+    },
+    "smiles": "Clc1cccc(Cl)c1",
+    "atoms": [
+      {
+        "el": "Cl",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "Cl",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          7
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          7,
+          1
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

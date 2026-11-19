@@ -1,0 +1,70 @@
+{
+  "id": "2-methyl-1-butene",
+  "formula": "C5H10",
+  "inputs": [
+    "C5H10",
+    "2-甲基-1-丁烯",
+    "2-methyl-1-butene"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "2-甲基-1-丁烯",
+      "zh-TW": "2-甲基-1-丁烯",
+      "en-US": "2-methyl-1-butene"
+    },
+    "smiles": "C=C(C)CC",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "id": "mono-sub-benzene-2",
+  "formula": "C6H5I",
+  "inputs": [
+    "C6H5I",
+    "碘苯",
+    "iodobenzene"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "碘苯",
+      "zh-TW": "碘苯",
+      "en-US": "iodobenzene"
+    },
+    "smiles": "Ic1ccccc1",
+    "atoms": [
+      {
+        "el": "I",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          6,
+          1
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import type { BondData, MoleculeData } from "../types/molecule";
-import { findRings } from "./rotation";
+import { graphOf } from "./rotation";
 
 export type CoplanarFragmentType = "ring" | "alkene" | "carbonyl" | "chain" | "other";
 
@@ -16,18 +16,6 @@ export interface CoplanarSet {
   tolerance?: number;
   /** Number of bonds contained by the fragment. */
   continuity?: number;
-}
-
-function buildAdj(bonds: BondData[]): Map<number, number[]> {
-  const adj = new Map<number, number[]>();
-  for (const bond of bonds) {
-    if (!adj.has(bond.atom1Idx)) adj.set(bond.atom1Idx, []);
-    if (!adj.has(bond.atom2Idx)) adj.set(bond.atom2Idx, []);
-    adj.get(bond.atom1Idx)!.push(bond.atom2Idx);
-    adj.get(bond.atom2Idx)!.push(bond.atom1Idx);
-  }
-  for (const neighbors of adj.values()) neighbors.sort((a, b) => a - b);
-  return adj;
 }
 
 function canonicalNormal(normal: THREE.Vector3): THREE.Vector3 {
@@ -255,10 +243,14 @@ function typePriority(type: CoplanarFragmentType): number {
 export function detectPlanarFragments(molecule: MoleculeData): CoplanarSet[] {
   const atoms = molecule.atoms;
   const bonds = molecule.bonds;
-  const adj = buildAdj(bonds);
+  const graph = graphOf(molecule);
+  const adj = new Map<number, number[]>();
+  for (let index = 0; index < molecule.atoms.length; index++) {
+    adj.set(index, [...graph.neighborsOf(index)]);
+  }
   const fragments: CoplanarSet[] = [];
 
-  for (const ring of findRings(adj)) {
+  for (const ring of graph.findRings(20)) {
     const fragment = makeFragment(ring, ring.length === 6 ? "ring" : "other", molecule, 0.12);
     if (fragment) fragments.push(fragment);
   }

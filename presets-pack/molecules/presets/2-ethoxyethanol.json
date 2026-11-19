@@ -1,0 +1,82 @@
+{
+  "id": "2-ethoxyethanol",
+  "formula": "C4H10O2",
+  "inputs": [
+    "C4H10O2",
+    "2-乙氧基乙醇",
+    "2-ethoxyethanol",
+    "乙二醇单乙醚"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "2-乙氧基乙醇",
+      "zh-TW": "2-乙氧基乙醇",
+      "en-US": "2-ethoxyethanol"
+    },
+    "smiles": "CCOCCO",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

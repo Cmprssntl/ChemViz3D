@@ -1,0 +1,49 @@
+{
+  "id": "formamide",
+  "formula": "CH3NO",
+  "inputs": [
+    "CH3NO",
+    "甲酰胺",
+    "formamide",
+    "formamide"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "甲酰胺",
+      "zh-TW": "甲醯胺",
+      "en-US": "formamide"
+    },
+    "smiles": "NC=O",
+    "atoms": [
+      {
+        "el": "N",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

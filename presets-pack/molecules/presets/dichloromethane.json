@@ -1,0 +1,49 @@
+{
+  "id": "dichloromethane",
+  "formula": "CH2Cl2",
+  "inputs": [
+    "CH2Cl2",
+    "二氯甲烷",
+    "dichloromethane",
+    "DCM"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "二氯甲烷",
+      "zh-TW": "二氯甲烷",
+      "en-US": "dichloromethane"
+    },
+    "smiles": "ClCCl",
+    "atoms": [
+      {
+        "el": "Cl",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "Cl",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

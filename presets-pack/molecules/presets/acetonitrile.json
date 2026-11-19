@@ -1,0 +1,48 @@
+{
+  "id": "acetonitrile",
+  "formula": "C2H3N",
+  "inputs": [
+    "C2H3N",
+    "乙腈",
+    "acetonitrile"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "乙腈",
+      "zh-TW": "乙腈",
+      "en-US": "acetonitrile"
+    },
+    "smiles": "CC#N",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 3
+      }
+    ]
+  }
+}

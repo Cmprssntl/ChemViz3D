@@ -9,10 +9,12 @@ import { useStore } from "./store/useStore";
 import { AISettingsDialog } from "./components/AISettingsDialog";
 import {
   getAISettings,
+  getInjectedUISettings,
   getRuntimeAISettings,
   hasDesktopDeveloperSettings,
   hasValidTextAISettings,
   loadAISettingsFromDesktopBridge,
+  restoreSettingsFromInjection,
   setRuntimeAISettings,
 } from "./ai/config";
 import { takeScreenshot, resetCameraView } from "./utils/screenshot";
@@ -121,10 +123,18 @@ const App: React.FC = () => {
     let active = true;
     const initializeSettings = async () => {
       // Seed the in-memory snapshot before any input can reach the parser.
-      // The desktop bridge may replace it with the effective on-disk settings.
       setRuntimeAISettings(getAISettings(), hasDesktopDeveloperSettings());
+      // Apply the HTML-injected settings immediately: the bridge inlines the
+      // on-disk settings into the page, so reads need no network and finish
+      // instantly even when QtWebEngine's fetch is slow or fails.
+      restoreSettingsFromInjection();
+      const injectedUi = getInjectedUISettings();
+      if (injectedUi) useStore.getState().applyUISettings(injectedUi);
       try {
         await loadExternalPresets();
+        // Refresh from the bridge file once the network service is ready.
+        // This is an enhancement, not a dependency: injected settings above
+        // already provided a working snapshot.
         const uiSettings = await loadAISettingsFromDesktopBridge();
         if (uiSettings) useStore.getState().applyUISettings(uiSettings);
       } catch (error) {
@@ -188,4 +198,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default App;

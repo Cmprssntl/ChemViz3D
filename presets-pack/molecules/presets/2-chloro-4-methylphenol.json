@@ -1,0 +1,121 @@
+{
+  "id": "2-chloro-4-methylphenol",
+  "formula": "C7H7ClO",
+  "inputs": [
+    "C7H7ClO",
+    "2-氯-4-甲基苯酚",
+    "2-chloro-4-methylphenol"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "2-氯-4-甲基苯酚",
+      "zh-TW": "2-氯-4-甲基苯酚",
+      "en-US": "2-chloro-4-methylphenol"
+    },
+    "smiles": "Cc1ccc(O)c(Cl)c1",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "Cl",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          6
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          8
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          8,
+          1
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

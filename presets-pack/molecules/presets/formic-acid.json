@@ -1,0 +1,50 @@
+{
+  "id": "formic-acid",
+  "formula": "CH2O2",
+  "inputs": [
+    "CH2O2",
+    "甲酸",
+    "formic acid",
+    "HCOOH",
+    "蚁酸"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "甲酸",
+      "zh-TW": "甲酸",
+      "en-US": "formic acid"
+    },
+    "smiles": "O=CO",
+    "atoms": [
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

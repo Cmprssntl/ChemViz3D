@@ -1,0 +1,60 @@
+{
+  "id": "acetamide",
+  "formula": "C2H5NO",
+  "inputs": [
+    "C2H5NO",
+    "乙酰胺",
+    "acetamide",
+    "acetamide"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "乙酰胺",
+      "zh-TW": "乙醯胺",
+      "en-US": "acetamide"
+    },
+    "smiles": "CC(N)=O",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          3
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "id": "propyne",
+  "formula": "C3H4",
+  "inputs": [
+    "C3H4",
+    "丙炔",
+    "propyne",
+    "C3H4",
+    "propyne"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "丙炔",
+      "zh-TW": "丙炔",
+      "en-US": "propyne"
+    },
+    "smiles": "C#CC",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 3
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

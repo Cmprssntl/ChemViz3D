@@ -1,0 +1,70 @@
+{
+  "id": "methyl-ether-c3",
+  "formula": "C4H10O",
+  "inputs": [
+    "C4H10O",
+    "甲基丙烷醚",
+    "methyl 丙烷 ether"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "甲基丙烷醚",
+      "zh-TW": "甲基丙烷醚",
+      "en-US": "methyl 丙烷 ether"
+    },
+    "smiles": "CCCOC",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

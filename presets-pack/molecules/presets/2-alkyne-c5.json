@@ -1,0 +1,70 @@
+{
+  "id": "2-alkyne-c5",
+  "formula": "C5H8",
+  "inputs": [
+    "C5H8",
+    "五-2-炔",
+    "2-五炔"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "五-2-炔",
+      "zh-TW": "五-2-炔",
+      "en-US": "2-五炔"
+    },
+    "smiles": "CC#CCC",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 3
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

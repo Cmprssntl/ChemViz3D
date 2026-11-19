@@ -1,0 +1,48 @@
+{
+  "id": "1-iodo-c3",
+  "formula": "C2H5I",
+  "inputs": [
+    "C2H5I",
+    "三碘代丙烷",
+    "1-iodo丙烷"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "三碘代丙烷",
+      "zh-TW": "三碘代丙烷",
+      "en-US": "1-iodo丙烷"
+    },
+    "smiles": "CCI",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "I",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

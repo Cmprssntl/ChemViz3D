@@ -1,0 +1,89 @@
+{
+  "id": "1,4-dioxane",
+  "formula": "C4H8O2",
+  "inputs": [
+    "C4H8O2",
+    "1,4-二氧六环",
+    "1,4-dioxane",
+    "二氧六环"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "1,4-二氧六环",
+      "zh-TW": "1,4-二氧六環",
+      "en-US": "1,4-dioxane"
+    },
+    "smiles": "C1COCCO1",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          0
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

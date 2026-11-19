@@ -1,0 +1,134 @@
+{
+  "id": "di-sub-benzene-4-6-2",
+  "formula": "C7H7NO2",
+  "inputs": [
+    "C7H7NO2",
+    "邻甲氧基硝基苯",
+    "邻-甲氧基硝基benzene"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "邻甲氧基硝基苯",
+      "zh-TW": "邻甲氧基硝基苯",
+      "en-US": "邻-甲氧基硝基benzene"
+    },
+    "smiles": "COc1ccccc1[N+][O-]",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3",
+        "charge": 1
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3",
+        "charge": -1
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          7,
+          8
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          8,
+          9
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          7,
+          2
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

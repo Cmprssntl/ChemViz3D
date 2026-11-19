@@ -5,7 +5,6 @@ import { t } from "../i18n/index";
 
 export const TopBar: React.FC = () => {
   const molecule = useStore((s) => s.molecule);
-  const rdkitReady = useStore((s) => s.rdkitReady);
   // Required subscription: React re-renders on language change so t()
   // re-evaluates with the new locale.
   const _locale = useStore((s) => s.locale);
@@ -38,9 +37,6 @@ export const TopBar: React.FC = () => {
         <span className="app-subtitle">{t("appSubtitle")}</span>
       </div>
       <div className="top-bar-right">
-        <span className="status-badge" style={{ fontSize: 10 }}>
-          {rdkitReady ? t("rdkitOn") : t("rdkitOff")}
-        </span>
         {molecule && <span className="status-badge">{t("active")}</span>}
         {molecule && (<>
           <button className="btn btn-icon" title={t("screenshot")} onClick={() => takeScreenshot()}>

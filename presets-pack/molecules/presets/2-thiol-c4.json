@@ -1,0 +1,59 @@
+{
+  "id": "2-thiol-c4",
+  "formula": "C3H8S",
+  "inputs": [
+    "C3H8S",
+    "四-2-硫醇",
+    "2-丁烷thiol"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "四-2-硫醇",
+      "zh-TW": "四-2-硫醇",
+      "en-US": "2-丁烷thiol"
+    },
+    "smiles": "CCSC",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "S",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

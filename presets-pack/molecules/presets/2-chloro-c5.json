@@ -1,0 +1,70 @@
+{
+  "id": "2-chloro-c5",
+  "formula": "C4H9Cl",
+  "inputs": [
+    "C4H9Cl",
+    "五-2-氯",
+    "2-chloro戊烷"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "五-2-氯",
+      "zh-TW": "五-2-氯",
+      "en-US": "2-chloro戊烷"
+    },
+    "smiles": "CCC(C)Cl",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "Cl",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          4
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

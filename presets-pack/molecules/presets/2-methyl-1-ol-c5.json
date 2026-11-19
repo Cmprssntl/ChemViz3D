@@ -1,0 +1,81 @@
+{
+  "id": "2-methyl-1-ol-c5",
+  "formula": "C5H12O",
+  "inputs": [
+    "C5H12O",
+    "2-甲基-1-戊醇",
+    "2-methyl-1-戊醇"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "2-甲基-1-戊醇",
+      "zh-TW": "2-甲基-1-戊醇",
+      "en-US": "2-methyl-1-戊醇"
+    },
+    "smiles": "COCC(C)C",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          5
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

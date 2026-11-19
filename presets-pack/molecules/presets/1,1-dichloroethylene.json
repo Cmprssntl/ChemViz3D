@@ -1,0 +1,59 @@
+{
+  "id": "1,1-dichloroethylene",
+  "formula": "C2H2Cl2",
+  "inputs": [
+    "C2H2Cl2",
+    "1,1-二氯乙烯",
+    "1,1-dichloroethylene"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "1,1-二氯乙烯",
+      "zh-TW": "1,1-二氯乙烯",
+      "en-US": "1,1-dichloroethylene"
+    },
+    "smiles": "C=C(Cl)Cl",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "Cl",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "Cl",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          3
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "1-amine-c1",
+  "formula": "H3N",
+  "inputs": [
+    "H3N",
+    "甲烷胺",
+    "1-甲烷amine"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "甲烷胺",
+      "zh-TW": "甲烷胺",
+      "en-US": "1-甲烷amine"
+    },
+    "smiles": "N",
+    "atoms": [
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": []
+  }
+}

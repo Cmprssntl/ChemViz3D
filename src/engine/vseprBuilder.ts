@@ -2,7 +2,7 @@
 import type { MoleculeData, AtomData, BondData } from "../types/molecule";
 import { BL_CC, BL_CC2, BL_CC3, BL_CH, BL_CO, BL_CO2, BL_CN, BL_OH, BL_NH, atomRenderRadius } from "./config";
 import { vseprPositions, tetrahedralPositions } from "./geometry";
-import { findRings } from "./rotation";
+import { MolecularGraph } from "../domain/graph/MolecularGraph";
 import { bestFitPlane } from "./coplanarity";
 import { uffRelax, buildTopology, type UFFAtom } from "./uff";
 
@@ -199,7 +199,19 @@ function valenceForAtom(element: string, charge: number | undefined): number {
   return base;
 }
 
-export function buildFromBondSpec(spec: BondSpec, formula: string, smiles: string, jsonName?: string): MoleculeData {
+export interface BuildOptions {
+  /** Run the legacy in-builder UFF relaxation. The conformer service disables
+   *  it and uses the constrained minimizer instead. */
+  relax?: boolean;
+}
+
+export function buildFromBondSpec(
+  spec: BondSpec,
+  formula: string,
+  smiles: string,
+  jsonName?: string,
+  options: BuildOptions = {},
+): MoleculeData {
   const n = spec.atoms.length;
   if (n === 0) return { atoms:[], bonds:[], name:formula, formula, smiles };
 
@@ -225,14 +237,11 @@ export function buildFromBondSpec(spec: BondSpec, formula: string, smiles: strin
   // wrong place. The remaining VSEPR slots on each ring atom are then
   // correctly available for H placement.
   // Local adjacency helper: spec.bonds is [i,j,order][] not BondData[]
-  const adj = new Map<number, number[]>();
-  for (const b of spec.bonds) {
-    if (!adj.has(b[0])) adj.set(b[0], []);
-    if (!adj.has(b[1])) adj.set(b[1], []);
-    adj.get(b[0])!.push(b[1]);
-    adj.get(b[1])!.push(b[0]);
-  }
-  const rings = findRings(adj, 20);
+  const graph = new MolecularGraph(
+    spec.atoms.length,
+    spec.bonds.map((b, index) => ({ index, a: b[0], b: b[1], order: b[2] })),
+  );
+  const rings = graph.findRings(20);
   // Place ring atoms with a template that targets the sp3 ideal C-C-C angle
   // (~109.47°). For an alternating-z n-gon (each atom up/down alternately),
   // the C-C-C angle θ depends on z, R, n via:
@@ -1066,7 +1075,7 @@ export function buildFromBondSpec(spec: BondSpec, formula: string, smiles: strin
   }));
   const bondPairs: [number, number][] = bonds.map(b => [b.atom1Idx, b.atom2Idx]);
   const topo = buildTopology(uffAtoms, bondPairs);
-  uffRelax(uffAtoms, topo);
+  if (options.relax !== false) uffRelax(uffAtoms, topo);
   // Copy optimized positions back into AtomData
   for (let i = 0; i < atoms.length; i++) {
     atoms[i].x = uffAtoms[i].x;

@@ -1,0 +1,82 @@
+{
+  "id": "methyl-tert-butyl-ether",
+  "formula": "C5H12O",
+  "inputs": [
+    "C5H12O",
+    "甲基叔丁基醚",
+    "methyl tert-butyl ether",
+    "MTBE"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "甲基叔丁基醚",
+      "zh-TW": "甲基叔丁基醚",
+      "en-US": "methyl tert-butyl ether"
+    },
+    "smiles": "COC(C)(C)C",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          5
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

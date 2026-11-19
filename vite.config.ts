@@ -110,11 +110,19 @@ export default defineConfig(({ command }) => {
           map: null
         };
       }
+    },
+    // openchemlib 内部保留了一个 `new URL("resources.json", import.meta.url)`
+    // 的未使用分支，Vite 会因此把上游 1.35 MB 的完整资源表打进产物。
+    // ChemViz3D 只使用裁剪后内联的那一份，这里丢弃多余资产。
+    {
+      name: 'drop-upstream-ocl-resources',
+      generateBundle(_options, bundle) {
+        for (const name of Object.keys(bundle)) {
+          if (/(^|\/)resources-[\w-]+\.json$/.test(name)) delete bundle[name];
+        }
+      }
     }
   ],
-  optimizeDeps: {
-    exclude: ['@rdkit/rdkit']
-  },
   build: {
     // 关闭 module preload polyfill（Vite 内置会生成 import.meta 代码）
     modulePreload: false,

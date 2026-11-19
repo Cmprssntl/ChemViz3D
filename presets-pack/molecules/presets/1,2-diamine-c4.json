@@ -1,0 +1,70 @@
+{
+  "id": "1,2-diamine-c4",
+  "formula": "C3H10N2",
+  "inputs": [
+    "C3H10N2",
+    "四二胺",
+    "1,2-丁烷diamine"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "四二胺",
+      "zh-TW": "四二胺",
+      "en-US": "1,2-丁烷diamine"
+    },
+    "smiles": "CC(N)CN",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

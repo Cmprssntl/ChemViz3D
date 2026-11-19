@@ -1,0 +1,92 @@
+{
+  "id": "1-alkyne-c7",
+  "formula": "C7H12",
+  "inputs": [
+    "C7H12",
+    "七炔",
+    "1-七炔"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "七炔",
+      "zh-TW": "七炔",
+      "en-US": "1-七炔"
+    },
+    "smiles": "C#CCCCCC",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 3
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

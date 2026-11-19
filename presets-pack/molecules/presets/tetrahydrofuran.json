@@ -1,0 +1,78 @@
+{
+  "id": "tetrahydrofuran",
+  "formula": "C4H8O",
+  "inputs": [
+    "C4H8O",
+    "四氢呋喃",
+    "tetrahydrofuran",
+    "THF"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "四氢呋喃",
+      "zh-TW": "四氫呋喃",
+      "en-US": "tetrahydrofuran"
+    },
+    "smiles": "C1CCOC1",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          0
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

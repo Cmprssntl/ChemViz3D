@@ -1,0 +1,110 @@
+{
+  "id": "di-sub-benzene-2-7-3",
+  "formula": "C6H4BrF",
+  "inputs": [
+    "C6H4BrF",
+    "间溴氟苯",
+    "间-溴氟benzene"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "间溴氟苯",
+      "zh-TW": "间溴氟苯",
+      "en-US": "间-溴氟benzene"
+    },
+    "smiles": "Fc1cccc(Br)c1",
+    "atoms": [
+      {
+        "el": "F",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "Br",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          7
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          7,
+          1
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

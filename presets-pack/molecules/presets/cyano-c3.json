@@ -1,0 +1,59 @@
+{
+  "id": "cyano-c3",
+  "formula": "C3H5N",
+  "inputs": [
+    "C3H5N",
+    "三腈",
+    "三nitrile"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "三腈",
+      "zh-TW": "三腈",
+      "en-US": "三nitrile"
+    },
+    "smiles": "CCC#N",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 3
+      }
+    ]
+  }
+}

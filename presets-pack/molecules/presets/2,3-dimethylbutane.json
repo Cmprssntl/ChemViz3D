@@ -1,0 +1,81 @@
+{
+  "id": "2,3-dimethylbutane",
+  "formula": "C6H14",
+  "inputs": [
+    "C6H14",
+    "2,3-二甲基丁烷",
+    "2,3-dimethylbutane"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "2,3-二甲基丁烷",
+      "zh-TW": "2,3-二甲基丁烷",
+      "en-US": "2,3-dimethylbutane"
+    },
+    "smiles": "CC(C)C(C)C",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          5
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

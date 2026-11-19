@@ -1,0 +1,78 @@
+{
+  "id": "thiophene",
+  "formula": "C4H4S",
+  "inputs": [
+    "C4H4S",
+    "噻吩",
+    "thiophene",
+    "thiophene"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "噻吩",
+      "zh-TW": "噻吩",
+      "en-US": "thiophene"
+    },
+    "smiles": "c1ccsc1",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "S",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          0
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

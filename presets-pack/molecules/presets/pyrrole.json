@@ -1,0 +1,78 @@
+{
+  "id": "pyrrole",
+  "formula": "C4H5N",
+  "inputs": [
+    "C4H5N",
+    "吡咯",
+    "pyrrole",
+    "pyrrole"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "吡咯",
+      "zh-TW": "吡咯",
+      "en-US": "pyrrole"
+    },
+    "smiles": "c1cc[nH]c1",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          0
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

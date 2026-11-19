@@ -191,7 +191,47 @@ export function cacheUISettings(settings: UISettings): UISettings {
   return normalized;
 }
 
+interface InjectedSettings {
+  text?: Partial<AIEndpointSettings>;
+  image?: Partial<AIEndpointSettings>;
+  ui?: Partial<UISettings>;
+  systemPrompt?: string;
+}
+
+/** Settings inlined into the page HTML by the desktop bridge. Reading them
+ * needs no network request, so reads never fail even if QtWebEngine's fetch
+ * is flaky ("Failed to fetch") on a given Windows build. */
+function getInjectedSettings(): InjectedSettings {
+  if (typeof window === "undefined") return {};
+  const value = (window as Window & { __CHEMVIZ_SETTINGS__?: unknown }).__CHEMVIZ_SETTINGS__;
+  return value && typeof value === "object" ? (value as InjectedSettings) : {};
+}
+
+/** Restore the runtime snapshot from the HTML-injected settings (fallback
+ * used when the bridge fetch fails). Returns true if anything was restored. */
+export function restoreSettingsFromInjection(): boolean {
+  const injected = getInjectedSettings();
+  if (!injected.text && !injected.image && !injected.ui) return false;
+  setRuntimeAISettings({
+    text: normalizeEndpoint(injected.text, DEFAULT_SETTINGS.text),
+    image: normalizeEndpoint(injected.image, DEFAULT_SETTINGS.image),
+  });
+  if (injected.ui) cacheUISettings(normalizeUISettings(injected.ui));
+  return true;
+}
+
+/** UI settings from the HTML injection, or null when absent. */
+export function getInjectedUISettings(): UISettings | null {
+  const injected = getInjectedSettings();
+  return injected.ui ? normalizeUISettings(injected.ui) : null;
+}
+
 export function getAISettings(): AISettings {
+  // The desktop bridge loads file-based settings into the runtime snapshot at
+  // startup (loadAISettingsFromDesktopBridge). Prefer that snapshot over
+  // localStorage: QtWebEngine keys localStorage by origin and the bridge port
+  // changes on every restart, so localStorage cannot survive a relaunch.
+  if (runtimeSettings) return cloneSettings(runtimeSettings);
   const configured = typeof __CHEMVIZ_AI_SETTINGS__ === "undefined" ? {} : __CHEMVIZ_AI_SETTINGS__;
   const legacyFilePrompt = normalizeSystemPrompt(configured.systemPrompt, "");
   const fileSettings = {
@@ -262,7 +302,13 @@ export async function loadAISettingsFromDesktopBridge(): Promise<UISettings | nu
     text: normalizeEndpoint(value.text, DEFAULT_SETTINGS.text),
     image: normalizeEndpoint(value.image, DEFAULT_SETTINGS.image),
   };
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+  } catch {
+    // localStorage is best-effort (QtWebEngine keys it by origin, so it may
+    // be a fresh empty store after a relaunch). Never let a storage failure
+    // prevent applying the file-based settings below.
+  }
   setRuntimeAISettings(normalized, hasDesktopDeveloperSettings());
   return cacheUISettings(normalizeUISettings(value.ui));
 }
@@ -281,13 +327,123 @@ export async function saveUISettingsToDesktopBridge(settings: UISettings): Promi
   }
   const token = getDesktopBridgeToken();
   if (!token) return false;
-  const response = await fetch(`${DESKTOP_BRIDGE_PREFIX}/settings`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...desktopBridgeHeaders() },
-    body: JSON.stringify({ ui: normalizeUISettings(settings) }),
-  });
-  if (!response.ok) throw new Error(`无法保存桌面客户端界面设置（HTTP ${response.status}）`);
+  // Native QtWebChannel first (packaged desktop), then the HTTP bridge.
+  if (await saveViaQtChannel({ ...getAISettings(), ui: normalizeUISettings(settings) })) return true;
+  try {
+    const response = await fetch(`${DESKTOP_BRIDGE_PREFIX}/settings`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...desktopBridgeHeaders() },
+      body: JSON.stringify({ ui: normalizeUISettings(settings) }),
+    });
+    if (!response.ok) throw new Error(`无法保存桌面客户端界面设置（HTTP ${response.status}）`);
+  } catch (error) {
+    if (error instanceof Error && /^无法保存桌面客户端界面设置（HTTP/.test(error.message)) {
+      throw error;
+    }
+    const current = getAISettings();
+    await saveViaImageBeacon({ ...current, ui: normalizeUISettings(settings) });
+  }
   return true;
+}
+
+/* QtWebChannel native bridge: the packaged desktop shell exposes settings
+ * read/write over Qt's internal IPC (window.qt.webChannelTransport), which
+ * keeps working even when QtWebEngine's HTTP network service fails on some
+ * Windows builds. The plain web build has no qt object and falls through to
+ * the HTTP bridge. */
+interface QtSettingsApi {
+  getSettings(callback: (value: string) => void): void;
+  saveSettings(content: string, callback: (result: string) => void): void;
+  chatCompletions(payloadJson: string, callback: (result: string) => void): void;
+}
+
+let qtChannelPromise: Promise<QtSettingsApi | null> | null = null;
+
+function loadQWebChannelScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector("script[data-chemviz-qwebchannel]")) {
+      resolve();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "qrc:///qtwebchannel/qwebchannel.js";
+    script.dataset.chemvizQwebchannel = "1";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("qwebchannel.js 加载失败"));
+    document.head.appendChild(script);
+  });
+}
+
+export function getQtSettingsApi(): Promise<QtSettingsApi | null> {
+  const qt = (window as { qt?: { webChannelTransport?: unknown } } | undefined)?.qt;
+  if (typeof window === "undefined" || !qt?.webChannelTransport) {
+    return Promise.resolve(null);
+  }
+  if (!qtChannelPromise) {
+    qtChannelPromise = loadQWebChannelScript()
+      .then(
+        () =>
+          new Promise<QtSettingsApi | null>((resolve) => {
+            const ctor = (window as unknown as {
+              QWebChannel?: new (
+                transport: unknown,
+                callback: (channel: { objects: Record<string, QtSettingsApi> }) => void,
+              ) => void;
+            }).QWebChannel;
+            if (!ctor) {
+              resolve(null);
+              return;
+            }
+            new ctor(qt.webChannelTransport as unknown, (channel) => {
+              resolve(channel.objects.chemviz ?? null);
+            });
+          }),
+      )
+      .catch(() => null);
+  }
+  return qtChannelPromise;
+}
+
+/** Prefer the native QtWebChannel save when the desktop shell provides it. */
+async function saveViaQtChannel(settings: Partial<AISettings> & { ui?: unknown }): Promise<boolean> {
+  const api = await getQtSettingsApi();
+  if (!api) return false;
+  const result = await new Promise<string>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error("保存超时")), 10000);
+    api.saveSettings(JSON.stringify(settings, null, 2), (value) => {
+      window.clearTimeout(timer);
+      resolve(value);
+    });
+  });
+  if (result !== "ok") {
+    const detail = result.startsWith("error:") ? `：${result.slice(6)}` : "";
+    throw new Error(`无法保存桌面客户端配置${detail}`);
+  }
+  return true;
+}
+
+/** Write settings without fetch(): an <img> GET beacon is not subject to
+ * QtWebEngine's flaky fetch() on some Windows builds ("Failed to fetch"),
+ * so saving keeps working even when the fetch network stack does not. */
+function saveViaImageBeacon(
+  settings: Partial<AISettings> & { ui?: unknown },
+): Promise<void> {
+  const token = getDesktopBridgeToken();
+  if (!token) return Promise.reject(new Error("bridge 未连接"));
+  const payload = encodeURIComponent(JSON.stringify(settings));
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const timer = window.setTimeout(() => reject(new Error("保存超时")), 15000);
+    image.onload = () => {
+      window.clearTimeout(timer);
+      resolve();
+    };
+    image.onerror = () => {
+      window.clearTimeout(timer);
+      reject(new Error("无法保存桌面客户端配置（bridge 通道不可用）"));
+    };
+    image.src = `${DESKTOP_BRIDGE_PREFIX}/settings?action=save&token=${encodeURIComponent(token)}&data=${payload}&t=${Date.now()}`;
+  });
 }
 
 /** Write settings.int with an explicit file picker, or download it when unavailable. */
@@ -303,22 +459,34 @@ export async function saveAISettingsFile(settings: AISettings): Promise<"bridge"
     if (!mobile.saveSettings?.(content)) throw new Error("无法保存 Android 设置");
     return "bridge";
   }
+  // 1) Native QtWebChannel (packaged desktop): never depends on HTTP.
+  if (await saveViaQtChannel(normalized)) return "bridge";
   const bridgeToken = getDesktopBridgeToken();
   if (bridgeToken) {
-    const response = await fetch(`${DESKTOP_BRIDGE_PREFIX}/settings`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", ...desktopBridgeHeaders() },
-      body: content,
-    });
-    if (!response.ok) {
-      let detail = "";
-      try {
-        const payload = await response.json() as { error?: unknown };
-        if (typeof payload.error === "string") detail = `：${payload.error}`;
-      } catch {
-        // Keep the status-only error when the bridge did not return JSON.
+    try {
+      const response = await fetch(`${DESKTOP_BRIDGE_PREFIX}/settings`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...desktopBridgeHeaders() },
+        body: content,
+      });
+      if (!response.ok) {
+        let detail = "";
+        try {
+          const payload = await response.json() as { error?: unknown };
+          if (typeof payload.error === "string") detail = `：${payload.error}`;
+        } catch {
+          // Keep the status-only error when the bridge did not return JSON.
+        }
+        throw new Error(`无法保存桌面客户端配置（HTTP ${response.status}）${detail}`);
       }
-      throw new Error(`无法保存桌面客户端配置（HTTP ${response.status}）${detail}`);
+    } catch (error) {
+      // A non-HTTP failure (e.g. TypeError "Failed to fetch" in QtWebEngine)
+      // means the request never reached the bridge; fall back to the image
+      // beacon so saving never depends on fetch working.
+      if (error instanceof Error && /^无法保存桌面客户端配置（HTTP/.test(error.message)) {
+        throw error;
+      }
+      await saveViaImageBeacon(normalized);
     }
     return "bridge";
   }

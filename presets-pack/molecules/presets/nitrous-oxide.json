@@ -1,0 +1,51 @@
+{
+  "id": "nitrous-oxide",
+  "formula": "N2O",
+  "inputs": [
+    "N2O",
+    "一氧化二氮",
+    "nitrous oxide",
+    "笑气"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "一氧化二氮",
+      "zh-TW": "一氧化二氮",
+      "en-US": "nitrous oxide"
+    },
+    "smiles": "[N-]=[N+]=O",
+    "atoms": [
+      {
+        "el": "N",
+        "hybridization": "sp2",
+        "charge": -1
+      },
+      {
+        "el": "N",
+        "hybridization": "sp",
+        "charge": 1
+      },
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

@@ -42,7 +42,18 @@ def _default_config_dir(root: Path) -> Path:
     executable_dir = Path(sys.executable).resolve().parent
     # A portable bundle is intentionally self-contained. The caller should
     # place it in a writable directory; never silently redirect its state.
-    return executable_dir
+    # Detect installed layouts by the protected Program Files location; plain
+    # os.access is unreliable because the current process may be elevated.
+    protected = any(
+        part.lower() in {"program files", "program files (x86)"} for part in executable_dir.parts
+    )
+    if not protected and os.access(executable_dir, os.W_OK):
+        return executable_dir
+    # Installed builds (e.g. C:\Program Files\ChemViz3D) are not writable by
+    # regular users; fall back to a per-user config directory so the bridge
+    # can still persist settings, presets and caches.
+    config_home = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA") or str(Path.home())
+    return Path(config_home) / "ChemViz3D"
 
 
 def _parser() -> argparse.ArgumentParser:

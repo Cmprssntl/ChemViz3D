@@ -2,7 +2,9 @@ import React, { useRef, useEffect, useCallback, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { useStore } from "../store/useStore";
-import { updateMoleculeScene, centerMolecule } from "../engine/bonds";
+import { MoleculeScene } from "../engine/view/MoleculeScene";
+import { CameraRig } from "../engine/view/CameraRig";
+import { centerGroupAtOrigin } from "../engine/view/centerGroup";
 import { raycastHit, clearHighlights, highlightAtom, highlightBond } from "../engine/interaction";
 import { applyBondRotation, snapshotPositions } from "../engine/rotation";
 import { detectPlanarFragments, bestFitPlane } from "../engine/coplanarity";
@@ -162,11 +164,13 @@ export const MoleculeViewer: React.FC = () => {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
+  const rigRef = useRef<CameraRig | null>(null);
+  const moleculeSceneRef = useRef<MoleculeScene | null>(null);
   const moleculeGroupRef = useRef<THREE.Group | null>(null);
+  const structureKeyRef = useRef<string>("");
   const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const pointerTypeRef = useRef<string>("mouse");
-  const molJsonRef = useRef<string>("");
   const originalPositionsRef = useRef<Array<{ x: number; y: number; z: number }> | null>(null);
   const [isTouchLayout, setIsTouchLayout] = useState(false);
 
@@ -210,7 +214,6 @@ export const MoleculeViewer: React.FC = () => {
     const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
     camera.position.set(8, 6, 10);
     cameraRef.current = camera;
-
     const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setSize(w, h);
     setScreenshotFn(() => { renderer.render(scene, camera); return renderer.domElement.toDataURL("image/png"); });
@@ -225,7 +228,10 @@ export const MoleculeViewer: React.FC = () => {
     controls.dampingFactor = 0.15;
     controls.minDistance = 3; controls.maxDistance = 30;
     controlsRef.current = controls;
-    setResetCameraFn(() => { controls.target.set(0,0,0); camera.position.set(8,6,10); controls.update(); });
+
+    const rig = new CameraRig(camera, controls);
+    rigRef.current = rig;
+    setResetCameraFn(() => { rig.reset(); });
 
     createLighting(scene);
     scene.add(new THREE.GridHelper(15, 15, 0x333366, 0x222244));
@@ -234,6 +240,11 @@ export const MoleculeViewer: React.FC = () => {
     molGroup.name = "molecule-root";
     scene.add(molGroup);
     moleculeGroupRef.current = molGroup;
+
+    const moleculeScene = new MoleculeScene();
+    molGroup.add(moleculeScene.group);
+    moleculeSceneRef.current = moleculeScene;
+    rig.reset();
 
     let animId = 0;
     const animate = () => { animId = requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); };
@@ -259,6 +270,9 @@ export const MoleculeViewer: React.FC = () => {
       window.removeEventListener("resize", onResize);
       resizeObserver?.disconnect();
       cancelAnimationFrame(animId);
+      moleculeScene.dispose();
+      moleculeSceneRef.current = null;
+      rigRef.current = null;
       renderer.dispose();
       if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
     };
@@ -282,33 +296,29 @@ export const MoleculeViewer: React.FC = () => {
     setMolecule(applyBondRotation(baseMolecule, bond.atom1Idx, bond.atom2Idx, rotationAngle));
   }, [rotationAngle]);
 
-  // ���� Scene rebuild when molecule/displayMode/label changes ����
+  // ── Scene sync when molecule / displayMode / label mode change ──
   useEffect(() => {
-    if (!moleculeGroupRef.current) return;
+    const moleculeScene = moleculeSceneRef.current;
+    if (!moleculeScene || !moleculeGroupRef.current) return;
     if (!molecule) {
-      const oldGroup = moleculeGroupRef.current.getObjectByName("molecule");
-      if (oldGroup) {
-        moleculeGroupRef.current.remove(oldGroup);
-        oldGroup.traverse((node) => {
-          if (node instanceof THREE.Mesh) {
-            node.geometry?.dispose();
-            if (Array.isArray(node.material)) node.material.forEach((material) => material.dispose());
-            else node.material?.dispose();
-          }
-        });
-      }
-      molJsonRef.current = "";
+      moleculeScene.dispose();
+      structureKeyRef.current = "";
       return;
     }
-    const key = JSON.stringify({ atoms: molecule.atoms, bonds: molecule.bonds, mode: displayMode, labelMode: labelDisplayMode });
-    if (key === molJsonRef.current) return;
-    molJsonRef.current = key;
+    moleculeScene.sync(molecule, displayMode, labelDisplayMode);
 
-    updateMoleculeScene(moleculeGroupRef.current, molecule, displayMode, labelDisplayMode);
-    centerMolecule(moleculeGroupRef.current);
+    // Only recentre and re-frame when a different structure is loaded.
+    // Doing it on every torsional rotation would slide the molecule and yank
+    // the camera while the user is dragging a bond.
+    const key = `${molecule.atoms.length}:${molecule.bonds.length}:${molecule.name}:${molecule.formula}:${displayMode}`;
+    if (key !== structureKeyRef.current) {
+      structureKeyRef.current = key;
+      centerGroupAtOrigin(moleculeGroupRef.current);
+      rigRef.current?.fit(moleculeGroupRef.current);
+    }
   }, [molecule, displayMode, labelDisplayMode]);
 
-  // ���� Refresh coplanarity indicators AFTER scene rebuild, on ANY change ����
+  // Refresh coplanarity indicators after any scene change so the plane
   // This ensures coplanarity persists through bond rotation, conformer search, etc.
   useEffect(() => {
     if (!moleculeGroupRef.current) return;

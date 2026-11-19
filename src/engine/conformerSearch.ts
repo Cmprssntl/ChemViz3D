@@ -1,7 +1,7 @@
 /** Deterministic conformer search for maximum and minimum coplanarity. */
 import * as THREE from "three";
 import type { BondData, MoleculeData } from "../types/molecule";
-import { applyBondRotation, buildAdj, buildRingBondSet } from "./rotation";
+import { applyBondRotation, graphOf } from "./rotation";
 import {
   bestFitPlane,
   detectPlanarFragments,
@@ -110,8 +110,8 @@ function hasCarbonylNeighbor(molecule: MoleculeData, atomIndex: number): boolean
 }
 
 function getRotatableBonds(molecule: MoleculeData): BondData[] {
-  const adj = buildAdj(molecule.bonds);
-  const ringBonds = buildRingBondSet(adj, molecule.bonds);
+  const graph = graphOf(molecule);
+  const ringBonds = graph.ringBondKeys();
   return molecule.bonds.filter((bond) => {
     if (bond.order !== 1) return false;
     const first = molecule.atoms[bond.atom1Idx];

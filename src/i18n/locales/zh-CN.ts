@@ -4,8 +4,6 @@ export const zhCN: TranslationMap = {
   appTitle: "ChemViz3D",
   appSubtitle: "分子结构可视化",
   inputPanel: "输入",
-  rdkitOn: "RDKit: ON",
-  rdkitOff: "RDKit: OFF",
   active: "活跃",
   screenshot: "截图 (Ctrl+S)",
   exit: "退出 (Esc)",
@@ -162,4 +160,6 @@ export const zhCN: TranslationMap = {
   possibleCoplanar: "可能共面原子数",
   noCoplanarFound: "\u65e0\u5171\u9762\u539f\u5b50",
   definiteCoplanar: "一定共面原子数",
+  conformerFailed: "无法为该结构生成三维构象",
+  conformerBackendFallback: "已回退到几何后备方案",
 };

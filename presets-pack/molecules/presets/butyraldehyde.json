@@ -1,0 +1,71 @@
+{
+  "id": "butyraldehyde",
+  "formula": "C4H8O",
+  "inputs": [
+    "C4H8O",
+    "丁醛",
+    "butyraldehyde",
+    "butanal"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "丁醛",
+      "zh-TW": "丁醛",
+      "en-US": "butyraldehyde"
+    },
+    "smiles": "CCCC=O",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

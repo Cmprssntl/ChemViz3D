@@ -1,0 +1,49 @@
+{
+  "id": "acetaldehyde",
+  "formula": "C2H4O",
+  "inputs": [
+    "C2H4O",
+    "乙醛",
+    "acetaldehyde",
+    "CH3CHO"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "乙醛",
+      "zh-TW": "乙醛",
+      "en-US": "acetaldehyde"
+    },
+    "smiles": "CC=O",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

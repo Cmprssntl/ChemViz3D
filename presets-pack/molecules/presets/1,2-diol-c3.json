@@ -1,0 +1,59 @@
+{
+  "id": "1,2-diol-c3",
+  "formula": "C2H6O2",
+  "inputs": [
+    "C2H6O2",
+    "三-1,2-二醇",
+    "1,2-丙烷diol"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "三-1,2-二醇",
+      "zh-TW": "三-1,2-二醇",
+      "en-US": "1,2-丙烷diol"
+    },
+    "smiles": "CC(O)O",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          3
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

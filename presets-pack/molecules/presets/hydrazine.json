@@ -1,0 +1,37 @@
+{
+  "id": "hydrazine",
+  "formula": "H4N2",
+  "inputs": [
+    "H4N2",
+    "肼",
+    "hydrazine"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "肼",
+      "zh-TW": "肼",
+      "en-US": "hydrazine"
+    },
+    "smiles": "NN",
+    "atoms": [
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

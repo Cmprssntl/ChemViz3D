@@ -1,0 +1,110 @@
+{
+  "id": "mono-sub-benzene-8",
+  "formula": "C7H5N",
+  "inputs": [
+    "C7H5N",
+    "苯甲腈",
+    "benzonitrile"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "苯甲腈",
+      "zh-TW": "苯甲腈",
+      "en-US": "benzonitrile"
+    },
+    "smiles": "N#Cc1ccccc1",
+    "atoms": [
+      {
+        "el": "N",
+        "hybridization": "sp"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 3
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          7,
+          2
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

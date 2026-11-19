@@ -1,0 +1,71 @@
+{
+  "id": "2-methoxyethanol",
+  "formula": "C3H8O2",
+  "inputs": [
+    "C3H8O2",
+    "2-甲氧基乙醇",
+    "2-methoxyethanol",
+    "乙二醇单甲醚"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "2-甲氧基乙醇",
+      "zh-TW": "2-甲氧基乙醇",
+      "en-US": "2-methoxyethanol"
+    },
+    "smiles": "COCCO",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

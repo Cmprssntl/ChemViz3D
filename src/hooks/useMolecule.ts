@@ -1,7 +1,6 @@
-import { useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import type { MoleculeData } from "../types/molecule";
-import { buildFromBondSpec } from "../engine/vseprBuilder";
-import { optimizeConformation } from "../engine/conformer";
+import { ConformerError, ConformerService } from "../engine/conformer/ConformerService";
 import { isChemVZ, chemVZToBondSpec } from "../types/moleculeFormat";
 import { useStore } from "../store/useStore";
 import { parseLocalInput } from "../ai/localParser";
@@ -11,35 +10,42 @@ import type { ChemVZMolecule } from "../types/moleculeFormat";
 import { clearAllCachedChemVZ, clearCachedChemVZ, getCachedChemVZ, saveCachedChemVZ } from "../ai/cache";
 import { t } from "../i18n/index";
 
-let rdkitModule: any = null;
-
-async function initRDKitInternal(): Promise<boolean> {
-  if (rdkitModule) return true;
-  if (location.protocol === "file:") return false;
-  try {
-    if (typeof (window as any).initRDKitModule === "function") {
-      rdkitModule = await (window as any).initRDKitModule({ locateFile: () => "RDKit_minimal.wasm" });
-      return true;
-    }
-    console.warn("RDKit initRDKitModule not found on window");
-    return false;
-  } catch (error) {
-    console.warn("RDKit WASM not available, using heuristic mode:", error);
-    return false;
-  }
-}
-
 function selectChemVZName(name: ChemVZMolecule["name"], locale: string): string | undefined {
   if (typeof name === "string") return name;
   if (!name || typeof name !== "object") return undefined;
   return name[locale] || name["en-US"] || Object.values(name)[0];
 }
 
+const conformerService = new ConformerService();
+
 function buildMoleculeFromChemVZObject(obj: ChemVZMolecule, locale = "zh-CN"): MoleculeData {
   const spec = chemVZToBondSpec(obj);
-  let result = buildFromBondSpec(spec, spec.formula, obj.smiles || "", selectChemVZName(obj.name, locale));
-  result = optimizeConformation(result);
-  return { ...result, name: selectChemVZName(obj.name, locale) || result.name, smiles: obj.smiles || result.smiles };
+  const name = selectChemVZName(obj.name, locale);
+  const result = conformerService.build(
+    {
+      elements: spec.atoms,
+      bonds: spec.bonds,
+      ...(spec.hybridizations ? { hybridizations: spec.hybridizations } : {}),
+      ...(spec.charges ? { charges: spec.charges } : {}),
+      formula: spec.formula,
+      smiles: obj.smiles || "",
+    },
+    { name },
+  );
+  if (result.warnings.length > 0) {
+    console.warn(`[conformer:${result.backend}]`, ...result.warnings);
+  }
+  return result.molecule;
+}
+
+/**
+ * Geometry failures are reported explicitly. Silently rendering nothing (or
+ * falling back to a 2D sketch) is what made the old "structure got stretched"
+ * bug so hard to diagnose.
+ */
+function describeBuildFailure(error: unknown): string {
+  if (error instanceof ConformerError) return `${t("conformerFailed")}: ${error.message}`;
+  return t("conformerFailed") + ": " + (error instanceof Error ? error.message : String(error));
 }
 
 export function useMolecule() {
@@ -47,17 +53,10 @@ export function useMolecule() {
   const setLoading = useStore(s => s.setLoading);
   const setError = useStore(s => s.setError);
   const setInfoMessage = useStore(s => s.setInfoMessage);
-  const setRdkitReady = useStore(s => s.setRdkitReady);
   const setRotatingBond = useStore(s => s.setRotatingBond);
   const setConformerStats = useStore(s => s.setConformerStats);
   const setParseSource = useStore(s => s.setParseSource);
   const locale = useStore(s => s.locale);
-  const rdkitReady = useStore(s => s.rdkitReady);
-
-  useEffect(() => {
-    if (rdkitReady) return;
-    initRDKitInternal().then(ready => { setRdkitReady(ready); console.log(`RDKit WASM ${ready ? "loaded" : "not available, using heuristic mode"}`); });
-  }, [rdkitReady, setRdkitReady]);
 
   const resetInputState = () => {
     setLoading(true); setError(null); setInfoMessage(null); setMolecule(null);
@@ -74,7 +73,9 @@ export function useMolecule() {
       }
       setMolecule(buildMoleculeFromChemVZObject(obj, locale));
     } catch (error) {
-      setError(t("fileErrorPrefix") + (error instanceof Error ? error.message : String(error)));
+      setError(error instanceof ConformerError
+        ? describeBuildFailure(error)
+        : t("fileErrorPrefix") + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLoading(false);
     }
@@ -122,7 +123,8 @@ export function useMolecule() {
       }
       setInfoMessage(chemvz.comment ? t("aiParsingComment", { comment: chemvz.comment }) : t("aiParsingComplete"));
     } catch (error) {
-      if (error instanceof AIParseError) setError(error.message);
+      if (error instanceof ConformerError) setError(describeBuildFailure(error));
+      else if (error instanceof AIParseError) setError(error.message);
       else setError(t("aiParsingFailed") + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLoading(false);

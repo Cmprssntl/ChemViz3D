@@ -1,0 +1,25 @@
+{
+  "id": "1-bromo-c1",
+  "formula": "HBr",
+  "inputs": [
+    "HBr",
+    "溴代甲烷",
+    "1-bromo甲烷"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "溴代甲烷",
+      "zh-TW": "溴代甲烷",
+      "en-US": "1-bromo甲烷"
+    },
+    "smiles": "Br",
+    "atoms": [
+      {
+        "el": "Br",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": []
+  }
+}

@@ -4,8 +4,6 @@ export interface TranslationMap {
   appTitle: string;
   appSubtitle: string;
   inputPanel: string;
-  rdkitOn: string;
-  rdkitOff: string;
   active: string;
   screenshot: string;
   exit: string;
@@ -167,5 +165,7 @@ export interface TranslationMap {
   possibleCoplanar: string;
   definiteCoplanar: string;
   noCoplanarFound: string;
+  conformerFailed: string;
+  conformerBackendFallback: string;
   [key: string]: string;
 }

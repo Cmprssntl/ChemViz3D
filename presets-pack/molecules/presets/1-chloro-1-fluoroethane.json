@@ -1,0 +1,59 @@
+{
+  "id": "1-chloro-1-fluoroethane",
+  "formula": "C2H4ClF",
+  "inputs": [
+    "C2H4ClF",
+    "1-氯-1-氟乙烷",
+    "1-chloro-1-fluoroethane"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "1-氯-1-氟乙烷",
+      "zh-TW": "1-氯-1-氟乙烷",
+      "en-US": "1-chloro-1-fluoroethane"
+    },
+    "smiles": "CC(F)Cl",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "F",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "Cl",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          3
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

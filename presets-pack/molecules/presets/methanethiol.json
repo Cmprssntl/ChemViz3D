@@ -1,0 +1,37 @@
+{
+  "id": "methanethiol",
+  "formula": "CH4S",
+  "inputs": [
+    "CH4S",
+    "甲硫醇",
+    "methanethiol"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "甲硫醇",
+      "zh-TW": "甲硫醇",
+      "en-US": "methanethiol"
+    },
+    "smiles": "CS",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "S",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

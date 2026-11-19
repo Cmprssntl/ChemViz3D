@@ -1,0 +1,103 @@
+{
+  "id": "2,2-dimethyl-alkane-c8",
+  "formula": "C8H18",
+  "inputs": [
+    "C8H18",
+    "2,2-二甲基辛烷",
+    "2,2-dimethyl辛烷"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "2,2-二甲基辛烷",
+      "zh-TW": "2,2-二甲基辛烷",
+      "en-US": "2,2-dimethyl辛烷"
+    },
+    "smiles": "CCCCC(C)(C)C",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          7
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

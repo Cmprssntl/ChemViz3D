@@ -1,0 +1,136 @@
+{
+  "id": "di-sub-benzene-6-6-3",
+  "formula": "C6H4N2O2",
+  "inputs": [
+    "C6H4N2O2",
+    "间硝基硝基苯",
+    "间-硝基硝基benzene"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "间硝基硝基苯",
+      "zh-TW": "间硝基硝基苯",
+      "en-US": "间-硝基硝基benzene"
+    },
+    "smiles": "[O-][N+]c1cccc([N+][O-])c1",
+    "atoms": [
+      {
+        "el": "O",
+        "hybridization": "sp3",
+        "charge": -1
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3",
+        "charge": 1
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3",
+        "charge": 1
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3",
+        "charge": -1
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          7,
+          8
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          9
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          9,
+          2
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

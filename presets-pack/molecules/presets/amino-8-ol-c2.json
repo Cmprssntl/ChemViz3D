@@ -1,0 +1,59 @@
+{
+  "id": "amino-8-ol-c2",
+  "formula": "C2H7NO",
+  "inputs": [
+    "C2H7NO",
+    "二-2-氨基-1-醇",
+    "2-amino-1-乙醇"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "二-2-氨基-1-醇",
+      "zh-TW": "二-2-氨基-1-醇",
+      "en-US": "2-amino-1-乙醇"
+    },
+    "smiles": "NCCO",
+    "atoms": [
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

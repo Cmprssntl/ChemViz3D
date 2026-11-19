@@ -1,0 +1,25 @@
+{
+  "id": "1-chloro-c1",
+  "formula": "HCl",
+  "inputs": [
+    "HCl",
+    "氯代甲烷",
+    "1-chloro甲烷"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "氯代甲烷",
+      "zh-TW": "氯代甲烷",
+      "en-US": "1-chloro甲烷"
+    },
+    "smiles": "Cl",
+    "atoms": [
+      {
+        "el": "Cl",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": []
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "id": "pentafluoroethane",
+  "formula": "C2HF5",
+  "inputs": [
+    "C2HF5",
+    "五氟乙烷",
+    "pentafluoroethane",
+    "HFC-125"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "五氟乙烷",
+      "zh-TW": "五氟乙烷",
+      "en-US": "pentafluoroethane"
+    },
+    "smiles": "FC(F)C(F)(F)F",
+    "atoms": [
+      {
+        "el": "F",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "F",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "F",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "F",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "F",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          6
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

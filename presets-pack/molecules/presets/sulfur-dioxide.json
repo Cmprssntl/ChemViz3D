@@ -1,0 +1,48 @@
+{
+  "id": "sulfur-dioxide",
+  "formula": "O2S",
+  "inputs": [
+    "O2S",
+    "二氧化硫",
+    "sulfur dioxide"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "二氧化硫",
+      "zh-TW": "二氧化硫",
+      "en-US": "sulfur dioxide"
+    },
+    "smiles": "O=S=O",
+    "atoms": [
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "S",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 2
+      }
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "id": "cyanamide",
+  "formula": "CH2N2",
+  "inputs": [
+    "CH2N2",
+    "氰胺",
+    "cyanamide"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "氰胺",
+      "zh-TW": "氰胺",
+      "en-US": "cyanamide"
+    },
+    "smiles": "N#CN",
+    "atoms": [
+      {
+        "el": "N",
+        "hybridization": "sp"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 3
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

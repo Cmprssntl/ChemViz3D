@@ -27,6 +27,9 @@ from typing import Any
 BRIDGE_PREFIX = "/__chemviz_bridge"
 BRIDGE_TOKEN_HEADER = "X-ChemViz-Bridge-Token"
 MAX_BODY_BYTES = 16 * 1024 * 1024
+# 1x1 transparent GIF returned by the settings "save" beacon so an <img> tag
+# (which never uses QtWebEngine's flaky fetch) can confirm a successful write.
+_PIXEL_GIF = base64.b64decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
 DEFAULT_UI_SETTINGS = {
     "locale": "zh-CN",
     "displayMode": "ball-and-stick",
@@ -185,7 +188,13 @@ class BridgeHandler(BaseHTTPRequestHandler):
         self._send_bytes(status, _json_bytes(value), "application/json; charset=utf-8")
 
     def _authorized(self) -> bool:
-        if secrets.compare_digest(self.headers.get(BRIDGE_TOKEN_HEADER, ""), self.server.bridge_token):
+        header_token = self.headers.get(BRIDGE_TOKEN_HEADER, "")
+        if secrets.compare_digest(header_token, self.server.bridge_token):
+            return True
+        # The image-beacon save cannot set custom headers, so its token rides
+        # in the query string instead.
+        query_token = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("token", [""])[0]
+        if query_token and secrets.compare_digest(query_token, self.server.bridge_token):
             return True
         self._send_json(HTTPStatus.UNAUTHORIZED, {"error": "invalid bridge token"})
         return False
@@ -204,26 +213,50 @@ class BridgeHandler(BaseHTTPRequestHandler):
         if self.path == f"{BRIDGE_PREFIX}/health":
             self._send_json(HTTPStatus.OK, {"ok": True, "bridge": 1})
             return
-        if self.path == f"{BRIDGE_PREFIX}/settings":
-            if self._authorized():
-                try:
-                    settings = _read_json_file(self.server.settings_path)
-                    # Expose the effective text snapshot to the WebUI so its
-                    # in-memory validation matches the bridge's request path.
-                    public_text = settings.get("text")
-                    merged_text = _merged_text_settings(
-                        self.server.settings_path,
-                        self.server.developer_settings_path,
-                    )
-                    if merged_text:
-                        settings["text"] = {
-                            **(public_text if isinstance(public_text, dict) else {}),
-                            **merged_text,
-                        }
-                    self._send_json(HTTPStatus.OK, settings)
-                except ValueError as exc:
-                    self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
-            return
+        if self.path.startswith(f"{BRIDGE_PREFIX}/settings"):
+            parsed = urllib.parse.urlsplit(self.path)
+            if parsed.path == f"{BRIDGE_PREFIX}/settings":
+                query = urllib.parse.parse_qs(parsed.query)
+                # Image-beacon save: some Windows QtWebEngine builds cannot use
+                # fetch() at all ("Failed to fetch"), so the WebUI falls back
+                # to an <img> GET with the settings inline. Same write path as
+                # PUT /settings, but answers with a 1x1 GIF for the image.
+                if query.get("action") == ["save"]:
+                    if not self._authorized():
+                        return
+                    try:
+                        data_values = query.get("data")
+                        if not data_values:
+                            raise ValueError("missing data parameter")
+                        value = _normalize_settings(
+                            json.loads(urllib.parse.unquote(data_values[0])),
+                            _read_json_file(self.server.settings_path),
+                        )
+                        self.server.write_settings(value)
+                    except (UnicodeDecodeError, ValueError, OSError) as exc:
+                        self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
+                        return
+                    self._send_bytes(HTTPStatus.OK, _PIXEL_GIF, "image/gif")
+                    return
+                if self._authorized():
+                    try:
+                        settings = _read_json_file(self.server.settings_path)
+                        # Expose the effective text snapshot to the WebUI so its
+                        # in-memory validation matches the bridge's request path.
+                        public_text = settings.get("text")
+                        merged_text = _merged_text_settings(
+                            self.server.settings_path,
+                            self.server.developer_settings_path,
+                        )
+                        if merged_text:
+                            settings["text"] = {
+                                **(public_text if isinstance(public_text, dict) else {}),
+                                **merged_text,
+                            }
+                        self._send_json(HTTPStatus.OK, settings)
+                    except ValueError as exc:
+                        self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
+                return
         if self.path == f"{BRIDGE_PREFIX}/presets":
             if self._authorized():
                 self._send_json(HTTPStatus.OK, {"presets": _preset_files(self.server.preset_root)})
@@ -395,8 +428,23 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 ensure_ascii=True,
                 separators=(",", ":"),
             )
+            # Inline the on-disk settings into the page so the WebUI can read
+            # them without any network request. QtWebEngine's fetch can fail
+            # transiently on some Windows builds ("Failed to fetch"); injected
+            # settings make reads immune to that.
+            try:
+                settings_json = json.dumps(
+                    _read_json_file(self.server.settings_path),
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                )
+            except ValueError:
+                settings_json = "{}"
             marker = b"</head>"
-            injection = f'<script>window.__CHEMVIZ_DESKTOP_BRIDGE__={bridge};</script>'.encode("utf-8")
+            injection = (
+                f'<script>window.__CHEMVIZ_DESKTOP_BRIDGE__={bridge};'
+                f"window.__CHEMVIZ_SETTINGS__={settings_json};</script>"
+            ).encode("utf-8")
             body = body.replace(marker, injection + marker, 1)
         self._send_bytes(HTTPStatus.OK, body, content_type)
 

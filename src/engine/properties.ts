@@ -2,7 +2,7 @@
  * Molecular property calculations for ChemViz3D
  *
  * Computes essential medicinal chemistry descriptors
- * using atom-contribution methods without RDKit dependency.
+ * using atom-contribution methods without an external toolkit.
  */
  import { ATOMIC_DATA } from "../utils/formulaParser";
  import type { AtomData, BondData } from "../types/molecule";

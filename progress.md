@@ -224,3 +224,25 @@
 - 目标是重新生成 Web bundle，同步到 ForAndroid，并重新构建验证 APK。
 - 用户随后明确本轮不构建 APK；已停止在资源同步和分支推送阶段。
 - `npm run build` 通过；国际化 bundle 同步至 Android，保留三语双指平移提示。提交 `469ddbf` 已推送到本地 `ForAndroid` 分支（其远端跟踪仓库为当前本地 origin）。
+
+## 2026-11-19 P0 + P1 落地
+
+### P0 安全网
+- 依赖：`@rdkit/rdkit` 移除，`openchemlib@9.26.0` 锁定；`public/RDKit_minimal.{js,wasm}` 删除；`rdkitReady` 状态、徽标与 i18n 键清理。
+- OCL 资源裁剪脚本 `scripts/build-ocl-resources.mjs`：只保留 `/resources/cod/*` 与 `/resources/forcefield/*`，22 项 / 931 KiB（原 35 项 / 1.35 MB），同步内联到 `src/engine/conformer/ocl-resources.generated.json`。
+- 测试骨架 `scripts/run-tests.mjs`（rolldown 打包 + `node --test`），`npm test` / `npm run check`。
+- 新增测试：`tests/ocl-spike.test.ts`、`tests/geometry.test.ts`、`tests/viewport.test.ts`。
+
+### P1 几何止血
+- 新后端：`ConformerBackend`（抽象基类）→ `OpenChemLibBackend`（ConformerGenerator + MMFF94）→ `HeuristicBackend`（VSEPR 放置 + 约束松弛），由 `ConformerService` 依次尝试并校验。
+- `GeometryValidator`：非有限坐标、键长偏差、非键重叠、总跨度；任何后端输出不通过即被跳过。
+- `HarmonicForceField`（解析梯度，键/角/LJ）+ `ConstrainedMinimizer`（Armijo + 信任域 + SHAKE 投影 + 键长应变门限），替代数值梯度 UFF。
+- 删除（移至 `/tmp/opencode/removed/`）：`engine/bonds.ts`、`engine/conformer.ts`、`engine/builder.ts`、`engine/validation.ts`、`utils/smilesGenerator.ts`。
+- 图算法统一到 `src/domain/graph/MolecularGraph.ts`：`rotation.ts` 只保留旋转/快照，`coplanarity.ts`、`conformerSearch.ts`、`vseprBuilder.ts` 不再各自实现邻接与环感知。
+- 视图：`MoleculeScene`（拓扑不变时复用球/标签，仅重建键）+ `CameraRig`（包围球 + 投影自适应 fit，按结构而非每帧重取景）+ `centerGroupAtOrigin`。
+- `vite.config.ts` 新增 `drop-upstream-ocl-resources` 插件，丢弃 OCL 内部未使用的 1.35 MB `resources-*.json` 产物。
+
+### 验收
+- `npm run check`：tsc 0 error，47/47 测试通过。
+- 实测（OCL + MMFF94）：C40 直链 122 原子，键长 1.09–1.53 Å，跨度 51.4 Å，无 <0.65 Å 碰撞；苯环共面偏差 < 0.08 Å。
+- 浏览器实测：乙醇、苯、C40 链均可加载，C40 铺满视口且完整可见，控制台无错误。

@@ -1,0 +1,267 @@
+{
+  "id": "kaempferol",
+  "formula": "C15H10O6",
+  "inputs": [
+    "C15H10O6",
+    "山柰酚",
+    "kaempferol"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "山柰酚",
+      "zh-TW": "山柰酚",
+      "en-US": "kaempferol"
+    },
+    "smiles": "O=c1c(O)c(-c2ccc(O)cc2)oc2cc(O)cc(O)c12",
+    "atoms": [
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          4
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          7,
+          8
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          8,
+          9
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          8,
+          10
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          10,
+          11
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          12
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          12,
+          13
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          13,
+          14
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          14,
+          15
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          15,
+          16
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          15,
+          17
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          17,
+          18
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          18,
+          19
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          18,
+          20
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          20,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          11,
+          5
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          20,
+          13
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

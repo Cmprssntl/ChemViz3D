@@ -1,0 +1,48 @@
+{
+  "id": "carbon-disulfide",
+  "formula": "CS2",
+  "inputs": [
+    "CS2",
+    "二硫化碳",
+    "carbon disulfide"
+  ],
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "二硫化碳",
+      "zh-TW": "二硫化碳",
+      "en-US": "carbon disulfide"
+    },
+    "smiles": "S=C=S",
+    "atoms": [
+      {
+        "el": "S",
+        "hybridization": "sp2"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp"
+      },
+      {
+        "el": "S",
+        "hybridization": "sp2"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 2
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 2
+      }
+    ]
+  }
+}
