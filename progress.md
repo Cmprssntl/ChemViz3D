@@ -270,3 +270,9 @@
 - `npm run check`：tsc 0 error，73/73 测试通过。
 - `node scripts/package.mjs`：web / desktop / android 三份产物均通过结构校验（2846 KiB / 份）。
 - 浏览器实测（IIFE 产物）：`<html data-platform="web">`，甲苯命名 `1-methylbenzene`，控制台无错误。
+
+### P5/P6 补充
+- `engine/view/MeshResources.ts`：按元素/显示模式缓存球体几何、原子材质、标签纹理；`MoleculeScene` 不再为每个原子新建资源，缓存由 `MeshResources.dispose()` 统一释放。
+- `atoms.ts` 移除已废弃的 `createAtomMesh` / `createAtomLabel` / `getElementColor`。
+- `tests/i18n.test.ts`：三语言 key 集合一致性、空值检查、插值检查。
+- 浏览器实测：乙醇 → 苯 → 乙酸 → 环己烷 → 甲苯 连续切换，渲染正常、控制台无错误。

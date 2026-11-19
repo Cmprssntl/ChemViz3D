@@ -4,38 +4,6 @@ import { atomRenderRadius, BOND_RADIUS_BALL, BOND_RADIUS_SPACE, BOND_EXT_FACTOR,
 import type { AtomData, BondData, DisplayMode } from "../types/molecule";
 
 /**
- * Create a 3D sphere mesh for an atom
- */
-export function createAtomMesh(
-  atom: AtomData,
-  mode: DisplayMode
-): THREE.Mesh {
-  const atomicData = ATOMIC_DATA[atom.element];
-  const color = atomicData?.color || "#808080";
-
-  let radius: number;
-  if (mode === "ball-and-stick") {
-    radius = Math.max(0.08, (atomicData?.covalentRadius || 76) / 200);
-  } else {
-    radius = Math.max(0.4, (atomicData?.vdwRadius || 170) / 100);
-  }
-
-  const geometry = new THREE.SphereGeometry(radius, 32, 32);
-  const material = new THREE.MeshPhongMaterial({
-    color: color,
-    shininess: mode === "ball-and-stick" ? 80 : 30,
-    specular: mode === "ball-and-stick" ? new THREE.Color(0x444444) : new THREE.Color(0x222222),
-  });
-
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.set(atom.x, atom.y, atom.z);
-  mesh.userData = { type: "atom", index: atom.index, element: atom.element };
-  mesh.name = `atom-${atom.index}`;
-
-  return mesh;
-}
-
-/**
  * Create a 3D cylinder mesh for a bond between two atoms
  */
 export function createBondMesh(
@@ -174,67 +142,4 @@ export function createBondGroup(
   }
 
   return group;
-}
-
-/**
- * Element color lookup for labels
- */
-export function getElementColor(element: string): string {
-  return ATOMIC_DATA[element]?.color || "#808080";
-}
-
-/**
- * Create a 3D text label sprite for an atom (element symbol).
- * Rendered as a canvas-drawn text on a sprite for performance.
- */
-export function createAtomLabel(atom: AtomData): THREE.Sprite {
-  const color = getElementColor(atom.element);
-  const symbol = atom.element;
-  const fontSize = 48;
-  const padding = 10;
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d")!;
-
-  // Measure text
-  ctx.font = `bold ${fontSize}px -apple-system, "Segoe UI", Arial, sans-serif`;
-  const metrics = ctx.measureText(symbol);
-  const textWidth = metrics.width;
-  const size = Math.max(textWidth + padding * 2, fontSize + padding * 2);
-
-  canvas.width = size;
-  canvas.height = size;
-
-  // Background circle (semi-transparent)
-  ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(13, 13, 26, 0.55)";
-  ctx.fill();
-
-  // Element symbol
-  ctx.font = `bold ${fontSize}px -apple-system, "Segoe UI", Arial, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = color;
-  ctx.fillText(symbol, size / 2, size / 2);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.needsUpdate = true;
-
-  const material = new THREE.SpriteMaterial({
-    map: texture,
-    transparent: true,
-    depthTest: true,
-    depthWrite: false,
-    sizeAttenuation: true,
-  });
-
-  const sprite = new THREE.Sprite(material);
-  // Position above the atom sphere
-  const r = atomRenderRadius(atom.element);
-  sprite.position.set(atom.x, atom.y + r + 0.25, atom.z);
-  sprite.scale.set(0.6, 0.6, 1);
-  sprite.userData = { type: "label", atomIndex: atom.index };
-  sprite.name = `label-${atom.index}`;
-
-  return sprite;
 }

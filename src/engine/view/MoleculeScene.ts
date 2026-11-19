@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { AtomData, BondData, DisplayMode, LabelDisplayMode, MoleculeData } from "../../types/molecule";
-import { createAtomLabel, createAtomMesh, createBondGroup } from "../atoms";
+import { createBondGroup } from "../atoms";
+import { MeshResources } from "./MeshResources";
 import { atomRenderRadius } from "../config";
 
 interface BondEntry {
@@ -24,6 +25,7 @@ export class MoleculeScene {
   private bonds: BondEntry[] = [];
   private signature = "";
   private mode: DisplayMode = "ball-and-stick";
+  private readonly resources = new MeshResources();
 
   constructor() {
     this.group.name = "molecule";
@@ -43,6 +45,7 @@ export class MoleculeScene {
 
   dispose(): void {
     this.clearChildren();
+    this.resources.dispose();
     this.signature = "";
   }
 
@@ -56,7 +59,7 @@ export class MoleculeScene {
     this.clearChildren();
     this.mode = mode;
     this.atomMeshes = molecule.atoms.map((atom) => {
-      const mesh = createAtomMesh(atom, mode);
+      const mesh = this.resources.atomMesh(atom, mode);
       this.group.add(mesh);
       return mesh;
     });
@@ -66,7 +69,7 @@ export class MoleculeScene {
     if (showLabels) {
       for (const atom of molecule.atoms) {
         if (atom.element === "H") continue;
-        const label = createAtomLabel(atom);
+        const label = this.resources.label(atom);
         if (labelMode === "hover") label.visible = false;
         this.group.add(label);
         this.labels.push(label);
@@ -133,9 +136,10 @@ export class MoleculeScene {
 
 function disposeTree(root: THREE.Object3D): void {
   root.traverse((node) => {
+    // Atom meshes and labels share cached geometry/material/texture; the cache
+    // owns them and frees them in MeshResources.dispose().
+    if (node.userData?.shared) return;
     if (node instanceof THREE.Sprite) {
-      // Sprite geometry is shared by three.js; only the material and its
-      // canvas texture belong to this sprite.
       const material = node.material;
       material.map?.dispose();
       material.dispose();

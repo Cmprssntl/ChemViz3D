@@ -96,19 +96,20 @@ scripts/                 打包、同步、检查脚本
 - [ ] 设置 schema 单一源（TS / Vite / Python 共用）
 - **验收**：tsc 0 error；组件行数达标；engine 侧仍有超限文件
 
-### P5 性能与大结构
-- [ ] 构建/松弛/构象搜索进 Worker，带进度与取消
-- [ ] 共享几何体/材质、增量渲染、dispose 审计
-- [ ] 平面分析按 revision memo
-- [ ] 大结构档位：>150 原子降级，>400 原子实例化渲染
-- **验收**：C40 不阻塞主线程；旋转 60 fps；连续切换无内存增长
+### P5 性能与大结构（部分完成）
+- [x] 几何资源复用：`MeshResources` 按元素缓存球体/材质/标签纹理，C40 由 122 份球体与纹理降为约 10 份；缓存统一释放
+- [x] 增量场景更新：拓扑不变时只更新坐标与键（`MoleculeScene.sync`）
+- [x] 大结构档位：>80 原子自动减少 MMFF94 迭代次数
+- [ ] 构建/松弛进 Worker：IIFE 单文件会把 worker 再内联一份（约 +2.9 MB base64），暂缓；需要时改为双产物
+- [ ] 实例化渲染（>400 原子）
+- **验收结果**：连续切换 5 个分子无报错、无残留；C40 生成约 1.2 s（主线程）
 
-### P6 UI 统一视觉
-- [ ] tokens + 分层 CSS，去内联样式
-- [ ] 单一 orientation 判定（CSS 或 JS 二选一）
-- [ ] `data-platform` / `data-touch` 标签样式
-- [ ] i18n 类型化 + 缺失 key 检查
-- **验收**：三语言 × 桌面/竖屏/横屏截图基线一致
+### P6 UI 统一视觉（部分完成）
+- [x] 组件内联样式清理（`MoleculeViewer` 全部改为 `.viewer-*` 类）
+- [x] `data-platform` / `data-touch` 写入 `<html>`，供样式与脚本共用
+- [x] i18n 一致性测试：三语言 key 集合完全一致、无空值、插值可用
+- [ ] tokens 与分层 CSS、单一 orientation 判定、截图基线
+- **验收结果**：i18n 76 项测试通过；视觉重构留待截图基线
 
 ### P7 发布验证（打包完成，安装包未产出）
 - [x] `scripts/package.mjs`：三端静态包 + `platform.json` + `build-info.json`
