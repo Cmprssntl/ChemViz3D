@@ -246,3 +246,27 @@
 - `npm run check`：tsc 0 error，47/47 测试通过。
 - 实测（OCL + MMFF94）：C40 直链 122 原子，键长 1.09–1.53 Å，跨度 51.4 Å，无 <0.65 Å 碰撞；苯环共面偏差 < 0.08 Å。
 - 浏览器实测：乙醇、苯、C40 链均可加载，C40 铺满视口且完整可见，控制台无错误。
+
+## 2026-11-19 P2–P4 推进
+
+### P2 IUPAC 命名（完成）
+- `src/domain/naming/` 类层次：`HeavyMolecule`（去氢骨架 + 隐式氢）、`FunctionalGroups`（主官能团优先级 + 酯/酰胺/腈显式拒绝）、`ParentSelector`（最长碳链 / 单环 / 苯环 + 位次打分）、`Substituents`（卤素、烷基、羟基、氧代、氨基、硝基）、`NameAssembler`（词干、增补词、省音、字母序）、`IupacNamer`（门面 + `tryName`）。
+- 位次规则：主官能团 → 不饱和键 → 取代基，逐项比较位次集合；平手时按字母序最小位次。
+- UI：`MoleculeData.iupacName/iupacError`，`LeftPanel` 独立一行；失败显示 `NamingError` 文案，不回退。
+- 测试 `tests/naming.test.ts`：19 个有机预设 golden；水/氨/CO₂ 断言 `no-carbon-parent`。
+
+### P3 平台统一（桌面/Web 完成）
+- `src/platform/`：`PlatformAdapter`（抽象基类 + 能力表）、`WebPlatform` / `DesktopPlatform` / `AndroidPlatform`、`detect.ts`（构建标志 → `__CHEMVIZ_PLATFORM__` → `ChemVizAndroid` / 桌面桥 → web）、`platform.json` 读取。
+- 启动时写入 `<html data-platform data-touch>`；`cache.ts` / `config.ts` / `screenshot.ts` / 触摸布局改为读适配器能力。
+- 构建：`format: 'iife'` + `inlineDynamicImports` + `base: './'`，`index.html` 改写为普通 `<script defer>`；新增 `emit-platform-marker`、`iife-classic-script-tag` 插件。
+- `scripts/package.mjs`：三端产物 + `platform.json` + `build-info.json`，并校验单文件、无 `import.meta`、非 module 脚本。
+- Android 壳迁移（`WebViewAssetLoader`、删除分叉源码）未执行：本机 `ANDROID_HOME` 未设置，无法编译验证。
+
+### P4 分层拆分（部分）
+- `MoleculeViewer` 450 → 248 行：抽出 `engine/view/CoplanarityOverlay.ts` 与 `hooks/useViewerPointer.ts`。
+- 删除未使用模块/导出：`engine/bonds.ts`、`engine/conformer.ts`、`engine/builder.ts`、`engine/validation.ts`、`utils/smilesGenerator.ts`、`moleculeDataToChemVZ`。
+
+### 验收
+- `npm run check`：tsc 0 error，73/73 测试通过。
+- `node scripts/package.mjs`：web / desktop / android 三份产物均通过结构校验（2846 KiB / 份）。
+- 浏览器实测（IIFE 产物）：`<html data-platform="web">`，甲苯命名 `1-methylbenzene`，控制台无错误。

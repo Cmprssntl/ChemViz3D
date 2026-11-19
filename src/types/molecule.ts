@@ -25,6 +25,10 @@ export interface MoleculeData {
   name: string;
   formula: string;
   smiles: string;
+  /** Deterministic IUPAC name, when the namer supports the structure. */
+  iupacName?: string;
+  /** Why naming failed; the UI shows this instead of a substitute string. */
+  iupacError?: string;
   conformer?: Float64Array;
 }
 

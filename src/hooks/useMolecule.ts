@@ -8,6 +8,7 @@ import { getAIConfig, hasValidTextAISettings, requestAISettings } from "../ai/co
 import { AIParseError, parseWithAI } from "../ai/aiParser";
 import type { ChemVZMolecule } from "../types/moleculeFormat";
 import { clearAllCachedChemVZ, clearCachedChemVZ, getCachedChemVZ, saveCachedChemVZ } from "../ai/cache";
+import { iupacNamer } from "../domain/naming/IupacNamer";
 import { t } from "../i18n/index";
 
 function selectChemVZName(name: ChemVZMolecule["name"], locale: string): string | undefined {
@@ -35,7 +36,18 @@ function buildMoleculeFromChemVZObject(obj: ChemVZMolecule, locale = "zh-CN"): M
   if (result.warnings.length > 0) {
     console.warn(`[conformer:${result.backend}]`, ...result.warnings);
   }
-  return result.molecule;
+  return withIupacName(result.molecule);
+}
+
+/**
+ * Naming is a separate, deterministic stage. A failure is stored verbatim so
+ * the UI can show "not nameable" instead of silently substituting the formula.
+ */
+function withIupacName(molecule: MoleculeData): MoleculeData {
+  const result = iupacNamer.tryName(molecule);
+  return "name" in result
+    ? { ...molecule, iupacName: result.name, iupacError: undefined }
+    : { ...molecule, iupacName: undefined, iupacError: result.error.message };
 }
 
 /**

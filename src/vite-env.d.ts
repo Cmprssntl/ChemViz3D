@@ -7,6 +7,8 @@ declare const __CHEMVIZ_AI_SETTINGS__: {
 } | undefined;
 declare const __CHEMVIZ_AI_PROXY_URL__: string | undefined;
 declare const __CHEMVIZ_AI_PROXY_SOURCE__: string | undefined;
+/** `web` | `desktop` | `android` | `auto` (runtime detection). */
+declare const __CHEMVIZ_BUILD_PLATFORM__: string | undefined;
 
 interface Window {
   __CHEMVIZ_DESKTOP_BRIDGE__?: {

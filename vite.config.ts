@@ -90,11 +90,15 @@ function createAIProxy(requestUrl: string) {
 export default defineConfig(({ command }) => {
   const aiSettings = loadAISettings(command);
   const proxy = command === 'serve' ? createAIProxy(aiSettings.text.requestUrl) : undefined;
+  const buildPlatform = (process.env.VITE_PLATFORM || 'auto').toLowerCase();
   return {
+  // 相对路径：同一份产物既能从 http 服务加载，也能从 file:///appassets 加载
+  base: './',
   define: {
     __CHEMVIZ_AI_SETTINGS__: JSON.stringify(aiSettings),
     __CHEMVIZ_AI_PROXY_URL__: JSON.stringify(proxy ? AI_PROXY_PATH : ''),
     __CHEMVIZ_AI_PROXY_SOURCE__: JSON.stringify(proxy ? aiSettings.text.requestUrl : ''),
+    __CHEMVIZ_BUILD_PLATFORM__: JSON.stringify(buildPlatform),
   },
   plugins: [
     react(),
@@ -118,8 +122,31 @@ export default defineConfig(({ command }) => {
       name: 'drop-upstream-ocl-resources',
       generateBundle(_options, bundle) {
         for (const name of Object.keys(bundle)) {
-          if (/(^|\/)resources-[\w-]+\.json$/.test(name)) delete bundle[name];
+          if (/(^|\/)resources(-\w+)?\.json$/.test(name)) delete bundle[name];
         }
+      }
+    },
+    // 单一 IIFE 产物：桌面 QtWebEngine 与 Android WebView 都以普通 <script>
+    // 加载 assets/main.js，因此把 module 脚本标签改写为 defer。
+    {
+      name: 'iife-classic-script-tag',
+      apply: 'build',
+      transformIndexHtml(html) {
+        return html.replace(
+          /<script type="module"[^>]*src="([^"]+)"[^>]*><\/script>/,
+          '<script defer src="$1"></script>',
+        );
+      }
+    },
+    // 每个平台产物自带一份 platform.json，打包脚本据此校验。
+    {
+      name: 'emit-platform-marker',
+      generateBundle() {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'platform.json',
+          source: JSON.stringify({ platform: buildPlatform === 'auto' ? 'web' : buildPlatform }),
+        });
       }
     }
   ],
@@ -127,7 +154,17 @@ export default defineConfig(({ command }) => {
     // 关闭 module preload polyfill（Vite 内置会生成 import.meta 代码）
     modulePreload: false,
     // 关闭 CSS 代码分割，Android 版只引用单个 style.css
-    cssCodeSplit: false
+    cssCodeSplit: false,
+    // 单一 IIFE 产物：无 import/export，普通 <script> 即可加载
+    rollupOptions: {
+      output: {
+        format: 'iife',
+        inlineDynamicImports: true,
+        entryFileNames: 'assets/main.js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name][extname]',
+      },
+    },
   },
   server: {
     port: 5173,

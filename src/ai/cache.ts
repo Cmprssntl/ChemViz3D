@@ -1,5 +1,6 @@
 import type { ChemVZMolecule } from "../types/moleculeFormat";
 import { getDesktopBridgeToken } from "./config";
+import { platform } from "../platform";
 import { validateAIChemVZ } from "./aiParser";
 
 const BRIDGE_PREFIX = "/__chemviz_bridge";
@@ -56,7 +57,7 @@ function writeBrowserCache(value: Record<string, CachedChemVZ>): void {
 }
 
 function androidCacheBridge(): NonNullable<Window["ChemVizAndroid"]> | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined" || !platform.isAndroid) return null;
   const bridge = window.ChemVizAndroid;
   return bridge && typeof bridge.getCache === "function" && typeof bridge.saveCache === "function"
     ? bridge

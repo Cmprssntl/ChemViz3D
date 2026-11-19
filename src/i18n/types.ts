@@ -165,6 +165,7 @@ export interface TranslationMap {
   possibleCoplanar: string;
   definiteCoplanar: string;
   noCoplanarFound: string;
+  iupacName: string;
   conformerFailed: string;
   conformerBackendFallback: string;
   [key: string]: string;

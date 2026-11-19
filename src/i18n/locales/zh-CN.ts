@@ -162,4 +162,5 @@ export const zhCN: TranslationMap = {
   definiteCoplanar: "一定共面原子数",
   conformerFailed: "无法为该结构生成三维构象",
   conformerBackendFallback: "已回退到几何后备方案",
+  iupacName: "IUPAC 名称",
 };

@@ -162,4 +162,5 @@ export const enUS: TranslationMap = {
   definiteCoplanar: "Definite Coplanar Atoms",
   conformerFailed: "Could not generate a 3D conformer for this structure",
   conformerBackendFallback: "Fell back to the geometric placement backend",
+  iupacName: "IUPAC Name",
 };

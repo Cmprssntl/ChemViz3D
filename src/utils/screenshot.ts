@@ -3,6 +3,7 @@
  * Avoids polluting Zustand store or passing refs through props.
  */
 import { t } from "../i18n/index";
+import { platform } from "../platform";
 
 let _renderer: (() => string | undefined) | null = null;
 
@@ -27,7 +28,7 @@ export async function takeScreenshot(filename = `screenshot-${Date.now()}.png`):
   if (!_renderer) return;
   const dataUrl = _renderer();
   if (!dataUrl) return;
-  const android = window.ChemVizAndroid;
+  const android = platform.isAndroid ? window.ChemVizAndroid : undefined;
   if (android?.saveScreenshot) {
     const saved = android.saveScreenshot(filename, dataUrl);
     const message = saved ? t("screenshotSavedToAlbum") : t("screenshotSaveAlbumFailed");
@@ -44,7 +45,7 @@ export async function takeScreenshot(filename = `screenshot-${Date.now()}.png`):
   } catch (error) {
     console.warn("Unable to copy screenshot to clipboard", error);
   }
-  const bridge = window.__CHEMVIZ_DESKTOP_BRIDGE__;
+  const bridge = platform.isDesktop ? window.__CHEMVIZ_DESKTOP_BRIDGE__ : undefined;
   let savedPath = "";
   if (bridge?.version === 1 && bridge.token) {
     try {

@@ -1,4 +1,5 @@
 import { t } from "../i18n/index";
+import { platform } from "../platform";
 
 export interface AIConfig {
   /** API root or a complete Chat Completions URL. */
@@ -124,7 +125,7 @@ function desktopBridgeHeaders(): Record<string, string> {
 }
 
 function androidBridge(): NonNullable<Window["ChemVizAndroid"]> | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined" || !platform.isAndroid) return null;
   const bridge = window.ChemVizAndroid;
   return bridge && typeof bridge.getSettings === "function" && typeof bridge.saveSettings === "function"
     ? bridge

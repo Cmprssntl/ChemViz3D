@@ -5,13 +5,13 @@ import { useStore } from "../store/useStore";
 import { MoleculeScene } from "../engine/view/MoleculeScene";
 import { CameraRig } from "../engine/view/CameraRig";
 import { centerGroupAtOrigin } from "../engine/view/centerGroup";
-import { raycastHit, clearHighlights, highlightAtom, highlightBond } from "../engine/interaction";
+import { platform } from "../platform";
 import { applyBondRotation, snapshotPositions } from "../engine/rotation";
-import { detectPlanarFragments, bestFitPlane } from "../engine/coplanarity";
-import { countMaxPlanarAtoms } from "../engine/conformerSearch";
 import { updateMeasurementOverlays, clearMeasurementOverlays } from "../engine/measurement";
+import { addCoplanarityIndicators, clearCoplanarityIndicators } from "../engine/view/CoplanarityOverlay";
 import { t } from "../i18n/index";
 import { setScreenshotFn, setResetCameraFn } from "../utils/screenshot";
+import { useViewerPointer } from "../hooks/useViewerPointer";
 
 function createLighting(scene: THREE.Scene): void {
   scene.add(new THREE.AmbientLight(0x404060, 0.5));
@@ -23,139 +23,6 @@ function createLighting(scene: THREE.Scene): void {
   dl2.position.set(-5, -5, -10);
   scene.add(dl2);
   scene.add(new THREE.HemisphereLight(0x444488, 0x222244, 0.6));
-}
-
-function addCoplanarityIndicators(
-  sceneGroup: THREE.Group,
-  molecule: import("../types/molecule").MoleculeData,
-  groupName = "coplanarity-hints"
-): void {
-  // Clean old coplanarity group
-  const old = sceneGroup.getObjectByName(groupName);
-  if (old) {
-    old.parent?.remove(old);
-    old.traverse((n) => { if (n instanceof THREE.Mesh) { n.geometry?.dispose(); (n.material as THREE.Material)?.dispose(); } });
-  }
-
-  const fragments = detectPlanarFragments(molecule);
-
-  // Separate chemically meaningful fragments from trivial chain fragments
-  const nonChainFragments = fragments.filter((f) => f.type !== "chain");
-
-  let atomIndices: number[];
-  let normal: THREE.Vector3;
-  let center: THREE.Vector3;
-  let color: number;
-  let planeOpacity: number;
-  let ringOpacity: number;
-
-  if (nonChainFragments.length > 0) {
-    // ── Preferred path: chemically meaningful fragments exist ──
-    // Highlight exactly the merged set reported by the conformer search.
-    // Do not apply a display-only tolerance here: that would make the 3D
-    // markers disagree with the "possible coplanar atoms" statistic.
-    const sorted = [...nonChainFragments].sort((a, b) => b.atomIndices.length - a.atomIndices.length);
-    const largest = sorted[0];
-    const merged = countMaxPlanarAtoms(molecule);
-    atomIndices = [...new Set(merged.largestIndices)].sort((a, b) => a - b);
-    const pos = atomIndices.map((idx) => {
-      const a = molecule.atoms[idx];
-      return new THREE.Vector3(a.x, a.y, a.z);
-    });
-    ({ normal, center } = bestFitPlane(pos));
-
-    // Color: ring=blue, alkene=orange, carbonyl=yellow-green
-    const colorMap: Record<string, number> = {
-      ring: 0x44aaff, alkene: 0xffaa44, carbonyl: 0x88dd44,
-      other: 0x888888,
-    };
-    color = colorMap[largest.type] ?? 0x888888;
-    planeOpacity = 0.18;
-    ringOpacity = 0.5;
-  } else if (fragments.length > 0) {
-    // ── Fallback: only chain fragments exist ──
-    // Use exactly the merged set so the visual count matches the statistic.
-    const merged = countMaxPlanarAtoms(molecule);
-    atomIndices = [...new Set(merged.largestIndices)].sort((a, b) => a - b);
-    const pos = atomIndices.map((idx) => {
-      const a = molecule.atoms[idx];
-      return new THREE.Vector3(a.x, a.y, a.z);
-    });
-    ({ normal, center } = bestFitPlane(pos));
-    color = 0x44dddd; // cyan for chain
-    planeOpacity = 0.12;
-    ringOpacity = 0.45;
-  } else {
-    // ── No fragments at all: this is the "least planar" case (e.g.
-    // ethanol's gauche conformation has no dihedral within 15° of 0/180).
-    // Fall back to the 3-atom geometric floor (any 3 points are coplanar)
-    // and draw a small, low-opacity indicator. ──
-    if (molecule.atoms.length < 3) return;
-    atomIndices = [0, 1, 2];
-    const positions = atomIndices.map((idx) => {
-      const a = molecule.atoms[idx];
-      return new THREE.Vector3(a.x, a.y, a.z);
-    });
-    const { normal: n, center: c } = bestFitPlane(positions);
-    normal = n;
-    center = c;
-    color = 0x888888; // neutral gray: indicates trivial coplanarity
-    planeOpacity = 0.06;
-    ringOpacity = 0.25;
-  }
-
-  // Compute positions and plane size from the final atomIndices
-  const finalPositions = atomIndices.map((idx) => {
-    const a = molecule.atoms[idx];
-    return new THREE.Vector3(a.x, a.y, a.z);
-  });
-  // (normal/center are already the best-fit of these atoms, set by the
-  // branch above.)
-
-  let maxDist = 1.5;
-  for (const p of finalPositions) { const d = p.distanceTo(center); if (d > maxDist) maxDist = d; }
-  const planeSize = maxDist * 2.2;
-
-  const hintGroup = new THREE.Group();
-  hintGroup.name = groupName;
-
-  // Semi-transparent plane
-  const plane = new THREE.Mesh(
-    new THREE.PlaneGeometry(planeSize, planeSize),
-    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: planeOpacity, side: THREE.DoubleSide, depthWrite: false, depthTest: false })
-  );
-  plane.position.copy(center);
-  plane.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
-  hintGroup.add(plane);
-
-  // Wireframe
-  const wire = new THREE.Mesh(
-    new THREE.PlaneGeometry(planeSize, planeSize),
-    new THREE.MeshBasicMaterial({ color, wireframe: true, transparent: true, opacity: Math.min(planeOpacity * 2, 0.35), depthTest: false })
-  );
-  wire.position.copy(center);
-  wire.quaternion.copy(plane.quaternion);
-  hintGroup.add(wire);
-
-  // Atom rings (subtle highlight on planar atoms).
-  // Aligned with the plane normal (via plane.quaternion) so each ring
-  // is tangent to the coplanar plane at the atom's position. Without
-  // this alignment, the rings default to the xy-plane and appear as
-  // random vertical strips at non-horizontal atom positions (e.g. for
-  // a chair, the atom rings at the "up" C's would be horizontal but
-  // the molecule is tilted).
-  for (const idx of atomIndices) {
-    const a = molecule.atoms[idx];
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(0.35, 0.5, 24),
-      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: ringOpacity, side: THREE.DoubleSide, depthWrite: false, depthTest: false })
-    );
-    ring.position.set(a.x, a.y, a.z);
-    ring.quaternion.copy(plane.quaternion);
-    hintGroup.add(ring);
-  }
-
-  sceneGroup.add(hintGroup);
 }
 
 export const MoleculeViewer: React.FC = () => {
@@ -172,7 +39,7 @@ export const MoleculeViewer: React.FC = () => {
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const pointerTypeRef = useRef<string>("mouse");
   const originalPositionsRef = useRef<Array<{ x: number; y: number; z: number }> | null>(null);
-  const [isTouchLayout, setIsTouchLayout] = useState(false);
+  const [isTouchLayout, setIsTouchLayout] = useState(platform.capabilities.touchFirst);
 
   const molecule = useStore((s) => s.molecule);
   const displayMode = useStore((s) => s.displayMode);
@@ -192,10 +59,16 @@ export const MoleculeViewer: React.FC = () => {
   const _locale = useStore((s) => s.locale);
 
   const rotatingBondKey = rotatingBond ? `bond-${rotatingBond.index}` : null;
+  const pointer = useViewerPointer({
+    containerRef, cameraRef, moleculeGroupRef, raycasterRef, mouseRef, pointerTypeRef,
+    isTouchLayout, labelDisplayMode,
+  });
 
   useEffect(() => {
     const updateTouchLayout = () => {
-      setIsTouchLayout(navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches);
+      setIsTouchLayout(platform.capabilities.touchFirst
+        || navigator.maxTouchPoints > 0
+        || window.matchMedia("(pointer: coarse)").matches);
     };
     updateTouchLayout();
     window.addEventListener("resize", updateTouchLayout);
@@ -322,16 +195,8 @@ export const MoleculeViewer: React.FC = () => {
   // This ensures coplanarity persists through bond rotation, conformer search, etc.
   useEffect(() => {
     if (!moleculeGroupRef.current) return;
-    // ALWAYS remove the old coplanarity plane first, regardless of toggle state.
-    // This ensures the plane updates immediately when the molecule changes
-    // (old plane from previous molecule must not linger after a model switch).
-    const old = moleculeGroupRef.current.getObjectByName("coplanarity-hints");
-    if (old) {
-      old.parent?.remove(old);
-      old.traverse((n) => {
-        if (n instanceof THREE.Mesh) { n.geometry?.dispose(); (n.material as THREE.Material)?.dispose(); }
-      });
-    }
+    // Always clear first: the previous molecule's plane must not linger.
+    clearCoplanarityIndicators(moleculeGroupRef.current);
     if (!molecule) return;
     // Then add the new plane if the toggle is on
     if (highlightCoplanar) {
@@ -346,85 +211,14 @@ export const MoleculeViewer: React.FC = () => {
     updateMeasurementOverlays(moleculeGroupRef.current, molecule.atoms, measurePoints, measureType);
   }, [measurePoints, molecule, measureType]);
 
-  // Click �� raycast
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    if (!cameraRef.current || !moleculeGroupRef.current || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    mouseRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    mouseRef.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-    const st = useStore.getState();
-    if (st.measureMode && st.measureType) {
-      clearHighlights(moleculeGroupRef.current);
-      const hit = raycastHit(raycasterRef.current, mouseRef.current, cameraRef.current, moleculeGroupRef.current);
-      if (hit && hit.type === "atom") {
-        const targetLen = st.measureType === "dihedral" ? 4 : st.measureType === "angle" ? 3 : 2;
-        const completed = st.measurePoints.length >= targetLen;
-        const newPts = completed ? [hit.index] : [...st.measurePoints, hit.index];
-        st.setMeasurePoints(newPts);
-      }
-    } else {
-      clearHighlights(moleculeGroupRef.current);
-      const hit = raycastHit(raycasterRef.current, mouseRef.current, cameraRef.current, moleculeGroupRef.current);
-      if (hit) {
-        setSelected({ type: hit.type, index: hit.index });
-        hit.mesh.traverse((node) => { if (node instanceof THREE.Mesh) { if (hit.type === "atom") highlightAtom(node, true); else highlightBond(node, true); } });
-        // Touch screens have no hover. Treat the existing "on hover" label
-        // mode as "show on tap" there (and on an explicit click), while
-        // keeping labels hidden until interaction.
-        if (hit.type === "atom" && labelDisplayMode === "hover"
-          && (isTouchLayout || pointerTypeRef.current === "touch")) {
-          moleculeGroupRef.current.traverse((node) => {
-            if (node.name.startsWith("label-")) (node as THREE.Sprite).visible = false;
-          });
-          const label = moleculeGroupRef.current.getObjectByName("label-" + hit.index);
-          if (label) label.visible = true;
-        }
-      } else setSelected(null);
-    }
-  }, [isTouchLayout, labelDisplayMode, setSelected]);
-
-  const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    pointerTypeRef.current = event.pointerType;
-  }, []);
-
-  // Hover handler for atom labels
-  const handleHover = useCallback((e: React.MouseEvent) => {
-    if (isTouchLayout || labelDisplayMode !== "hover" || !moleculeGroupRef.current || !cameraRef.current || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const mx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    const my = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-    mouseRef.current.set(mx, my);
-    const hit = raycastHit(raycasterRef.current, mouseRef.current, cameraRef.current, moleculeGroupRef.current);
-
-    moleculeGroupRef.current.traverse((node) => {
-      if (node.name.startsWith("label-")) (node as THREE.Sprite).visible = false;
-    });
-    if (hit && hit.type === "atom") {
-      const label = moleculeGroupRef.current.getObjectByName("label-" + hit.index);
-      if (label) label.visible = true;
-    }
-  }, [isTouchLayout, labelDisplayMode]);
-
-  // Right-click cancels measurement
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    const st = useStore.getState();
-    if (st.measurePoints.length > 0) st.clearMeasurePoints();
-    if (st.measureType) st.setMeasureType(null);
-  }, []);
-
   return (
-    <div ref={containerRef} style={{ width: "100%", height: "100%", cursor: "pointer", position: "relative" }}
-         onClick={handleClick} onPointerDown={handlePointerDown} onPointerMove={handleHover} onContextMenu={handleContextMenu}
+    <div ref={containerRef} className="viewer-root"
+         onClick={pointer.onClick} onPointerDown={pointer.onPointerDown}
+         onPointerMove={pointer.onPointerMove} onContextMenu={pointer.onContextMenu}
          tabIndex={-1}>
-      {isLoading && <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
-          color: "#fff", fontSize: 18, background: "rgba(0,0,0,0.6)", padding: "12px 24px", borderRadius: 8, pointerEvents: "none" }}>
-        {t('processingMol')}
-      </div>}
+      {isLoading && <div className="viewer-loading">{t("processingMol")}</div>}
       {measureMode && molecule && (
-        <div style={{ position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)",
-            color: "#44ff88", fontSize: 13, background: "rgba(0,0,0,0.7)", padding: "6px 14px", borderRadius: 6, pointerEvents: "none", whiteSpace: "nowrap" }}>
+        <div className="viewer-hint">
           {measureType === "distance" ? t("distance") : measureType === "angle" ? t("angle") : measureType === "dihedral" ? t("dihedralShort") : t("measureMode")}
           {" "}{(measurePoints.length === 0 || (measureType === "distance" && measurePoints.length >= 2) ||
             (measureType === "angle" && measurePoints.length >= 3) ||
@@ -432,19 +226,16 @@ export const MoleculeViewer: React.FC = () => {
         </div>
       )}
       {!molecule && !isLoading && (
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-            flexDirection: "column", gap: 12, pointerEvents: "none" }}>
-          <div style={{ color: "#444", fontSize: 48, opacity: 0.3 }}>
+        <div className="viewer-empty">
+          <div className="viewer-empty-icon">
             <svg width="80" height="80" viewBox="0 0 100 100" fill="none" stroke="#666" strokeWidth="2">
               <circle cx="50" cy="30" r="12" /><circle cx="25" cy="65" r="12" /><circle cx="75" cy="65" r="12" />
               <line x1="40" y1="23" x2="30" y2="58" /><line x1="60" y1="23" x2="70" y2="58" /><line x1="35" y1="70" x2="65" y2="70" />
             </svg>
           </div>
-          <div style={{ color: "#666", fontSize: 14, textAlign: "center" }}>{t('enterFormula')}</div>
+          <div className="viewer-empty-text">{t("enterFormula")}</div>
         </div>
       )}
     </div>
   );
 };
-
-

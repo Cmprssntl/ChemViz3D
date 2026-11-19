@@ -3,6 +3,7 @@ import { t } from "../i18n/index";
 import { useStore } from "../store/useStore";
 import { calcMoleculeProperties } from "../engine/properties";
 import type { MoleculeProperties } from "../engine/properties";
+import { platform } from "../platform";
 
 interface LeftPanelProps {
   onProcessInput: (input: string, forceAI?: boolean) => void;
@@ -14,7 +15,7 @@ interface LeftPanelProps {
 }
 
 export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessInput, onProcessChemVZFile, onOpenAISettings, onClearCurrentCache, onClearAllCache, aiUnavailable }) => {
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(platform.capabilities.touchFirst);
   const inputFormula = useStore((s) => s.inputFormula);
   const setInputFormula = useStore((s) => s.setInputFormula);
   const displayMode = useStore((s) => s.displayMode);
@@ -85,6 +86,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ onProcessInput, onProcessC
       <div className="info-list">
         <div className="info-item"><span className="info-label">{t("formula")}</span><span className="info-value">{molecule.formula}</span></div>
         <div className="info-item"><span className="info-label">{t("name")}</span><span className="info-value">{molecule.name}</span></div>
+        <div className="info-item"><span className="info-label">{t("iupacName")}</span><span className={`info-value${molecule.iupacError ? " info-error" : ""}`}>{molecule.iupacName ?? molecule.iupacError ?? ""}</span></div>
         <div className="info-item"><span className="info-label">{t("smiles")}</span><span className="info-value">{molecule.smiles}</span></div>
         <div className="info-item"><span className="info-label">{t("atoms")}</span><span className="info-value">{molecule.atoms.length}</span></div>
         <div className="info-item"><span className="info-label">{t("bonds")}</span><span className="info-value">{molecule.bonds.length}</span></div>

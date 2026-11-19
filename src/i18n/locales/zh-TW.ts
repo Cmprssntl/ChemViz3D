@@ -162,4 +162,5 @@ export const zhTW: TranslationMap = {
   definiteCoplanar: "一定共面原子數",
   conformerFailed: "無法為該結構產生三維構象",
   conformerBackendFallback: "已回退到幾何後備方案",
+  iupacName: "IUPAC 名稱",
 };

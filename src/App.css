@@ -482,6 +482,11 @@
   font-size: 12px;
 }
 
+.info-value.info-error {
+  color: #ff8080;
+  font-family: inherit;
+}
+
 /* ===== Examples Grid ===== */
 .examples-grid {
   display: flex;
@@ -656,4 +661,61 @@
   .panel-tab { width: 56px; height: 18px; }
   .left-tab { border-top: none; border-left: 1px solid rgba(136, 170, 255, 0.4); border-radius: 0 0 8px 8px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); }
   .right-tab { border-bottom: none; border-right: 1px solid rgba(136, 170, 255, 0.4); border-radius: 8px 8px 0 0; box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.4); }
+}
+
+/* ===== 3D viewer overlays ===== */
+.viewer-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.viewer-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 18px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 12px 24px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.viewer-hint {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #44ff88;
+  font-size: 13px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 6px 14px;
+  border-radius: 6px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.viewer-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.viewer-empty-icon {
+  color: #444;
+  opacity: 0.3;
+}
+
+.viewer-empty-text {
+  color: #666;
+  font-size: 14px;
+  text-align: center;
 }

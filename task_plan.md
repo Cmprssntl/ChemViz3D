@@ -70,28 +70,31 @@ scripts/                 打包、同步、检查脚本
 - [x] 相机包围球 + 投影自适应 fit、增量场景更新
 - **验收结果**：C3/C6/C10/C16/C24/C40 键长 1.09–1.53 Å、无 NaN、无 <0.65 Å 碰撞；C40 跨度 51.4 Å 完整入镜
 
-### P2 后端接入 + IUPAC 命名
-- [ ] `ConformerBackend` 抽象 + `OpenChemLibBackend` + `RigidTreeBackend`
-- [ ] 裁剪并内联 OCL resources（COD + MMFF94，去掉 druglikeness/tox）
-- [ ] `domain/naming`：父体选择、取代基、位次、字母序、装配
-- [ ] UI：IUPAC 名称独立展示；失败显示明确错误（不得显示分子式冒充名称）
-- **验收**：22 预设命名 golden 通过；不支持结构返回具体错误码
+### P2 后端接入 + IUPAC 命名（完成）
+- [x] `ConformerBackend` 抽象 + `OpenChemLibBackend` + `HeuristicBackend`
+- [x] 裁剪并内联 OCL resources（COD + MMFF94，去掉 druglikeness/tox）
+- [x] `domain/naming`：父体选择、取代基、位次、字母序、装配（类层次：`HeavyMolecule` / `FunctionalGroups` / `ParentSelector` / `Substituents` / `NameAssembler` / `IupacNamer`）
+- [x] UI：IUPAC 名称独立成行；失败显示 `NamingError` 文案（不回退分子式/SMILES）
+- **验收结果**：19 个有机预设 golden 全部通过；水/氨/CO₂ 返回 `no-carbon-parent`；73/73 测试通过
 
-### P3 平台统一
-- [ ] `platform/` 适配器 + 探测（`VITE_PLATFORM` → 注入 → `platform.json` → web）
-- [ ] 单一 IIFE 产物（`inlineDynamicImports`，worker inline）
-- [ ] 统一 `index.html`；Android 桥脚本移入 `platform/android/`
-- [ ] Android 升级 `WebViewAssetLoader`
+### P3 平台统一（桌面/Web 完成，Android 壳待迁移）
+- [x] `platform/` 适配器 + 探测（构建标志 → 运行期注入 → `platform.json` → web）
+- [x] 单一 IIFE 产物（`format: 'iife'`、`inlineDynamicImports`、无 `import.meta`、相对路径）
+- [x] 统一 `index.html`：产物改写为普通 `<script defer>`
+- [x] `scripts/package.mjs` 生成三端产物 + 每端 `platform.json`，并校验单文件/无 `import.meta`
+- [x] `data-platform` / `data-touch` 由适配器写入 `<html>`
+- [ ] Android `WebViewAssetLoader` 迁移 + 桥脚本抽到 `platform/android/`（需 Android SDK 验证，见风险）
 - [ ] 合并 Android 图片解析到共享代码
 - [ ] Android 仓库删除 `src/`、`vite.config.ts`、`package.json`、根 `index.html`、`_archive/`
-- [ ] `scripts/package.mjs` 生成三端产物 + `platform.json`
-- **验收**：同一份 `assets/main.js` 在 Web / 桌面 / Android 启动；三端设置、缓存、AI、截图、文件读写全部走适配器
+- **验收结果**：Web 构建通过；三端产物 `release/{web,desktop,android}` 均通过自动校验
 
-### P4 分层拆分与死代码清理
-- [ ] 拆 `vseprBuilder` / `MoleculeViewer` / `ai/config` / `aiParser` / store
-- [ ] 删除 `builder.ts`、`validation.ts`、`smilesGenerator.ts`、`moleculeDataToChemVZ` 等死代码
+### P4 分层拆分与死代码清理（部分完成）
+- [x] 拆 `MoleculeViewer`：`CoplanarityOverlay` + `useViewerPointer`，组件 248 行
+- [x] 删除 `builder.ts`、`validation.ts`、`smilesGenerator.ts`、`bonds.ts`、`conformer.ts`、`moleculeDataToChemVZ`
+- [x] 测试入口 `npm run check`（tsc + 73 项）
+- [ ] 拆 `vseprBuilder`（1177 行）、`ai/config`（570 行）、`conformerSearch`（400 行）
 - [ ] 设置 schema 单一源（TS / Vite / Python 共用）
-- **验收**：无循环依赖；行数达标；tsc 0 error
+- **验收**：tsc 0 error；组件行数达标；engine 侧仍有超限文件
 
 ### P5 性能与大结构
 - [ ] 构建/松弛/构象搜索进 Worker，带进度与取消
@@ -107,10 +110,11 @@ scripts/                 打包、同步、检查脚本
 - [ ] i18n 类型化 + 缺失 key 检查
 - **验收**：三语言 × 桌面/竖屏/横屏截图基线一致
 
-### P7 发布验证
-- [ ] Web 静态包、Windows/Linux 桌面包、Android APK
-- [ ] `platform.json` 与注入校验
-- **验收**：三端冒烟通过；两仓库无交叉引用
+### P7 发布验证（打包完成，安装包未产出）
+- [x] `scripts/package.mjs`：三端静态包 + `platform.json` + `build-info.json`
+- [x] 产物自动校验：单一 `assets/main.js`、普通 script 标签、无 `import.meta`
+- [ ] Windows/Linux 桌面包与 Android APK（需对应工具链）
+- **验收**：三端产物结构一致；安装包留待发布环境
 
 ## 3. 备份
 
