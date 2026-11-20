@@ -6,6 +6,7 @@
  */
  import { ATOMIC_DATA } from "../utils/formulaParser";
  import type { AtomData, BondData } from "../types/molecule";
+ import { MolecularGraph } from "../domain/graph/MolecularGraph";
  
  export interface MoleculeProperties {
    molecularWeight: number;
@@ -171,42 +172,26 @@
    return acceptors;
  }
  
- /**
- * Rotatable Bonds: count non-terminal, non-ring single bonds. A bond to an
- * sp2 atom (for example the methyl-carbonyl bond in acetic acid) is still
- * rotatable; only linear sp atoms and multiple bonds are excluded here.
-  *
-  * A rotatable bond is any single non-ring bond between
-  * tetrahedral atoms (sp3), excluding bonds to hydrogens,
-  * terminal atoms, and atoms with only one heavy neighbor.
-  */
- function calcRotatableBonds(atoms: AtomData[], bonds: BondData[]): number {
-   let count = 0;
-   for (const b of bonds) {
-     if (b.order !== 1) continue;
-     const a1 = atoms[b.atom1Idx];
-     const a2 = atoms[b.atom2Idx];
-     if (!a1 || !a2) continue;
- 
-     // Skip bonds involving hydrogen
-     if (a1.element === "H" || a2.element === "H") continue;
- 
-     // Both atoms must have at least 2 heavy neighbors to be rotatable
-     const h1 = heavyNeighborCount(b.atom1Idx, bonds, atoms);
-     const h2 = heavyNeighborCount(b.atom2Idx, bonds, atoms);
-    const carbonylAdjacent = a1.element === "C" && a2.element === "C" &&
-      ((a1.hybridization === "sp2" && a2.hybridization === "sp3") ||
-       (a1.hybridization === "sp3" && a2.hybridization === "sp2"));
-    if ((h1 < 2 || h2 < 2) && !carbonylAdjacent) continue;
- 
-  // Linear sp centres cannot provide a normal torsional degree of freedom.
-  if (a1.hybridization === "sp" || a2.hybridization === "sp") continue;
- 
-     count++;
-   }
-   return count;
- }
- 
+/**
+ * Rotatable bonds: single, acyclic bonds between two atoms that both keep at
+ * least two heavy neighbours, excluding amide C-N and linear sp centres.
+ *
+ * This used to be a local loop that never asked about rings, so cycloheptane
+ * reported seven rotatable bonds. The rule now comes from MolecularGraph, the
+ * same implementation the conformer search uses, so the panel and the geometry
+ * can no longer disagree.
+ */
+function calcRotatableBonds(atoms: AtomData[], bonds: BondData[]): number {
+  const graph = new MolecularGraph(
+    atoms.length,
+    bonds.map((bond, index) => ({ index, a: bond.atom1Idx, b: bond.atom2Idx, order: bond.order })),
+  );
+  const elements = atoms.map((atom) => atom.element);
+  return graph.rotatableBonds(elements).filter((bond) =>
+    atoms[bond.a]?.hybridization !== "sp" && atoms[bond.b]?.hybridization !== "sp",
+  ).length;
+}
+
  /**
   * TPSA: Topological Polar Surface Area (Ertl method)
   *

@@ -284,3 +284,12 @@
 - Android 仓库只保留外壳：删除 `src/`、`vite.config.ts`、`package.json`、`index.html`、`public/`、`dist/`、`node_modules/`、`molecules/`、RDKit 资产、`_archive/` 与未使用的 Kotlin 引擎/渲染包（共 1839 行）。
 - 新增 `sync-webapp.sh`（校验 `import.meta`/module 脚本后同步 `release/android`），`BUILD.md`/`README.txt` 更新为新流程。
 - 实测：`./build-apk.sh` 成功，APK 7.8 MB，`assets/webapp/assets/main.js` 与 `release/android` 哈希一致。
+
+### P7 发布 v1.1.0（完成）
+- 版本：`package.json` 1.1.0；Android `versionCode 2` / `versionName 1.1.0`；`build-info.json` 增加 `version`。
+- 产物：`release/{web,desktop,android}` 各 2.9 MB；`release/ChemViz3D-v1.1.0-web.zip`（862 KB）；`release/ChemViz3D-Android-v1.1.0.apk`（8.1 MB）。
+- 真机（Android 14 / PERM10）：WebViewAssetLoader 加载成功，`adb logcat -s ChemVizJS` 可见页面控制台；预设切换、IUPAC 名称、触控布局正常。
+- 修复 1：复位视角调用 `CameraRig.reset()`（空场景距离），手机上相机会进入分子内部；改为重新 `fit()` 当前分子，并在宽高比变化且用户未手动操作时自动重新取景。
+- 修复 2：`calcRotatableBonds` 未排除环内键，环庚烷显示 7 个可旋转键；改为复用 `MolecularGraph.rotatableBonds`，新增 `tests/properties.test.ts`（13 项）。
+- 文档：Android `onConsoleLog` 接入 logcat，删除旧原生 UI 的三个空回调。
+- 推送：`main`（ecc9016 起）、`ForAndroid`（366e283）。

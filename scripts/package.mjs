@@ -59,9 +59,10 @@ for (const platform of targets) {
   await mkdir(target, { recursive: true });
   await cp(dist, target, { recursive: true });
   const size = (await readFile(path.join(target, "assets/main.js"))).byteLength;
+  const version = JSON.parse(await readFile(path.join(root, "package.json"), "utf8")).version;
   await writeFile(
     path.join(target, "build-info.json"),
-    JSON.stringify({ platform, bundleBytes: size, builtAt: new Date().toISOString() }, null, 2),
+    JSON.stringify({ platform, version, bundleBytes: size, builtAt: new Date().toISOString() }, null, 2),
   );
   console.log(`[package] ${platform} -> release/${platform} (${(size / 1024).toFixed(0)} KiB)`);
 }

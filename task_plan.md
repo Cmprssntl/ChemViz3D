@@ -112,16 +112,20 @@ scripts/                 打包、同步、检查脚本
 - [ ] tokens 与分层 CSS、单一 orientation 判定、截图基线
 - **验收结果**：i18n 76 项测试通过；视觉重构留待截图基线
 
-### P7 发布验证（打包完成，安装包未产出）
-- [x] `scripts/package.mjs`：三端静态包 + `platform.json` + `build-info.json`
+### P7 发布验证（v1.1.0 已发布）
+- [x] `scripts/package.mjs`：三端静态包 + `platform.json` + `build-info.json`（含 `version`）
 - [x] 产物自动校验：单一 `assets/main.js`、普通 script 标签、无 `import.meta`
-- [ ] Windows/Linux 桌面包与 Android APK（需对应工具链）
-- **验收**：三端产物结构一致；安装包留待发布环境
+- [x] Android APK：`ChemViz3D-Android-v1.1.0.apk`（8.1 MB，versionCode 2 / versionName 1.1.0）
+- [x] 真机验证（Android 14 / 1080×2412）：启动、预设切换、IUPAC 名称、触控布局、控制台桥接
+- [x] GitHub Release：`v1.1.0`（web 包）与 `v1.1.0-Android`（APK）
+- [ ] Windows/Linux 桌面包：本机无 PySide6/PyInstaller，`desktop/build_executable.py` 仍引用已删除的 `README.txt`，留待下阶段
+- **验收结果**：`npm run check` 89/89；web 包在浏览器实测（复位视角、环庚烷可旋转键 = 0）；APK 与 `release/android` 字节一致
 
 ## 3. 备份
 
-- 仓库与工作树备份：`/tmp/opencode/backups/`（bundle + tar.gz，含 Android 子仓库）
-- 时间戳：`20261119-131958`
+- 仓库与工作树备份：`backup/`（bundle + tar.gz，含 Android 子仓库；已在 `.gitignore` 中）
+- 迁移前 Android 快照：`backup/chemviz3d-android-pre-migration-20261119-173301.bundle`
+- 被删除的旧源码：`backup/android-removed/`，说明见 `backup/README.md`
 
 ## 4. 历史阶段（已完成，保留摘要）
 
