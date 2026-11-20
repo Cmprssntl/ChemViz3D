@@ -1,5 +1,10 @@
-# Android (not ready)
-ChemViz3D-Android/
+# Android build output (the shell lives in android/)
+android/app/build/
+android/build/
+android/.gradle/
+android/.idea/
+android/local.properties
+android/artifacts/
 
 # Development guide (not for public repo)
 Agent.md
