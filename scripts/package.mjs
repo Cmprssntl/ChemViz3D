@@ -24,7 +24,10 @@ if (unknown.length > 0) {
 }
 
 function build(platform) {
-  execFileSync("npx", ["vite", "build"], {
+  // Call the local Vite CLI through Node: `npx` is a .cmd shim on Windows and
+  // execFileSync does not resolve it without a shell.
+  const vite = path.join(root, "node_modules", "vite", "bin", "vite.js");
+  execFileSync(process.execPath, [vite, "build"], {
     cwd: root,
     stdio: "inherit",
     env: { ...process.env, VITE_PLATFORM: platform },
