@@ -48,5 +48,8 @@ settings.developer.int
 # Locally generated release packages
 release/
 
+# Local snapshots taken before big refactors (see backup/README.md)
+backup/
+
 # Runtime AI cache (presets are tracked separately)
 molecules/cache/*.json

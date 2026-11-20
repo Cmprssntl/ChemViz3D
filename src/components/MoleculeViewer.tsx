@@ -35,6 +35,8 @@ export const MoleculeViewer: React.FC = () => {
   const moleculeSceneRef = useRef<MoleculeScene | null>(null);
   const moleculeGroupRef = useRef<THREE.Group | null>(null);
   const structureKeyRef = useRef<string>("");
+  /** Set as soon as the user orbits/zooms, so a resize never yanks the view. */
+  const cameraTouchedRef = useRef(false);
   const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const pointerTypeRef = useRef<string>("mouse");
@@ -104,7 +106,14 @@ export const MoleculeViewer: React.FC = () => {
 
     const rig = new CameraRig(camera, controls);
     rigRef.current = rig;
-    setResetCameraFn(() => { rig.reset(); });
+    // "Reset" means "frame the molecule again": the empty-scene distance is
+    // far too close for a loaded structure on a short mobile viewport.
+    setResetCameraFn(() => {
+      const group = moleculeGroupRef.current;
+      if (group) rig.fit(group);
+      else rig.reset();
+    });
+    controls.addEventListener("start", () => { cameraTouchedRef.current = true; });
 
     createLighting(scene);
     scene.add(new THREE.GridHelper(15, 15, 0x333366, 0x222244));
@@ -128,9 +137,16 @@ export const MoleculeViewer: React.FC = () => {
       const width = containerRef.current.clientWidth;
       const height = containerRef.current.clientHeight;
       if (width <= 0 || height <= 0) return;
+      const previousAspect = cameraRef.current.aspect;
       cameraRef.current.aspect = width / height;
       cameraRef.current.updateProjectionMatrix();
       rendererRef.current.setSize(width, height);
+      // Panel collapse and rotation change the usable canvas; re-frame unless
+      // the user has already chosen a view.
+      const aspectChanged = Math.abs(previousAspect - cameraRef.current.aspect) > 0.01;
+      if (aspectChanged && !cameraTouchedRef.current && moleculeGroupRef.current) {
+        rigRef.current?.fit(moleculeGroupRef.current);
+      }
     };
     window.addEventListener("resize", onResize);
     const resizeObserver = typeof ResizeObserver !== "undefined"
@@ -187,6 +203,7 @@ export const MoleculeViewer: React.FC = () => {
     if (key !== structureKeyRef.current) {
       structureKeyRef.current = key;
       centerGroupAtOrigin(moleculeGroupRef.current);
+      cameraTouchedRef.current = false;
       rigRef.current?.fit(moleculeGroupRef.current);
     }
   }, [molecule, displayMode, labelDisplayMode]);
