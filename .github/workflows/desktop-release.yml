@@ -1,0 +1,78 @@
+name: Desktop packages
+
+# PyInstaller cannot cross-compile Qt, so each platform builds its own
+# installer. Trigger manually or by pushing a v* tag.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  linux:
+    name: Linux deb + portable
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+      - run: node scripts/package.mjs
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install "PySide6>=6.7,<7" "pyinstaller>=6,<7"
+      - run: python desktop/build_release.py --target deb
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            release/ChemViz3D-*-Linux-amd64.deb
+            release/ChemViz3D-*-Linux-amd64-portable.tar.xz
+          if-no-files-found: error
+
+  windows:
+    name: Windows setup + portable
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+      - run: node scripts/package.mjs
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install "PySide6>=6.7,<7" "pyinstaller>=6,<7"
+
+      # Inno Setup ships with the runner image; install it if the image changes.
+      - name: Ensure Inno Setup
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress }
+          if (-not (Test-Path $iscc)) { throw "Inno Setup missing" }
+          Split-Path $iscc | Out-File -Append -Encoding ascii $env:GITHUB_PATH
+
+      - run: python desktop/build_release.py --target win
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-packages
+          path: |
+            release/ChemViz3D-*-Windows-amd64-setup.exe
+            release/ChemViz3D-*-Windows-amd64-portable.zip
+          if-no-files-found: error
