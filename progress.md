@@ -293,3 +293,11 @@
 - 修复 2：`calcRotatableBonds` 未排除环内键，环庚烷显示 7 个可旋转键；改为复用 `MolecularGraph.rotatableBonds`，新增 `tests/properties.test.ts`（13 项）。
 - 文档：Android `onConsoleLog` 接入 logcat，删除旧原生 UI 的三个空回调。
 - 推送：`main`（ecc9016 起）、`ForAndroid`（366e283）。
+
+### v1.1.0 统一发布（完成）
+- Android 外壳迁入主仓库 `android/`，`ForAndroid` 分支与独立仓库取消（最终快照 `backup/chemviz3d-android-final-20261120-131236.bundle`）。
+- 新增 `desktop/build_release.py`：用 `release/desktop` 打包 Qt 单文件，产出 deb、便携 tar.xz、Windows zip 与 Inno Setup 安装包；暂存目录放 `/tmp`（项目盘为 NTFS，chmod 无效）。
+- 新增 `.github/workflows/desktop-release.yml`：Linux 与 Windows 各自原生构建，产物上传为 artifact。
+- 修复 `scripts/package.mjs` 在 Windows 上调用 `npx` 失败（改为 node 调用本地 vite CLI）。
+- 发布 `v1.1.0`：Windows setup.exe（212 MB）、Windows portable.zip（212 MB）、Linux deb（228 MB）、Linux portable.tar.xz（226 MB）、Android APK（8 MB）。
+- 旧的两个 v1.1.0 / v1.1.0-Android release 与标签已删除，改为单一版本。

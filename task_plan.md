@@ -112,14 +112,13 @@ scripts/                 打包、同步、检查脚本
 - [ ] tokens 与分层 CSS、单一 orientation 判定、截图基线
 - **验收结果**：i18n 76 项测试通过；视觉重构留待截图基线
 
-### P7 发布验证（v1.1.0 已发布）
-- [x] `scripts/package.mjs`：三端静态包 + `platform.json` + `build-info.json`（含 `version`）
-- [x] 产物自动校验：单一 `assets/main.js`、普通 script 标签、无 `import.meta`
-- [x] Android APK：`ChemViz3D-Android-v1.1.0.apk`（8.1 MB，versionCode 2 / versionName 1.1.0）
-- [x] 真机验证（Android 14 / 1080×2412）：启动、预设切换、IUPAC 名称、触控布局、控制台桥接
-- [x] GitHub Release：`v1.1.0`（web 包）与 `v1.1.0-Android`（APK）
-- [ ] Windows/Linux 桌面包：本机无 PySide6/PyInstaller，`desktop/build_executable.py` 仍引用已删除的 `README.txt`，留待下阶段
-- **验收结果**：`npm run check` 89/89；web 包在浏览器实测（复位视角、环庚烷可旋转键 = 0）；APK 与 `release/android` 字节一致
+### P7 发布验证（v1.1.0 统一版已发布）
+- [x] 单一仓库：Android 外壳并入 `android/`，删除 `ForAndroid` 分支与独立仓库
+- [x] 桌面打包：`desktop/build_release.py`（deb / 便携 tar.xz / Windows zip / Inno Setup 安装包）
+- [x] CI：`.github/workflows/desktop-release.yml` 在 Linux 与 Windows 原生构建
+- [x] 产物：Windows setup.exe / portable.zip、Linux deb / portable.tar.xz、Android APK
+- [x] GitHub Release：`v1.1.0`（唯一发布，五个附件，非技术化更新说明）
+- **验收结果**：`npm run check` 112/112；deb `--help` 与 headless 服务实测；APK 与 `release/android` 字节一致
 
 ## 3. 备份
 
