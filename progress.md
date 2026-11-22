@@ -316,3 +316,11 @@
 - P10：`ConformerPlan` 分级（fine/balanced/coarse）；粗几何先渲染 + 后台精修；MMFF94 分块让出主线程；>200 重原子改用 `ConstrainedMinimizer`；>400 原子关闭标签并降低球体分段；构象搜索自动降档；精修不会覆盖用户旋转/搜索结果。
 - 验证：`npm run check` 147/147，`vite build` 通过；`main` 已推送至 `c61df0f`。
 - 下一步：P11 按 `task_plan_crystal_ionic.md` 从 C0 开始（独立计划，尚未实现）。
+
+### 预设补充包 500 / 2000（2026-11-22）
+- 新增 `scripts/build-preset-packs.mjs`：用 OpenChemLib 解析 SMILES，生成带 `chemvz: 2` 原子/键、IUPAC 英文名和中文名的同系物预设；生成前按规范结构去重，不覆盖已有 ID。
+- 在原 1162 个预设基础上新增 838 个同系物，总计 2000 个；新增覆盖烯/炔、醇、胺、酸、醛、酮、卤代物等系列。
+- 产出两档压缩包：`ChemViz3D-presets-500.zip`（444 个常用/天然产物 + 56 个小同系物）与 `ChemViz3D-presets-2000.zip`（全部 2000 个）。
+- 删除旧的 1162 个 `ChemViz3D-presets-supplement.zip`，README 更新为两档说明。
+- 新增 `tests/preset-pack.test.ts`：校验 2000 个预设的 schema、唯一结构，并抽样构建 3D 几何；`npm run check` 149/149。
+- 两个压缩包上传到 GitHub Release `v1.0.0`。

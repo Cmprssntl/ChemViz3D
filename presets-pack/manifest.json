@@ -1,0 +1,11 @@
+{
+  "generatedAt": "2026-11-22T09:38:33.445Z",
+  "full": {
+    "count": 2000,
+    "archive": "ChemViz3D-presets-2000.zip"
+  },
+  "small": {
+    "count": 500,
+    "archive": "ChemViz3D-presets-500.zip"
+  }
+}

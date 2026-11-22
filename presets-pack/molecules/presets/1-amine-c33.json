@@ -1,0 +1,390 @@
+{
+  "id": "1-amine-c33",
+  "formula": "C33H69N",
+  "inputs": [
+    "C33H69N",
+    "1-三十三胺",
+    "tritriacontan-1-amine"
+  ],
+  "iupac": "tritriacontan-1-amine",
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "1-三十三胺",
+      "zh-TW": "1-三十三胺",
+      "en-US": "tritriacontan-1-amine"
+    },
+    "smiles": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCN",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          0,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          7,
+          8
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          8,
+          9
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          9,
+          10
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          10,
+          11
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          11,
+          12
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          12,
+          13
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          13,
+          14
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          14,
+          15
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          15,
+          16
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          16,
+          17
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          17,
+          18
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          18,
+          19
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          19,
+          20
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          20,
+          21
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          21,
+          22
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          22,
+          23
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          23,
+          24
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          24,
+          25
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          25,
+          26
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          26,
+          27
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          27,
+          28
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          28,
+          29
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          29,
+          30
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          30,
+          31
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          31,
+          32
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          32,
+          33
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

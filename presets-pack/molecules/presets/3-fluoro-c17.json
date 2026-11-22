@@ -1,0 +1,214 @@
+{
+  "id": "3-fluoro-c17",
+  "formula": "C17H35F",
+  "inputs": [
+    "C17H35F",
+    "3-氟十七烷",
+    "3-fluoroheptadecane"
+  ],
+  "iupac": "3-fluoroheptadecane",
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "3-氟十七烷",
+      "zh-TW": "3-氟十七烷",
+      "en-US": "3-fluoroheptadecane"
+    },
+    "smiles": "CCCCCCCCCCCCCCC(CC)F",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "F",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          7,
+          8
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          8,
+          9
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          9,
+          10
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          10,
+          11
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          11,
+          12
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          12,
+          13
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          13,
+          14
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          14,
+          15
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          15,
+          16
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          16,
+          17
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

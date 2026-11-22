@@ -1,0 +1,93 @@
+{
+  "id": "3-amine-c6",
+  "formula": "C6H15N",
+  "inputs": [
+    "C6H15N",
+    "3-六胺",
+    "hexan-3-amine"
+  ],
+  "iupac": "hexan-3-amine",
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "3-六胺",
+      "zh-TW": "3-六胺",
+      "en-US": "hexan-3-amine"
+    },
+    "smiles": "CCCC(CC)N",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

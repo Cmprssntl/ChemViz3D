@@ -1,0 +1,104 @@
+{
+  "id": "3-amine-c7",
+  "formula": "C7H17N",
+  "inputs": [
+    "C7H17N",
+    "3-七胺",
+    "heptan-3-amine"
+  ],
+  "iupac": "heptan-3-amine",
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "3-七胺",
+      "zh-TW": "3-七胺",
+      "en-US": "heptan-3-amine"
+    },
+    "smiles": "CCCCC(CC)N",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "id": "3-chloro-c11",
+  "formula": "C11H23Cl",
+  "inputs": [
+    "C11H23Cl",
+    "3-氯十一烷",
+    "3-chloroundecane"
+  ],
+  "iupac": "3-chloroundecane",
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "3-氯十一烷",
+      "zh-TW": "3-氯十一烷",
+      "en-US": "3-chloroundecane"
+    },
+    "smiles": "CCCCCCCCC(CC)Cl",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "Cl",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          7,
+          8
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          8,
+          9
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          9,
+          10
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          10,
+          11
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

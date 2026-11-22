@@ -1,0 +1,115 @@
+{
+  "id": "2-amine-c8",
+  "formula": "C8H19N",
+  "inputs": [
+    "C8H19N",
+    "2-八胺",
+    "octan-2-amine"
+  ],
+  "iupac": "octan-2-amine",
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "2-八胺",
+      "zh-TW": "2-八胺",
+      "en-US": "octan-2-amine"
+    },
+    "smiles": "CCCCCCC(C)N",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          7,
+          8
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

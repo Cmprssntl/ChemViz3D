@@ -42,6 +42,9 @@ Windows 便携版：解压压缩包，运行其中的 `ChemViz3D.exe`。
 - 便携版运行目录中的 `settings.int`、`molecules/` 和 `screenshots/`：便携版的全部可变数据。
 - 安装版 `~/.config/ChemViz3D/settings.int`、`molecules/` 和 `screenshots/`：安装版的全部可变数据。
 - `molecules/presets/`：本地分子预设；安装版首次启动时从程序包解压到上述配置目录，后续新增文件会自动读入。你可以下载附件中的预设扩展包并解压到上述目录中，以增加预设数目。这可能可以改善没有能力使用AI解析的情况下的使用体验。
+  - `ChemViz3D-presets-500.zip`：500 个常用预设，适合日常教学和快速查找。
+  - `ChemViz3D-presets-2000.zip`：2000 个预设，覆盖直链同系物、常见官能团和天然产物。
+  - 解压后应得到 `molecules/presets/*.json`；重启程序即可生效。
 - `screenshots/`：截图保存于此。
 - `molecules/cache/`：AI解析缓存
 - `settings.int`：配置文件，以json格式保存。开发者不建议手动修改配置。
