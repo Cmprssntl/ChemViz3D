@@ -27,6 +27,8 @@ export interface MoleculeData {
   smiles: string;
   /** Deterministic IUPAC name, when the namer supports the structure. */
   iupacName?: string;
+  /** Where `iupacName` came from; absent for legacy objects. */
+  iupacSource?: "preset" | "cache" | "ai" | "local";
   /** Why naming failed; the UI shows this instead of a substitute string. */
   iupacError?: string;
   conformer?: Float64Array;

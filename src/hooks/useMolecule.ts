@@ -9,7 +9,8 @@ import { AIParseError, parseImageWithAI, parseWithAI } from "../ai/aiParser";
 import { imageCacheInput } from "../ai/image";
 import type { ChemVZMolecule } from "../types/moleculeFormat";
 import { clearAllCachedChemVZ, clearCachedChemVZ, getCachedChemVZ, saveCachedChemVZ } from "../ai/cache";
-import { iupacNamer } from "../domain/naming/IupacNamer";
+import { namingService } from "../naming/NamingService";
+import { namingCacheKey } from "../naming/cache";
 import { t } from "../i18n/index";
 
 function selectChemVZName(name: ChemVZMolecule["name"], locale: string): string | undefined {
@@ -20,7 +21,11 @@ function selectChemVZName(name: ChemVZMolecule["name"], locale: string): string 
 
 const conformerService = new ConformerService();
 
-function buildMoleculeFromChemVZObject(obj: ChemVZMolecule, locale = "zh-CN"): MoleculeData {
+function buildMoleculeFromChemVZObject(
+  obj: ChemVZMolecule,
+  locale = "zh-CN",
+  presetIupac?: string,
+): MoleculeData {
   const spec = chemVZToBondSpec(obj);
   const name = selectChemVZName(obj.name, locale);
   const result = conformerService.build(
@@ -37,18 +42,23 @@ function buildMoleculeFromChemVZObject(obj: ChemVZMolecule, locale = "zh-CN"): M
   if (result.warnings.length > 0) {
     console.warn(`[conformer:${result.backend}]`, ...result.warnings);
   }
-  return withIupacName(result.molecule);
+  return withIupacName(result.molecule, presetIupac);
 }
 
 /**
- * Naming is a separate, deterministic stage. A failure is stored verbatim so
- * the UI can show "not nameable" instead of silently substituting the formula.
+ * Naming is a separate, deterministic stage. Preset names are authoritative;
+ * everything else starts with the local namer. A failure is stored verbatim
+ * so the UI can show "not nameable" instead of silently substituting the
+ * formula. The caller upgrades the name asynchronously when AI is available.
  */
-function withIupacName(molecule: MoleculeData): MoleculeData {
-  const result = iupacNamer.tryName(molecule);
-  return "name" in result
-    ? { ...molecule, iupacName: result.name, iupacError: undefined }
-    : { ...molecule, iupacName: undefined, iupacError: result.error.message };
+function withIupacName(molecule: MoleculeData, presetIupac?: string): MoleculeData {
+  const resolution = namingService.resolve(molecule, presetIupac);
+  return {
+    ...molecule,
+    iupacName: resolution.name,
+    iupacSource: resolution.source,
+    iupacError: resolution.error,
+  };
 }
 
 /**
@@ -74,9 +84,26 @@ export function useMolecule() {
   const lastImageRef = useRef<{ cacheInput: string; dataUrl: string } | null>(null);
 
   const resetInputState = () => {
+    namingService.cancel();
     setLoading(true); setError(null); setInfoMessage(null); setMolecule(null);
     setRotatingBond(null); setConformerStats(null); setParseSource(null);
   };
+
+  /**
+   * Publish a molecule immediately, then upgrade its name in the background.
+   * The callback re-reads the store so a rotated molecule keeps its current
+   * coordinates, and compares structure keys so a stale reply is ignored.
+   */
+  const applyMolecule = useCallback((molecule: MoleculeData) => {
+    setMolecule(molecule);
+    if (molecule.iupacSource === "preset") return;
+    const key = namingCacheKey(molecule);
+    void namingService.upgrade(molecule, (name, source) => {
+      const current = useStore.getState().molecule;
+      if (!current || namingCacheKey(current) !== key) return;
+      setMolecule({ ...current, iupacName: name, iupacSource: source, iupacError: undefined });
+    });
+  }, [setMolecule]);
 
   const processChemVZFile = useCallback(async (file: File) => {
     resetInputState();
@@ -86,7 +113,7 @@ export function useMolecule() {
         setError(t("invalidChemvzFile"));
         return;
       }
-      setMolecule(buildMoleculeFromChemVZObject(obj, locale));
+      applyMolecule(buildMoleculeFromChemVZObject(obj, locale));
     } catch (error) {
       setError(error instanceof ConformerError
         ? describeBuildFailure(error)
@@ -94,14 +121,14 @@ export function useMolecule() {
     } finally {
       setLoading(false);
     }
-  }, [locale, setError, setLoading, setMolecule, setParseSource, setRotatingBond, setConformerStats, setInfoMessage]);
+  }, [applyMolecule, locale, setError, setLoading, setParseSource, setRotatingBond, setConformerStats, setInfoMessage]);
 
   const processInput = useCallback(async (input: string, forceAI = false) => {
     resetInputState();
     try {
       const local = parseLocalInput(input);
       if (local) {
-        setMolecule(buildMoleculeFromChemVZObject(local.chemvz, locale));
+        applyMolecule(buildMoleculeFromChemVZObject(local.chemvz, locale, local.iupac));
         setParseSource("preset");
         setInfoMessage(t("localPresetLoaded", { id: local.presetId }));
         return;
@@ -118,7 +145,7 @@ export function useMolecule() {
         try {
           const cached = await getCachedChemVZ(input);
           if (cached) {
-            setMolecule(buildMoleculeFromChemVZObject(cached.chemvz, locale));
+            applyMolecule(buildMoleculeFromChemVZObject(cached.chemvz, locale));
             setParseSource("cache", input);
             setInfoMessage(t("aiCacheLoaded"));
             return;
@@ -129,7 +156,7 @@ export function useMolecule() {
       }
 
       const chemvz = await parseWithAI(input, getAIConfig());
-      setMolecule(buildMoleculeFromChemVZObject(chemvz, locale));
+      applyMolecule(buildMoleculeFromChemVZObject(chemvz, locale));
       setParseSource("ai", input);
       try {
         await saveCachedChemVZ(input, chemvz);
@@ -144,7 +171,7 @@ export function useMolecule() {
     } finally {
       setLoading(false);
     }
-  }, [locale, setError, setInfoMessage, setLoading, setMolecule, setParseSource, setRotatingBond, setConformerStats]);
+  }, [applyMolecule, locale, setError, setInfoMessage, setLoading, setParseSource, setRotatingBond, setConformerStats]);
 
 
   /**
@@ -160,7 +187,7 @@ export function useMolecule() {
         try {
           const cached = await getCachedChemVZ(cacheInput);
           if (cached) {
-            setMolecule(buildMoleculeFromChemVZObject(cached.chemvz, locale));
+            applyMolecule(buildMoleculeFromChemVZObject(cached.chemvz, locale));
             setParseSource("cache", cacheInput);
             setInfoMessage(t("aiCacheLoaded"));
             return;
@@ -170,7 +197,7 @@ export function useMolecule() {
         }
       }
       const chemvz = await parseImageWithAI(dataUrl);
-      setMolecule(buildMoleculeFromChemVZObject(chemvz, locale));
+      applyMolecule(buildMoleculeFromChemVZObject(chemvz, locale));
       setParseSource("ai", cacheInput);
       try {
         await saveCachedChemVZ(cacheInput, chemvz);
@@ -184,7 +211,7 @@ export function useMolecule() {
     } finally {
       setLoading(false);
     }
-  }, [locale, setError, setInfoMessage, setLoading, setMolecule, setParseSource, setRotatingBond, setConformerStats]);
+  }, [applyMolecule, locale, setError, setInfoMessage, setLoading, setParseSource, setRotatingBond, setConformerStats]);
 
   const clearCurrentCache = useCallback(async (input: string) => {
     await clearCachedChemVZ(input);

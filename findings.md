@@ -168,3 +168,14 @@
 - P8.7：新增 `hooks/useResponsiveLayout.ts`，`App`/`MoleculeViewer`/`LeftPanel` 共用同一 orientation + touch 快照，移除三处重复 resize 监听。
 - P8.8/P8.9：删除未被任何桌面/Android 代码实现的 `window.__chemviz` 桥（`ChemVizBridge` 接口与 `App.tsx` 两处 effect）；`ChemVizAndroid` 的方法均仍被使用，予以保留。
 - `Agent.md` 已更新技术栈、系统架构、文件表、VSEPR/构象/命名章节与 Android 路径；历史 UFF 章节标注为已移除。
+
+### 2026-11-22 P9 AI 命名实现（工作树）
+
+- 预设：22 个 `molecules/presets/*.json` 增加顶层 `iupac`；有机分子与本地 `IupacNamer` 的 golden 名称保持一致，water/ammonia/carbon dioxide 由预设直接提供名称，避免本地命名失败。
+- 数据：`MoleculeData.iupacSource` 记录 `preset | cache | ai | local`；`localParser` 把预设 `iupac` 透传到 `useMolecule`。
+- 传输：新增 `src/ai/errors.ts` 与 `src/ai/chat.ts`，把 `AIParseError`、JSON 提取、Android/Qt/fetch 三种传输和 `response_format` 回退集中到一处；`aiParser` 与命名共用。
+- 缓存：`src/naming/cache.ts` 键为规范 SMILES，无 SMILES 时用元素/键标签签名；存储键 `naming-v1-<hash>`，值内保留原始键防碰撞；桌面桥接受 `naming-` 前缀并支持 `?prefix=naming-` 单独清空；Android `validCacheKey` 同步放宽并新增 `clearCacheByPrefix`。
+- AI 命名：`src/naming/aiNamer.ts` 使用专用 prompt，只接受 `{name, comment?}`；`validateIupacName` 拒绝空值、多行、超长、Markdown 与 `IUPAC:`/`name:` 前缀。
+- 编排：`NamingService` 同步返回预设/本地名称，异步先查缓存再调模型；令牌 + 结构键双重校验，旧请求不会覆盖新分子；无 AI 配置时完全跳过异步阶段。
+- UI：左侧 IUPAC 行显示来源徽标；新增 `NamingControls` 的“重新生成名称”和“清除命名缓存”。
+- 测试：新增 preset iupac、缓存键、AI 名称校验、NamingService 令牌/回退等用例；`npm run check` 136/136，`vite build` 通过。

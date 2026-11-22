@@ -6,6 +6,8 @@ export interface LocalPresetResult {
   formula: string;
   reason: "preset";
   presetId: string;
+  /** Authoritative IUPAC name from the preset file, when present. */
+  iupac?: string;
   chemvz: ChemVZMolecule;
 }
 
@@ -15,6 +17,8 @@ interface PresetFile {
   id: string;
   formula: string;
   inputs: string[];
+  /** Standard English IUPAC name; optional for third-party presets. */
+  iupac?: string;
   chemvz: unknown;
 }
 
@@ -34,6 +38,7 @@ function loadPresets(): Map<string, LocalPresetResult> {
           formula: file.formula,
           reason: "preset",
           presetId: file.id,
+          ...(typeof file.iupac === "string" && file.iupac.trim() ? { iupac: file.iupac.trim() } : {}),
           chemvz,
         });
       }
@@ -74,7 +79,9 @@ function loadPresetsFromValues(values: unknown[]): Map<string, LocalPresetResult
       for (const input of file.inputs) {
         if (typeof input !== "string" || !input.trim()) continue;
         byInput.set(normalizeInput(input), {
-          kind: "preset", formula: file.formula, reason: "preset", presetId: file.id, chemvz,
+          kind: "preset", formula: file.formula, reason: "preset", presetId: file.id,
+          ...(typeof file.iupac === "string" && file.iupac.trim() ? { iupac: file.iupac.trim() } : {}),
+          chemvz,
         });
       }
     } catch (error) {

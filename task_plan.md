@@ -136,15 +136,15 @@ scripts/                 打包、同步、检查脚本
 - [x] 清理 `src/types/bridge.d.ts` 与 Android 桥中未使用的字段（删除 `window.__chemviz` 死桥）
 - **验收**：tsc 0；117/117 测试全过；engine 文件 ≤400 行、组件 ≤250 行；无 `uffRelax` / `rdkit` 生产引用；三端打包脚本待发布前复验
 
-### P9 AI 命名（缓存 / 预设 + 本地回退）
-- [ ] `MoleculeData.iupacSource?: "preset" | "cache" | "ai" | "local"`，保留 `iupacName` / `iupacError`
-- [ ] 22 个预设 JSON 增加 `iupac`（标准英文名）；`localParser` 读出并透传
-- [ ] `src/naming/cache.ts`：键 = 规范 SMILES（无 SMILES 时结构签名）；`naming` 命名空间；桌面桥 / Android / localStorage 三路复用
-- [ ] `src/naming/aiNamer.ts`：专用 prompt，严格 JSON `{ name, comment? }`，校验非空/单行/长度/无前缀；复用文本模型配置与重试
-- [ ] `src/naming/NamingService.ts`：本地名称立即返回；预设/缓存/AI 异步解析成功后升级；请求令牌防止旧结果覆盖新分子；失败静默回退本地
-- [ ] UI：名称来源徽标；命名缓存清除 / 重新生成入口
-- [ ] 测试：预设 golden、缓存键稳定、AI mock 成功/失败回退、旧请求不覆盖、无 AI 配置时行为不变
-- **验收**：无 AI 配置时与现状一致；有 AI 时名称来自 AI 且命中缓存；本地失败仍显示 `NamingError`；`npm run check` 全过
+### P9 AI 命名（缓存 / 预设 + 本地回退）（已完成）
+- [x] `MoleculeData.iupacSource?: "preset" | "cache" | "ai" | "local"`，保留 `iupacName` / `iupacError`
+- [x] 22 个预设 JSON 增加 `iupac`（标准英文名）；`localParser` 读出并透传
+- [x] `src/naming/cache.ts`：键 = 规范 SMILES（无 SMILES 时结构签名）；`naming` 命名空间；桌面桥 / Android / localStorage 三路复用
+- [x] `src/naming/aiNamer.ts`：专用 prompt，严格 JSON `{ name, comment? }`，校验非空/单行/长度/无前缀；复用文本模型配置与重试
+- [x] `src/naming/NamingService.ts`：本地名称立即返回；预设/缓存/AI 异步解析成功后升级；请求令牌防止旧结果覆盖新分子；失败静默回退本地
+- [x] UI：名称来源徽标；命名缓存清除 / 重新生成入口
+- [x] 测试：预设 golden、缓存键稳定、AI mock 成功/失败回退、旧请求不覆盖、无 AI 配置时行为不变
+- **验收**：无 AI 配置时与现状一致；有 AI 时名称来自 AI 且命中缓存；本地失败仍显示 `NamingError`；`npm run check` 136/136 通过
 
 ### P10 大分子分级处理（先粗后细）
 - [ ] 基准：记录 C40 / C80 / C120 / C200 的 OCL 生成与 MMFF94 时间（当前 C40 122 原子约 1.4–1.8 s）
@@ -173,9 +173,10 @@ scripts/                 打包、同步、检查脚本
 ## 5. 当前状态
 
 - P8 已完成：低风险清理（UFF 死路径、设置 schema、文件拆分、组件瘦身、orientation、桥接清理、文档）。
-- P9 / P10 在 P8 验收后开始；P11 独立推进。
+- P9 已完成：预设 `iupac`、命名缓存、AI 命名、本地优先 + 异步升级、来源徽标与缓存操作。
+- P10 进行中；P11 独立推进。
 - 旧 P4 / P5 / P6 的未完成项已并入 P8，不再单独维护。
 
 ## Next Step
 
-P9.1：给 `MoleculeData` 增加 `iupacSource`，并让 22 个预设 JSON 带上标准英文 `iupac` 字段。
+P10.1：记录 C40 / C80 / C120 / C200 的 OCL 生成与 MMFF94 时间，作为分级阈值基准。

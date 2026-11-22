@@ -166,6 +166,17 @@ export interface TranslationMap {
   definiteCoplanar: string;
   noCoplanarFound: string;
   iupacName: string;
+  naming: string;
+  namingSourcePreset: string;
+  namingSourceCache: string;
+  namingSourceAi: string;
+  namingSourceLocal: string;
+  namingRegenerate: string;
+  clearNamingCache: string;
+  namingCacheCleared: string;
+  namingRegenerateUnavailable: string;
+  namingRegenerated: string;
+  namingRegenerateFailed: string;
   fromImageParse: string;
   conformerFailed: string;
   conformerBackendFallback: string;

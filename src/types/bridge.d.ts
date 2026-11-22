@@ -14,6 +14,8 @@ interface Window {
     saveCache?(key: string, content: string): boolean;
     deleteCache?(key: string): boolean;
     clearCache?(): boolean;
+    /** Clear cache entries whose storage key starts with `prefix`. */
+    clearCacheByPrefix?(prefix: string): boolean;
     requestChatCompletions?(requestId: string, url: string, apiKey: string, body: string): void;
     /** Opens the native camera/gallery sheet; the result arrives via
      *  `window.__chemvizAndroidImageResult`. */

@@ -4,6 +4,7 @@ import { useStore } from "../store/useStore";
 import { calcMoleculeProperties } from "../engine/properties";
 import type { MoleculeProperties } from "../engine/properties";
 import { useResponsiveLayout } from "../hooks/useResponsiveLayout";
+import { NamingControls, NamingSourceBadge } from "./NamingControls";
 
 interface LeftPanelProps {
   onProcessInput: (input: string, forceAI?: boolean) => void;
@@ -88,12 +89,13 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
       <div className="info-list">
         <div className="info-item"><span className="info-label">{t("formula")}</span><span className="info-value">{molecule.formula}</span></div>
         <div className="info-item"><span className="info-label">{t("name")}</span><span className="info-value">{molecule.name}</span></div>
-        <div className="info-item"><span className="info-label">{t("iupacName")}</span><span className={`info-value${molecule.iupacError ? " info-error" : ""}`}>{molecule.iupacName ?? molecule.iupacError ?? ""}</span></div>
+        <div className="info-item"><span className="info-label">{t("iupacName")}</span><span className={`info-value${molecule.iupacError ? " info-error" : ""}`}>{molecule.iupacName ?? molecule.iupacError ?? ""}{molecule.iupacName && <NamingSourceBadge source={molecule.iupacSource} />}</span></div>
         <div className="info-item"><span className="info-label">{t("smiles")}</span><span className="info-value">{molecule.smiles}</span></div>
         <div className="info-item"><span className="info-label">{t("atoms")}</span><span className="info-value">{molecule.atoms.length}</span></div>
         <div className="info-item"><span className="info-label">{t("bonds")}</span><span className="info-value">{molecule.bonds.length}</span></div>
       </div>
     </div>)}
+    <NamingControls />
     {molProps && (<div className="section"><h3 className="section-title">{t("properties")}</h3>
       <div className="info-list">
         <div className="info-item"><span className="info-label">{t("molecularWeight")}</span><span className="info-value">{molProps.molecularWeight.toFixed(2)} g/mol</span></div>

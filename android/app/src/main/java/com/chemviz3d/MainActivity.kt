@@ -180,8 +180,24 @@ class MainActivity : AppCompatActivity() {
 
             @JavascriptInterface
             fun clearCache(): Boolean = try {
-                File(cacheDir, cacheDirectoryName).listFiles()?.forEach { it.delete() }
+                File(cacheDir, cacheDirectoryName).listFiles()
+                    ?.filter { it.name.matches(Regex("v1-[0-9a-f]{8}\\.json")) }
+                    ?.forEach { it.delete() }
                 true
+            } catch (_: Exception) {
+                false
+            }
+
+            @JavascriptInterface
+            fun clearCacheByPrefix(prefix: String): Boolean = try {
+                if (prefix != "naming-") {
+                    false
+                } else {
+                    File(cacheDir, cacheDirectoryName).listFiles()
+                        ?.filter { it.name.startsWith(prefix) }
+                        ?.forEach { it.delete() }
+                    true
+                }
             } catch (_: Exception) {
                 false
             }
@@ -401,7 +417,7 @@ class MainActivity : AppCompatActivity() {
         return "data:image/jpeg;base64," + Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP)
     }
 
-    private fun validCacheKey(key: String): Boolean = Regex("v1-[0-9a-f]{8}").matches(key)
+    private fun validCacheKey(key: String): Boolean = Regex("(?:naming-)?v1-[0-9a-f]{8}").matches(key)
 
     private fun cacheFile(key: String): File = File(File(cacheDir, cacheDirectoryName), "$key.json")
 

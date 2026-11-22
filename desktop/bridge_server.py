@@ -177,7 +177,8 @@ def _json_bytes(value: Any) -> bytes:
 
 
 def _cache_key(value: str) -> bool:
-    return bool(re.fullmatch(r"v1-[0-9a-f]{8}", value))
+    # `naming-v1-*` is the naming namespace; `v1-*` is the AI structure cache.
+    return bool(re.fullmatch(r"(?:naming-)?v1-[0-9a-f]{8}", value))
 
 
 def _preset_files(root: Path) -> list[dict[str, Any]]:
@@ -392,7 +393,11 @@ class BridgeHandler(BaseHTTPRequestHandler):
         prefix = f"{BRIDGE_PREFIX}/cache/"
         try:
             if parsed.path == f"{BRIDGE_PREFIX}/cache":
-                self.server.clear_cache()
+                query = urllib.parse.parse_qs(parsed.query)
+                prefix = query.get("prefix", ["v1-"])[0]
+                if not re.fullmatch(r"(?:naming-)?v1-", prefix):
+                    raise ValueError("invalid cache prefix")
+                self.server.clear_cache(prefix)
             elif parsed.path.startswith(prefix):
                 key = urllib.parse.unquote(parsed.path[len(prefix):])
                 if not _cache_key(key):
@@ -415,8 +420,10 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 if not _cache_key(key):
                     raise ValueError("invalid cache key")
                 value = json.loads(self._read_body().decode("utf-8"))
-                if not isinstance(value, dict) or not isinstance(value.get("chemvz"), dict):
-                    raise ValueError("cache entry must contain chemvz object")
+                if not isinstance(value, dict) or not (
+                    isinstance(value.get("chemvz"), dict) or isinstance(value.get("name"), str)
+                ):
+                    raise ValueError("cache entry must contain chemvz or name")
                 self.server.write_cache(key, value)
             except (UnicodeDecodeError, ValueError, OSError) as exc:
                 self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
@@ -568,10 +575,10 @@ class BridgeHTTPServer(ThreadingHTTPServer):
         except FileNotFoundError:
             pass
 
-    def clear_cache(self) -> None:
+    def clear_cache(self, prefix: str = "v1-") -> None:
         if not self.cache_root.is_dir():
             return
-        for path in self.cache_root.glob("v1-*.json"):
+        for path in self.cache_root.glob(f"{prefix}*.json"):
             try:
                 path.unlink()
             except FileNotFoundError:

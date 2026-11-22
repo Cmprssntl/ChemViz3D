@@ -728,3 +728,22 @@
   width: 100%;
   margin-top: 6px;
 }
+
+.naming-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 9px;
+  line-height: 14px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid currentColor;
+  opacity: 0.8;
+}
+
+.naming-badge-preset { color: #88dd44; }
+.naming-badge-cache { color: #44aaff; }
+.naming-badge-ai { color: #ffaa44; }
+.naming-badge-local { color: #8888aa; }

@@ -82,3 +82,24 @@ test("every preset either names cleanly or raises a typed error", () => {
     assert.ok(result.name.length > 0, `${file}: empty name`);
   }
 });
+
+test("every preset declares a unique, non-empty IUPAC name", () => {
+  const files = fs.readdirSync(presetsDir).filter((name) => name.endsWith(".json"));
+  assert.equal(files.length, 22);
+  const seen = new Set<string>();
+  for (const file of files) {
+    const raw = JSON.parse(fs.readFileSync(path.join(presetsDir, file), "utf8")) as { iupac?: unknown };
+    assert.equal(typeof raw.iupac, "string", `${file}: missing iupac`);
+    const name = (raw.iupac as string).trim();
+    assert.ok(name.length > 0, `${file}: empty iupac`);
+    assert.ok(!seen.has(name), `${file}: duplicate iupac ${name}`);
+    seen.add(name);
+  }
+});
+
+test("preset IUPAC names agree with the local namer where it succeeds", () => {
+  for (const [file, expected] of Object.entries(GOLDEN)) {
+    const raw = JSON.parse(fs.readFileSync(path.join(presetsDir, file), "utf8")) as { iupac?: unknown };
+    assert.equal(raw.iupac, expected, `${file}: preset iupac drifted from the local namer`);
+  }
+});
