@@ -43,11 +43,15 @@ export class HeuristicBackend extends ConformerBackend {
     }
 
     const warnings: string[] = [];
-    const minimized = this.minimizer.minimize(built.atoms, built.bonds, {
-      maxIterations: options.maxIterations ?? 200,
-    });
-    const atoms: AtomData[] = minimized.accepted ? minimized.atoms : built.atoms;
-    if (!minimized.accepted) warnings.push("Constrained refinement did not converge; using placement geometry");
+    const minimized = options.skipMinimise
+      ? null
+      : this.minimizer.minimize(built.atoms, built.bonds, {
+        maxIterations: options.maxIterations ?? 200,
+      });
+    const atoms: AtomData[] = minimized?.accepted ? minimized.atoms : built.atoms;
+    if (minimized && !minimized.accepted) {
+      warnings.push("Constrained refinement did not converge; using placement geometry");
+    }
 
     const report = this.validator.validate(atoms, built.bonds);
     if (!report.ok) return null;
