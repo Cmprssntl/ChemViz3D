@@ -2,6 +2,7 @@ import React, { useCallback, useRef } from "react";
 import { t } from "../i18n/index";
 import { useStore } from "../store/useStore";
 import { searchExtremeConformations, type ConformerSearchQuality } from "../engine/conformerSearch";
+import { effectiveSearchQuality } from "../engine/conformer/search/types";
 import type { MoleculeData } from "../types/molecule";
 
 interface CachedSearch {
@@ -13,7 +14,8 @@ interface CachedSearch {
 
 /** "Most/least planar" conformer search and its possible/definite summary. */
 export const RightPanelConformer: React.FC<{ molecule: MoleculeData }> = ({ molecule }) => {
-  const quality = useStore((s) => s.conformerSearchQuality);
+  const requestedQuality = useStore((s) => s.conformerSearchQuality);
+  const quality = effectiveSearchQuality(molecule.atoms.length, requestedQuality);
   const stats = useStore((s) => s.conformerStats);
   const setMolecule = useStore((s) => s.setMolecule);
   const setConformerStats = useStore((s) => s.setConformerStats);
@@ -57,6 +59,13 @@ export const RightPanelConformer: React.FC<{ molecule: MoleculeData }> = ({ mole
           <span className="info-label">{t("conformerSearchQuality")}</span>
           <span className="info-value">{t(`conformerSearch${quality[0].toUpperCase()}${quality.slice(1)}`)}</span>
         </div>
+        {quality !== requestedQuality && (
+          <div className="info-item" style={{ fontSize: 10, color: "#ffaa44" }}>
+            {t("conformerSearchDowngraded", {
+              quality: t(`conformerSearch${quality[0].toUpperCase()}${quality.slice(1)}`),
+            })}
+          </div>
+        )}
         <button className="btn btn-small" onClick={() => handleSearch("most")} style={{ width: "100%", fontSize: 11 }}>
           {t("searchMostPlanar")}
         </button>

@@ -179,3 +179,14 @@
 - 编排：`NamingService` 同步返回预设/本地名称，异步先查缓存再调模型；令牌 + 结构键双重校验，旧请求不会覆盖新分子；无 AI 配置时完全跳过异步阶段。
 - UI：左侧 IUPAC 行显示来源徽标；新增 `NamingControls` 的“重新生成名称”和“清除命名缓存”。
 - 测试：新增 preset iupac、缓存键、AI 名称校验、NamingService 令牌/回退等用例；`npm run check` 136/136，`vite build` 通过。
+
+### 2026-11-22 P10 大分子分级实现（工作树）
+
+- 基准（直链烷烃，OCL 生成 + MMFF94，maxIts 150/400）：C40 生成 0.39 s、MMFF94 1.27 s；C80 生成 0.05 s、MMFF94 9.7 s；C120 生成 0.08 s、MMFF94 10.0 s；C200 生成 0.15 s、MMFF94 35.3 s。MMFF94 是主要瓶颈，且 C80 起返回码 1（未收敛）。
+- `ConformerPlan`：≤60 重原子且 ≤8 环 → `fine`（完整 MMFF94 400 次）；61–200 → `balanced`（先生成、后精修，精修 120/60 次）；>200 → `coarse`（先生成、后用 `ConstrainedMinimizer` 120 次）。
+- `ConformerService.build` 返回 `{ molecule, plan, refine }`；`refine` 闭包捕获成功的后端，精修结果再次过 `GeometryValidator`，失败则保留粗几何。
+- `OpenChemLibBackend.refine` 从粗几何重建 OCL 分子，MMFF94 每 10 次迭代 `setTimeout(0)` 让出主线程；`useConstrained` 分支改用 `ConstrainedMinimizer`。
+- `useMolecule` 用 `refineTokenRef` + 结构键双重校验：新分子加载后旧精修结果被丢弃；精修替换时保留当前命名与坐标以外的 UI 状态。
+- 渲染降级：>400 原子关闭元素标签，球体分段 32→16；>800 原子的实例化渲染暂列为后续评估。
+- 构象搜索：`effectiveSearchQuality` 在 >200 原子时强制 `fast`，>100 且 `precise` 时降为 `balanced`，右侧面板显示降档提示。
+- 测试：新增 `tests/conformer-plan.test.ts`（分级、C120 首帧预算、MMFF94/受限精修、搜索降档）；`npm run check` 144/144。

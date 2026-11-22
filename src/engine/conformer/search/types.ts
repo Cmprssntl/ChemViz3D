@@ -58,6 +58,16 @@ export interface ConformerSearchResult {
   totalSearched: number;
 }
 
+/** Large structures automatically use a cheaper search budget. */
+export function effectiveSearchQuality(
+  atomCount: number,
+  requested: ConformerSearchQuality,
+): ConformerSearchQuality {
+  if (atomCount > 200) return "fast";
+  if (atomCount > 100 && requested === "precise") return "balanced";
+  return requested;
+}
+
 // A fragment's own tolerance describes the geometry of that chemical unit.
 // Once separate fragments are combined, use a substantially tighter bound:
 // otherwise two nearby but visibly different planes can be accepted by the

@@ -10,7 +10,7 @@ import { imageCacheInput } from "../ai/image";
 import type { ChemVZMolecule } from "../types/moleculeFormat";
 import { clearAllCachedChemVZ, clearCachedChemVZ, getCachedChemVZ, saveCachedChemVZ } from "../ai/cache";
 import { namingService } from "../naming/NamingService";
-import { namingCacheKey } from "../naming/cache";
+import { useMoleculeUpgrade, type BuiltMolecule } from "./useMoleculeUpgrade";
 import { t } from "../i18n/index";
 
 function selectChemVZName(name: ChemVZMolecule["name"], locale: string): string | undefined {
@@ -25,7 +25,7 @@ function buildMoleculeFromChemVZObject(
   obj: ChemVZMolecule,
   locale = "zh-CN",
   presetIupac?: string,
-): MoleculeData {
+): BuiltMolecule {
   const spec = chemVZToBondSpec(obj);
   const name = selectChemVZName(obj.name, locale);
   const result = conformerService.build(
@@ -42,7 +42,10 @@ function buildMoleculeFromChemVZObject(
   if (result.warnings.length > 0) {
     console.warn(`[conformer:${result.backend}]`, ...result.warnings);
   }
-  return withIupacName(result.molecule, presetIupac);
+  return {
+    molecule: withIupacName(result.molecule, presetIupac),
+    refine: result.refine,
+  };
 }
 
 /**
@@ -82,28 +85,13 @@ export function useMolecule() {
   const locale = useStore(s => s.locale);
   /** Last imported image, so "regenerate" repeats the vision request. */
   const lastImageRef = useRef<{ cacheInput: string; dataUrl: string } | null>(null);
+  const { apply: applyMolecule, cancel: cancelUpgrades } = useMoleculeUpgrade(setMolecule);
 
   const resetInputState = () => {
-    namingService.cancel();
+    cancelUpgrades();
     setLoading(true); setError(null); setInfoMessage(null); setMolecule(null);
     setRotatingBond(null); setConformerStats(null); setParseSource(null);
   };
-
-  /**
-   * Publish a molecule immediately, then upgrade its name in the background.
-   * The callback re-reads the store so a rotated molecule keeps its current
-   * coordinates, and compares structure keys so a stale reply is ignored.
-   */
-  const applyMolecule = useCallback((molecule: MoleculeData) => {
-    setMolecule(molecule);
-    if (molecule.iupacSource === "preset") return;
-    const key = namingCacheKey(molecule);
-    void namingService.upgrade(molecule, (name, source) => {
-      const current = useStore.getState().molecule;
-      if (!current || namingCacheKey(current) !== key) return;
-      setMolecule({ ...current, iupacName: name, iupacSource: source, iupacError: undefined });
-    });
-  }, [setMolecule]);
 
   const processChemVZFile = useCallback(async (file: File) => {
     resetInputState();

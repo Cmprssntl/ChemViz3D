@@ -24,6 +24,12 @@ export interface ConformerOptions {
   seed?: number;
   /** MMFF94 iteration cap; large molecules use fewer iterations. */
   maxIterations?: number;
+  /** Skip the initial minimisation and return the raw conformer. */
+  skipMinimise?: boolean;
+  /** Background refinement should use `ConstrainedMinimizer` instead of MMFF94. */
+  useConstrained?: boolean;
+  /** MMFF94 iterations per cooperative chunk. */
+  chunkIterations?: number;
 }
 
 /**
@@ -37,6 +43,16 @@ export abstract class ConformerBackend {
   abstract isAvailable(): boolean;
 
   abstract build(input: ConformerInput, options: ConformerOptions): ConformerOutput | null;
+
+  /**
+   * Optional second stage for large molecules. Returns refined geometry for
+   * the same graph, or null when the backend cannot refine it.
+   */
+  refine?(
+    input: ConformerInput,
+    coarse: ConformerOutput,
+    options: ConformerOptions,
+  ): Promise<ConformerOutput | null> | ConformerOutput | null;
 }
 
 export class ConformerError extends Error {

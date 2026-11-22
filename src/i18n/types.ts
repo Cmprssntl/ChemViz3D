@@ -160,6 +160,7 @@ export interface TranslationMap {
   propertyMW: string;
   unitA2: string;
     conformerSearch: string;
+  conformerSearchDowngraded: string;
   searchMostPlanar: string;
   searchLeastPlanar: string;
   possibleCoplanar: string;

@@ -5,7 +5,9 @@ import {
   ConformerError,
   type ConformerInput,
   type ConformerOptions,
+  type ConformerOutput,
 } from "./ConformerBackend";
+import { planConformer, type ConformerPlan } from "./ConformerPlan";
 import { HeuristicBackend } from "./HeuristicBackend";
 import { OpenChemLibBackend } from "./OpenChemLibBackend";
 
@@ -19,6 +21,9 @@ export interface ConformerBuildResult {
   molecule: MoleculeData;
   backend: string;
   warnings: string[];
+  plan: ConformerPlan;
+  /** Background refinement; absent when the plan does not need one. */
+  refine?: () => Promise<MoleculeData | null>;
 }
 
 const ELEMENT_ORDER = ["C", "H", "O", "N", "S", "P", "F", "Cl", "Br", "I"];
@@ -39,6 +44,7 @@ export class ConformerService {
     if (input.elements.length === 0) {
       throw new ConformerError("Empty structure", []);
     }
+    const plan = planConformer(input);
     const attempts: string[] = [];
     for (const backend of this.backends) {
       if (!backend.isAvailable()) {
@@ -47,7 +53,13 @@ export class ConformerService {
       }
       let output;
       try {
-        output = backend.build(input, options);
+        output = backend.build(input, {
+          ...options,
+          skipMinimise: options.skipMinimise ?? !plan.initialMinimise,
+          ...(plan.initialMinimise
+            ? { maxIterations: options.maxIterations ?? plan.initialIterations }
+            : {}),
+        });
       } catch (error) {
         attempts.push(`${backend.id}: ${message(error)}`);
         continue;
@@ -61,22 +73,60 @@ export class ConformerService {
         attempts.push(`${backend.id}: ${report.issues[0]?.message ?? "invalid geometry"}`);
         continue;
       }
+      const refine = plan.refine && backend.refine
+        ? this.makeRefiner(backend, input, output, options, plan)
+        : undefined;
       return {
-        molecule: {
-          atoms: output.atoms,
-          bonds: output.bonds,
-          name: options.name || input.formula || "molecule",
-          formula: formulaOf(output.atoms.map((atom) => atom.element)) || input.formula || "",
-          smiles: input.smiles ?? "",
-        },
+        molecule: this.toMolecule(output, options, input),
         backend: output.backend,
         warnings: output.warnings,
+        plan,
+        refine,
       };
     }
     throw new ConformerError(
       `No conformer backend produced a valid structure (${attempts.join("; ")})`,
       attempts,
     );
+  }
+
+  private makeRefiner(
+    backend: ConformerBackend,
+    input: ConformerInput,
+    coarse: ConformerOutput,
+    options: ConformerBuildOptions,
+    plan: ConformerPlan,
+  ): () => Promise<MoleculeData | null> {
+    return async () => {
+      let refined: ConformerOutput | null;
+      try {
+        refined = await backend.refine!(input, coarse, {
+          ...options,
+          maxIterations: plan.refineIterations,
+          useConstrained: plan.refineWithConstrained,
+        });
+      } catch {
+        return null;
+      }
+      if (!refined) return null;
+      const report = this.validator.validate(refined.atoms, refined.bonds);
+      if (!report.ok) return null;
+      return this.toMolecule(refined, options, input);
+    };
+  }
+
+  private toMolecule(
+    output: ConformerOutput,
+    options: ConformerBuildOptions,
+    input: ConformerInput,
+  ): MoleculeData {
+    return {
+      atoms: output.atoms,
+      bonds: output.bonds,
+      name: options.name || input.formula || "molecule",
+      formula: formulaOf(output.atoms.map((atom) => atom.element)) || input.formula || "",
+      smiles: input.smiles ?? "",
+    };
   }
 }
 

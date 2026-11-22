@@ -146,15 +146,16 @@ scripts/                 打包、同步、检查脚本
 - [x] 测试：预设 golden、缓存键稳定、AI mock 成功/失败回退、旧请求不覆盖、无 AI 配置时行为不变
 - **验收**：无 AI 配置时与现状一致；有 AI 时名称来自 AI 且命中缓存；本地失败仍显示 `NamingError`；`npm run check` 136/136 通过
 
-### P10 大分子分级处理（先粗后细）
-- [ ] 基准：记录 C40 / C80 / C120 / C200 的 OCL 生成与 MMFF94 时间（当前 C40 122 原子约 1.4–1.8 s）
-- [ ] `ConformerPlan`：按重原子数 / 环数选择 `coarse` / `balanced` / `fine`；初定阈值 ≤60 / 61–200 / >200
-- [ ] 两阶段 API：`ConformerService.build` 返回粗几何 + `refine()`；`useMolecule` 先渲染粗几何，再后台精修，仅在分子未变时替换
-- [ ] 精修预算：MMFF94 `maxIts` 按档位；>200 重原子跳过全量 MMFF94，改用受限 `ConstrainedMinimizer` 或仅柔性键
-- [ ] 渲染降级：>400 原子关闭标签、降低球体分段；>800 原子评估实例化渲染
-- [ ] 构象搜索联动：大分子自动降档并提示
-- [ ] 测试：C40/C120 键长、重叠、NaN 不变量；首帧时间预算；精修后不回退
-- **验收**：C120 粗几何首帧 < 1.5 s；精修完成后无跳变/无错误；C40 结果不劣于当前
+### P10 大分子分级处理（先粗后细）（已完成，Worker 待补）
+- [x] 基准：记录 C40 / C80 / C120 / C200 的 OCL 生成与 MMFF94 时间（C40 约 0.4 s 生成 + 1.3 s MMFF94；C80 约 9.7 s；C120 约 10 s；C200 约 35 s）
+- [x] `ConformerPlan`：按重原子数 / 环数选择 `coarse` / `balanced` / `fine`；阈值 ≤60 / 61–200 / >200，环数 >8 时降档
+- [x] 两阶段 API：`ConformerService.build` 返回粗几何 + `refine()`；`useMolecule` 先渲染粗几何，再后台精修，仅在分子未变时替换
+- [x] 精修预算：MMFF94 `maxIts` 按档位；>200 重原子跳过全量 MMFF94，改用受限 `ConstrainedMinimizer`
+- [x] 渲染降级：>400 原子关闭标签、球体分段 32→16；>800 原子实例化渲染列为后续评估
+- [x] 构象搜索联动：>200 原子自动降为 `fast`，>100 且 `precise` 降为 `balanced`，UI 显示降档提示
+- [x] 测试：C40/C120 键长、重叠、NaN 不变量；C120 首帧预算；精修后不回退；受限精修分支
+- **验收**：C120 粗几何首帧约 0.7 s（< 1.5 s）；精修完成按结构键替换，不覆盖新分子；C40 仍走完整 MMFF94
+- **说明**：精修目前用 `setTimeout` 分块让出主线程（MMFF94 每 10 次迭代一块），未引入独立 Worker；单 bundle 的 Android 打包约束下，Worker 作为后续优化项
 
 ### P11 晶体与离子键（独立计划）
 - [ ] 按 `task_plan_crystal_ionic.md` 执行 C0–C7
@@ -174,9 +175,10 @@ scripts/                 打包、同步、检查脚本
 
 - P8 已完成：低风险清理（UFF 死路径、设置 schema、文件拆分、组件瘦身、orientation、桥接清理、文档）。
 - P9 已完成：预设 `iupac`、命名缓存、AI 命名、本地优先 + 异步升级、来源徽标与缓存操作。
-- P10 进行中；P11 独立推进。
+- P10 已完成：分级 `ConformerPlan`、粗几何先渲染 + 后台精修、受限精修、渲染降级、构象搜索联动；独立 Worker 作为后续优化。
+- P11 待推进（独立计划）。
 - 旧 P4 / P5 / P6 的未完成项已并入 P8，不再单独维护。
 
 ## Next Step
 
-P10.1：记录 C40 / C80 / C120 / C200 的 OCL 生成与 MMFF94 时间，作为分级阈值基准。
+P11.1：按 `task_plan_crystal_ionic.md` 从 C0（`chemvz: 3` schema 与校验）开始。

@@ -53,4 +53,22 @@ export class HeuristicBackend extends ConformerBackend {
     if (!report.ok) return null;
     return { atoms, bonds: built.bonds as BondData[], backend: this.id, warnings };
   }
+
+  refine(
+    _input: ConformerInput,
+    coarse: ConformerOutput,
+    options: ConformerOptions = {},
+  ): ConformerOutput {
+    const warnings: string[] = [];
+    const minimized = this.minimizer.minimize(coarse.atoms, coarse.bonds, {
+      maxIterations: options.maxIterations ?? 200,
+    });
+    if (!minimized.accepted) warnings.push("Constrained refinement did not converge; using coarse geometry");
+    return {
+      atoms: minimized.accepted ? minimized.atoms : coarse.atoms,
+      bonds: coarse.bonds,
+      backend: this.id,
+      warnings,
+    };
+  }
 }

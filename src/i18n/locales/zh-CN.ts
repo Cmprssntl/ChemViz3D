@@ -155,6 +155,7 @@ export const zhCN: TranslationMap = {
   propertyMW: "MW",
   unitA2: "A\u00b2",
   conformerSearch: "构象查找",
+  conformerSearchDowngraded: "大分子已自动降档为 {{quality}}",
   searchMostPlanar: "查找原子共面最多构象",
   searchLeastPlanar: "查找原子共面最少构象",
   possibleCoplanar: "可能共面原子数",

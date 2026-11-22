@@ -58,13 +58,17 @@ export class MoleculeScene {
   private rebuild(molecule: MoleculeData, mode: DisplayMode, labelMode: LabelDisplayMode): void {
     this.clearChildren();
     this.mode = mode;
+    // Large structures trade sphere detail and labels for frame rate. The
+    // threshold is intentionally high enough that normal examples keep the
+    // full 32x32 spheres and element labels.
+    const lowDetail = molecule.atoms.length > 400;
     this.atomMeshes = molecule.atoms.map((atom) => {
-      const mesh = this.resources.atomMesh(atom, mode);
+      const mesh = this.resources.atomMesh(atom, mode, lowDetail);
       this.group.add(mesh);
       return mesh;
     });
 
-    const showLabels = mode === "ball-and-stick" && labelMode !== "never";
+    const showLabels = mode === "ball-and-stick" && labelMode !== "never" && !lowDetail;
     this.labels = [];
     if (showLabels) {
       for (const atom of molecule.atoms) {

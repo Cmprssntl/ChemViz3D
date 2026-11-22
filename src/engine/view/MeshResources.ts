@@ -28,9 +28,9 @@ export class MeshResources {
   private readonly labelTextures = new Map<string, THREE.CanvasTexture>();
   private readonly labelMaterials = new Map<string, THREE.SpriteMaterial>();
 
-  atomMesh(atom: AtomData, mode: DisplayMode): THREE.Mesh {
+  atomMesh(atom: AtomData, mode: DisplayMode, lowDetail = false): THREE.Mesh {
     const style = styleFor(atom.element, mode);
-    const mesh = new THREE.Mesh(this.sphere(atom.element, mode, style.radius), this.atomMaterial(atom.element, mode, style));
+    const mesh = new THREE.Mesh(this.sphere(atom.element, mode, style.radius, lowDetail), this.atomMaterial(atom.element, mode, style));
     mesh.position.set(atom.x, atom.y, atom.z);
     mesh.userData = { type: "atom", index: atom.index, element: atom.element, shared: true };
     mesh.name = `atom-${atom.index}`;
@@ -58,11 +58,11 @@ export class MeshResources {
     this.labelTextures.clear();
   }
 
-  private sphere(element: string, mode: DisplayMode, radius: number): THREE.SphereGeometry {
-    const key = `${element}:${mode}`;
+  private sphere(element: string, mode: DisplayMode, radius: number, lowDetail: boolean): THREE.SphereGeometry {
+    const key = `${element}:${mode}:${lowDetail ? "lo" : "hi"}`;
     let geometry = this.spheres.get(key);
     if (!geometry) {
-      geometry = new THREE.SphereGeometry(radius, 32, 32);
+      geometry = new THREE.SphereGeometry(radius, lowDetail ? 16 : 32, lowDetail ? 16 : 32);
       this.spheres.set(key, geometry);
     }
     return geometry;

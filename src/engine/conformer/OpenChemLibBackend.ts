@@ -2,6 +2,7 @@ import { ConformerGenerator, ForceFieldMMFF94, Molecule, Resources } from "openc
 import type { AtomData, BondData } from "../../types/molecule";
 import { ATOMIC_DATA } from "../../utils/formulaParser";
 import { GeometryValidator } from "../relax/GeometryValidator";
+import { ConstrainedMinimizer } from "../relax/ConstrainedMinimizer";
 import {
   atomicNumberFromElement,
   ConformerBackend,
@@ -40,14 +41,69 @@ export class OpenChemLibBackend extends ConformerBackend {
     const generated = this.generateConformer(molecule, options.seed ?? DEFAULT_SEED);
     if (!generated) return null;
 
-    const iterations = options.maxIterations
-      ?? (input.elements.length > LARGE_MOLECULE_ATOMS ? 150 : 400);
-    this.minimise(generated, iterations, warnings);
+    if (!options.skipMinimise) {
+      const iterations = options.maxIterations
+        ?? (input.elements.length > LARGE_MOLECULE_ATOMS ? 150 : 400);
+      this.minimise(generated, iterations, warnings);
+    }
 
     const output = this.readBack(generated, input, warnings);
     const report = this.validator.validate(output.atoms, output.bonds);
     if (!report.ok) return null;
     return output;
+  }
+
+  /**
+   * Second stage. MMFF94 runs in short chunks with a yield between them so the
+   * viewer keeps responding; very large structures use the constrained
+   * minimizer because MMFF94 scales poorly beyond ~200 heavy atoms.
+   */
+  async refine(
+    input: ConformerInput,
+    coarse: ConformerOutput,
+    options: ConformerOptions = {},
+  ): Promise<ConformerOutput | null> {
+    if (options.useConstrained) return this.refineConstrained(coarse, options);
+
+    const molecule = this.fromOutput(coarse);
+    if (!molecule) return null;
+    const warnings: string[] = [];
+    const total = Math.max(1, options.maxIterations ?? 120);
+    const chunk = Math.max(1, options.chunkIterations ?? 10);
+    try {
+      const forceField = new ForceFieldMMFF94(molecule, "MMFF94");
+      for (let done = 0; done < total; done += chunk) {
+        const code = forceField.minimise({
+          maxIts: Math.min(chunk, total - done),
+          gradTol: 1e-3,
+          funcTol: 1e-4,
+        });
+        if (code === 0) break;
+        await yieldToMain();
+      }
+    } catch (error) {
+      warnings.push(`MMFF94 refinement skipped: ${message(error)}`);
+    }
+
+    const output = this.readBack(molecule, input, warnings);
+    const report = this.validator.validate(output.atoms, output.bonds);
+    return report.ok ? output : null;
+  }
+
+  private refineConstrained(coarse: ConformerOutput, options: ConformerOptions): ConformerOutput {
+    const minimizer = new ConstrainedMinimizer();
+    const result = minimizer.minimize(coarse.atoms, coarse.bonds, {
+      maxIterations: options.maxIterations ?? 120,
+    });
+    const warnings = result.accepted
+      ? []
+      : ["Constrained refinement did not converge; using coarse geometry"];
+    return {
+      atoms: result.accepted ? result.atoms : coarse.atoms,
+      bonds: coarse.bonds,
+      backend: this.id,
+      warnings,
+    };
   }
 
   private static registerResources(): void {
@@ -82,6 +138,29 @@ export class OpenChemLibBackend extends ConformerBackend {
     try {
       const generator = new ConformerGenerator(seed);
       return generator.getOneConformerAsMolecule(molecule);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Rebuild an OCL molecule from a coarse output, including explicit H atoms. */
+  private fromOutput(output: ConformerOutput): Molecule | null {
+    try {
+      const molecule = new Molecule(output.atoms.length + 8, output.bonds.length + 8);
+      for (const atom of output.atoms) {
+        const index = molecule.addAtom(atomicNumberFromElement(atom.element));
+        if (atom.charge) molecule.setAtomCharge(index, atom.charge);
+        molecule.setAtomX(index, atom.x);
+        molecule.setAtomY(index, atom.y);
+        molecule.setAtomZ(index, atom.z);
+      }
+      for (const bond of output.bonds) {
+        if (bond.atom1Idx === bond.atom2Idx) continue;
+        const index = molecule.addBond(bond.atom1Idx, bond.atom2Idx);
+        molecule.setBondOrder(index, Math.max(1, Math.round(bond.order)));
+      }
+      molecule.ensureHelperArrays(Molecule.cHelperParities);
+      return molecule;
     } catch {
       return null;
     }
@@ -139,4 +218,9 @@ export class OpenChemLibBackend extends ConformerBackend {
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/** Yield one macrotask so the renderer can paint between MMFF94 chunks. */
+function yieldToMain(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }

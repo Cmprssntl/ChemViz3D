@@ -155,6 +155,7 @@ export const enUS: TranslationMap = {
   propertyMW: "MW",
   unitA2: "A\u00b2",
   conformerSearch: "Conformer Search",
+  conformerSearchDowngraded: "Large structure: search quality reduced to {{quality}}",
   searchMostPlanar: "Find most-coplanar conformation",
   searchLeastPlanar: "Find least-coplanar conformation",
   possibleCoplanar: "Possible Coplanar Atoms",
