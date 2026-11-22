@@ -1,0 +1,159 @@
+{
+  "id": "4-ol-c12",
+  "formula": "C12H26O",
+  "inputs": [
+    "C12H26O",
+    "4-十二醇",
+    "dodecan-4-ol"
+  ],
+  "iupac": "dodecan-4-ol",
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "4-十二醇",
+      "zh-TW": "4-十二醇",
+      "en-US": "dodecan-4-ol"
+    },
+    "smiles": "CCCCCCCCC(CCC)O",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "O",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          3,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          7,
+          8
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          8,
+          9
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          9,
+          10
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          10,
+          11
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          11,
+          12
+        ],
+        "order": 1
+      }
+    ]
+  }
+}

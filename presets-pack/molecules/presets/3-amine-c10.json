@@ -1,0 +1,137 @@
+{
+  "id": "3-amine-c10",
+  "formula": "C10H23N",
+  "inputs": [
+    "C10H23N",
+    "3-十胺",
+    "decan-3-amine"
+  ],
+  "iupac": "decan-3-amine",
+  "chemvz": {
+    "chemvz": 2,
+    "name": {
+      "zh-CN": "3-十胺",
+      "zh-TW": "3-十胺",
+      "en-US": "decan-3-amine"
+    },
+    "smiles": "CCCCCCCC(CC)N",
+    "atoms": [
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "N",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      },
+      {
+        "el": "C",
+        "hybridization": "sp3"
+      }
+    ],
+    "bonds": [
+      {
+        "i": [
+          0,
+          1
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          1,
+          2
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          3
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          2,
+          4
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          4,
+          5
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          5,
+          6
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          6,
+          7
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          7,
+          8
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          8,
+          9
+        ],
+        "order": 1
+      },
+      {
+        "i": [
+          9,
+          10
+        ],
+        "order": 1
+      }
+    ]
+  }
+}
