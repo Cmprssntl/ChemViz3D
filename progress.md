@@ -309,3 +309,10 @@
 - 修复 `scripts/package.mjs` 在 Windows 上调用 `npx` 失败（改为 node 调用本地 vite CLI）。
 - 发布 `v1.1.0`：Windows setup.exe（212 MB）、Windows portable.zip（212 MB）、Linux deb（228 MB）、Linux portable.tar.xz（226 MB）、Android APK（8 MB）。
 - 旧的两个 v1.1.0 / v1.1.0-Android release 与标签已删除，改为单一版本。
+
+### P8 / P9 / P10 执行（完成）
+- P8：删除 UFF 死路径；`shared/settings.defaults.json` 单一 schema；拆分 `ai/config.ts`、`vseprBuilder.ts`、`conformerSearch.ts` 与超长组件；统一 orientation/touch；删除 `window.__chemviz` 死桥；更新 `Agent.md`。
+- P9：22 个预设增加 `iupac`；`MoleculeData.iupacSource`；`src/naming/` 的缓存（SMILES/结构签名键、`naming` 命名空间）、AI 命名、两阶段 `NamingService`；来源徽标与缓存操作。
+- P10：`ConformerPlan` 分级（fine/balanced/coarse）；粗几何先渲染 + 后台精修；MMFF94 分块让出主线程；>200 重原子改用 `ConstrainedMinimizer`；>400 原子关闭标签并降低球体分段；构象搜索自动降档；精修不会覆盖用户旋转/搜索结果。
+- 验证：`npm run check` 147/147，`vite build` 通过；`main` 已推送至 `c61df0f`。
+- 下一步：P11 按 `task_plan_crystal_ionic.md` 从 C0 开始（独立计划，尚未实现）。
