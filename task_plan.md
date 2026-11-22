@@ -16,6 +16,10 @@
 | Android 图片解析 | 合并进共享代码（相机/相册 → 图像模型） |
 | 视觉 | 允许统一，需要重采截图基线 |
 | 代码风格 | 面向对象 + 继承/多态；禁止上帝对象；单方法 ≤ 60 行；单文件 ≤ 400 行（engine）/ 250 行（组件） |
+| 命名 AI | 顺序：预设 `iupac` → 命名缓存 → 文本模型 → 本地 `IupacNamer`；本地名称先显示，AI 成功后升级，失败静默回退 |
+| 命名缓存 | 以规范 SMILES（无 SMILES 时结构签名）为键，独立 `naming` 命名空间，复用桌面/Android/localStorage 传输 |
+| 大分子几何 | 自动分级：coarse 先渲染 → fine 后台精修；>200 重原子不做全量 MMFF94；粗/细结果都必须过 `GeometryValidator` |
+| 晶体 / 离子键 | 独立计划 `task_plan_crystal_ionic.md`；`chemvz: 3`，不破坏 `chemvz: 2` |
 
 ## 1. 目标架构
 
@@ -120,6 +124,42 @@ scripts/                 打包、同步、检查脚本
 - [x] GitHub Release：`v1.1.0`（唯一发布，五个附件，非技术化更新说明）
 - **验收结果**：`npm run check` 112/112；deb `--help` 与 headless 服务实测；APK 与 `release/android` 字节一致
 
+### P8 历史遗留清理（已完成）
+- [x] 删除 UFF 死路径：`engine/uff.ts`、`vseprBuilder` 的 `uffRelax` 块与 `BuildOptions.relax`；启发式后端继续用 `ConstrainedMinimizer`（112/112 通过）
+- [x] 设置 schema 单一源：`shared/settings.defaults.json`（字段、枚举、默认值），TS / Vite / Python 共用
+- [x] 拆 `ai/config.ts`（589 行）→ `ai/settings/` 下的类型、默认值、归一化、存储、桥接模块
+- [x] 拆 `vseprBuilder.ts`（606 行）→ `placement/knownSpecs.ts` + `placement/postPlacement.ts` + 门面（391 行）
+- [x] 拆 `conformerSearch.ts`（400 行）→ `conformer/search/{types,planarity,explore}.ts` + 18 行门面
+- [x] 组件瘦身：`RightPanel`（279→123）拆面板；`MoleculeViewer`（258→150）抽 `useViewerScene`
+- [x] 统一 orientation / touch 检测：`hooks/useResponsiveLayout.ts`，移除三处重复 resize 监听
+- [x] 更新 `Agent.md` 到当前架构（移除 RDKit、已删模块、旧文件表）；`findings.md` 追加当前事实
+- [x] 清理 `src/types/bridge.d.ts` 与 Android 桥中未使用的字段（删除 `window.__chemviz` 死桥）
+- **验收**：tsc 0；117/117 测试全过；engine 文件 ≤400 行、组件 ≤250 行；无 `uffRelax` / `rdkit` 生产引用；三端打包脚本待发布前复验
+
+### P9 AI 命名（缓存 / 预设 + 本地回退）
+- [ ] `MoleculeData.iupacSource?: "preset" | "cache" | "ai" | "local"`，保留 `iupacName` / `iupacError`
+- [ ] 22 个预设 JSON 增加 `iupac`（标准英文名）；`localParser` 读出并透传
+- [ ] `src/naming/cache.ts`：键 = 规范 SMILES（无 SMILES 时结构签名）；`naming` 命名空间；桌面桥 / Android / localStorage 三路复用
+- [ ] `src/naming/aiNamer.ts`：专用 prompt，严格 JSON `{ name, comment? }`，校验非空/单行/长度/无前缀；复用文本模型配置与重试
+- [ ] `src/naming/NamingService.ts`：本地名称立即返回；预设/缓存/AI 异步解析成功后升级；请求令牌防止旧结果覆盖新分子；失败静默回退本地
+- [ ] UI：名称来源徽标；命名缓存清除 / 重新生成入口
+- [ ] 测试：预设 golden、缓存键稳定、AI mock 成功/失败回退、旧请求不覆盖、无 AI 配置时行为不变
+- **验收**：无 AI 配置时与现状一致；有 AI 时名称来自 AI 且命中缓存；本地失败仍显示 `NamingError`；`npm run check` 全过
+
+### P10 大分子分级处理（先粗后细）
+- [ ] 基准：记录 C40 / C80 / C120 / C200 的 OCL 生成与 MMFF94 时间（当前 C40 122 原子约 1.4–1.8 s）
+- [ ] `ConformerPlan`：按重原子数 / 环数选择 `coarse` / `balanced` / `fine`；初定阈值 ≤60 / 61–200 / >200
+- [ ] 两阶段 API：`ConformerService.build` 返回粗几何 + `refine()`；`useMolecule` 先渲染粗几何，再后台精修，仅在分子未变时替换
+- [ ] 精修预算：MMFF94 `maxIts` 按档位；>200 重原子跳过全量 MMFF94，改用受限 `ConstrainedMinimizer` 或仅柔性键
+- [ ] 渲染降级：>400 原子关闭标签、降低球体分段；>800 原子评估实例化渲染
+- [ ] 构象搜索联动：大分子自动降档并提示
+- [ ] 测试：C40/C120 键长、重叠、NaN 不变量；首帧时间预算；精修后不回退
+- **验收**：C120 粗几何首帧 < 1.5 s；精修完成后无跳变/无错误；C40 结果不劣于当前
+
+### P11 晶体与离子键（独立计划）
+- [ ] 按 `task_plan_crystal_ionic.md` 执行 C0–C7
+- **验收**：见独立计划
+
 ## 3. 备份
 
 - 仓库与工作树备份：`backup/`（bundle + tar.gz，含 Android 子仓库；已在 `.gitignore` 中）
@@ -129,3 +169,13 @@ scripts/                 打包、同步、检查脚本
 ## 4. 历史阶段（已完成，保留摘要）
 
 1–18 阶段（Linux 依赖恢复、AI 解析链路、chemvz 校验、本地预设、设置持久化、桌面桥接、构象搜索、共面检测等）已完成，详见 `progress.md` / `findings.md`。
+
+## 5. 当前状态
+
+- P8 已完成：低风险清理（UFF 死路径、设置 schema、文件拆分、组件瘦身、orientation、桥接清理、文档）。
+- P9 / P10 在 P8 验收后开始；P11 独立推进。
+- 旧 P4 / P5 / P6 的未完成项已并入 P8，不再单独维护。
+
+## Next Step
+
+P9.1：给 `MoleculeData` 增加 `iupacSource`，并让 22 个预设 JSON 带上标准英文 `iupac` 字段。

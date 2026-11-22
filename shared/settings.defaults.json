@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "groups": ["text", "image"],
+  "endpoint": {
+    "stringFields": ["api", "model", "requestUrl", "systemPrompt"],
+    "maxRetries": { "default": 2, "min": 0, "max": 10 }
+  },
+  "ui": {
+    "defaults": {
+      "locale": "zh-CN",
+      "displayMode": "ball-and-stick",
+      "labelDisplayMode": "always",
+      "conformerSearchQuality": "balanced"
+    },
+    "values": {
+      "locale": ["zh-CN", "zh-TW", "en-US"],
+      "displayMode": ["ball-and-stick", "space-filling"],
+      "labelDisplayMode": ["always", "hover", "never"],
+      "conformerSearchQuality": ["fast", "balanced", "precise"]
+    }
+  }
+}

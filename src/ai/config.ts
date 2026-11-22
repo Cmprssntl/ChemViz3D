@@ -1,115 +1,45 @@
+/**
+ * Public AI settings facade.
+ *
+ * The implementation is split under `settings/`:
+ *   types     — configuration shapes
+ *   prompt    — the default chemvz system prompt
+ *   defaults  — shared JSON schema (field names, enums, defaults)
+ *   storage   — normalization, localStorage and the runtime snapshot
+ *   bridge    — desktop QtWebChannel / HTTP bridge and Android persistence
+ *
+ * Feature code keeps importing from `ai/config` so the split stays invisible.
+ */
 import { t } from "../i18n/index";
-import { platform } from "../platform";
+import { getDesktopBridgeToken } from "./settings/bridge";
+import { getRuntimeAISettings, isRuntimeDeveloperConfigured } from "./settings/storage";
+import type { AIConfig } from "./settings/types";
 
-export interface AIConfig {
-  /** API root or a complete Chat Completions URL. */
-  baseUrl: string;
-  apiKey: string;
-  model: string;
-  maxRetries: number;
-  systemPrompt: string;
-}
-
-export interface AIEndpointSettings {
-  api: string;
-  model: string;
-  requestUrl: string;
-  maxRetries: number;
-  systemPrompt: string;
-}
-
-export interface AISettings {
-  text: AIEndpointSettings;
-  image: AIEndpointSettings;
-}
-
-export interface UISettings {
-  locale: "zh-CN" | "zh-TW" | "en-US";
-  displayMode: "ball-and-stick" | "space-filling";
-  labelDisplayMode: "always" | "hover" | "never";
-  conformerSearchQuality: "fast" | "balanced" | "precise";
-}
-
-export const DEFAULT_SYSTEM_PROMPT = `You convert chemistry descriptions into ChemViz3D's molecular storage format.
-Return ONLY one valid JSON object. Never use Markdown fences or explanatory text.
-The exact schema is:
-{
-  "chemvz": 2,
-  "name": {"zh-CN":"optional Chinese name","en-US":"optional English name"},
-  "smiles": "canonical SMILES",
-  "comment": "optional short note",
-  "atoms": [{"el":"C","hybridization":"sp3","charge":0}],
-  "bonds": [{"i":[0,1],"order":1}]
-}
-Rules:
-- Output chemvz exactly 2.
-- Use only element symbols supported by the application.
-- Output heavy atoms only; implicit hydrogens are added by the local VSEPR builder.
-- Atom indices are zero-based and bonds must refer to existing, distinct atoms.
-- Bond order must be 1, 1.5, 2, or 3. Use hybridization sp/sp2/sp3 when known.
-- For benzene-style six-member aromatic carbon rings, use alternating 1, 2, 1, 2, 1, 2 bonds; never make all six ring edges order 2.
-- For nitro groups, use [N+](=O)[O-] with explicit N+ and O- charges when needed.
-- Describe one connected ordinary molecule. Use formal charges when standard resonance notation requires them; do not output multiple disconnected fragments.
-- Always include a correct canonical SMILES string in the \'smiles\' field. Do not derive it from the formula.
-- Do not invent 3D coordinates or formula fields.
-- If the request is ambiguous, choose the most common textbook interpretation and explain it in comment.`;
-
-const EMPTY_ENDPOINT: AIEndpointSettings = {
-  api: "",
-  model: "",
-  requestUrl: "",
-  maxRetries: 2,
-  systemPrompt: DEFAULT_SYSTEM_PROMPT,
-};
-const DEFAULT_SETTINGS: AISettings = {
-  text: { ...EMPTY_ENDPOINT },
-  image: { ...EMPTY_ENDPOINT },
-};
-export const DEFAULT_UI_SETTINGS: UISettings = {
-  locale: "zh-CN",
-  displayMode: "ball-and-stick",
-  labelDisplayMode: "always",
-  conformerSearchQuality: "balanced",
-};
-
-declare const __CHEMVIZ_AI_SETTINGS__: (Partial<AISettings> & { ui?: Partial<UISettings>; systemPrompt?: string }) | undefined;
 declare const __CHEMVIZ_AI_PROXY_URL__: string | undefined;
 declare const __CHEMVIZ_AI_PROXY_SOURCE__: string | undefined;
-const STORAGE_KEY = "chemviz3d.ai-settings.v1";
-const UI_STORAGE_KEY = "chemviz3d.ui-settings.v1";
-const DESKTOP_BRIDGE_PREFIX = "/__chemviz_bridge";
-const DESKTOP_BRIDGE_TOKEN_HEADER = "X-ChemViz-Bridge-Token";
-let runtimeSettings: AISettings | null = null;
-let runtimeDeveloperConfigured = false;
 
-export function getDesktopBridgeToken(): string {
-  if (typeof window === "undefined") return "";
-  const bridge = window.__CHEMVIZ_DESKTOP_BRIDGE__;
-  return bridge?.version === 1 && typeof bridge.token === "string" ? bridge.token : "";
-}
-
-export function hasDesktopDeveloperSettings(): boolean {
-  if (typeof window === "undefined") return false;
-  const bridge = window.__CHEMVIZ_DESKTOP_BRIDGE__;
-  return bridge?.version === 1 && bridge.developerConfigured === true;
-}
-
-function cloneSettings(settings: AISettings): AISettings {
-  return {
-    text: { ...settings.text },
-    image: { ...settings.image },
-  };
-}
-
-export function setRuntimeAISettings(settings: AISettings, developerConfigured = hasDesktopDeveloperSettings()): AISettings {
-  runtimeSettings = cloneSettings(settings);
-  runtimeDeveloperConfigured = developerConfigured;
-  return cloneSettings(runtimeSettings);
-}
-
-export function getRuntimeAISettings(): AISettings {
-  return runtimeSettings ? cloneSettings(runtimeSettings) : getAISettings();
-}
+export type { AIConfig, AIEndpointSettings, AISettings, UISettings } from "./settings/types";
+export { DEFAULT_SYSTEM_PROMPT } from "./settings/prompt";
+export {
+  DEFAULT_UI_SETTINGS,
+  cacheUISettings,
+  getAISettings,
+  getInjectedUISettings,
+  getRuntimeAISettings,
+  getUISettings,
+  normalizeUISettings,
+  restoreSettingsFromInjection,
+  saveAISettings,
+  setRuntimeAISettings,
+} from "./settings/storage";
+export {
+  getDesktopBridgeToken,
+  getQtSettingsApi,
+  hasDesktopDeveloperSettings,
+  loadAISettingsFromDesktopBridge,
+  saveAISettingsFile,
+  saveUISettingsToDesktopBridge,
+} from "./settings/bridge";
 
 export function requestAISettings(message = t("aiDisabledMessage")) {
   if (typeof window !== "undefined") {
@@ -117,405 +47,6 @@ export function requestAISettings(message = t("aiDisabledMessage")) {
       detail: { message, openSettings: true },
     }));
   }
-}
-
-function desktopBridgeHeaders(): Record<string, string> {
-  const token = getDesktopBridgeToken();
-  return token ? { [DESKTOP_BRIDGE_TOKEN_HEADER]: token } : {};
-}
-
-function androidBridge(): NonNullable<Window["ChemVizAndroid"]> | null {
-  if (typeof window === "undefined" || !platform.isAndroid) return null;
-  const bridge = window.ChemVizAndroid;
-  return bridge && typeof bridge.getSettings === "function" && typeof bridge.saveSettings === "function"
-    ? bridge
-    : null;
-}
-
-function normalizeEndpoint(value: unknown, fallback: AIEndpointSettings): AIEndpointSettings {
-  if (!value || typeof value !== "object") return { ...fallback };
-  const endpoint = value as Record<string, unknown>;
-  return {
-    api: typeof endpoint.api === "string" ? endpoint.api.trim() : fallback.api,
-    model: typeof endpoint.model === "string" ? endpoint.model.trim() : fallback.model,
-    requestUrl: typeof endpoint.requestUrl === "string" ? endpoint.requestUrl.trim() : fallback.requestUrl,
-    maxRetries: typeof endpoint.maxRetries === "number" && Number.isInteger(endpoint.maxRetries)
-      ? Math.min(10, Math.max(0, endpoint.maxRetries))
-      : fallback.maxRetries,
-    systemPrompt: normalizeSystemPrompt(endpoint.systemPrompt, fallback.systemPrompt),
-  };
-}
-
-function normalizeSystemPrompt(value: unknown, fallback: string): string {
-  return typeof value === "string" && value.trim() ? value.trim() : fallback;
-}
-
-export function normalizeUISettings(value: unknown, fallback = DEFAULT_UI_SETTINGS): UISettings {
-  const raw = value && typeof value === "object" ? value as Record<string, unknown> : {};
-  return {
-    locale: raw.locale === "zh-CN" || raw.locale === "zh-TW" || raw.locale === "en-US"
-      ? raw.locale
-      : fallback.locale,
-    displayMode: raw.displayMode === "ball-and-stick" || raw.displayMode === "space-filling"
-      ? raw.displayMode
-      : fallback.displayMode,
-    labelDisplayMode: raw.labelDisplayMode === "always" || raw.labelDisplayMode === "hover" || raw.labelDisplayMode === "never"
-      ? raw.labelDisplayMode
-      : fallback.labelDisplayMode,
-    conformerSearchQuality: raw.conformerSearchQuality === "fast" || raw.conformerSearchQuality === "balanced" || raw.conformerSearchQuality === "precise"
-      ? raw.conformerSearchQuality
-      : fallback.conformerSearchQuality,
-  };
-}
-
-export function getUISettings(): UISettings {
-  if (typeof window === "undefined") return { ...DEFAULT_UI_SETTINGS };
-  const configured = typeof __CHEMVIZ_AI_SETTINGS__ === "undefined" ? undefined : __CHEMVIZ_AI_SETTINGS__?.ui;
-  const configuredDefaults = normalizeUISettings(configured);
-  try {
-    const raw = window.localStorage.getItem(UI_STORAGE_KEY);
-    return raw ? normalizeUISettings(JSON.parse(raw), configuredDefaults) : configuredDefaults;
-  } catch {
-    return configuredDefaults;
-  }
-}
-
-export function cacheUISettings(settings: UISettings): UISettings {
-  const normalized = normalizeUISettings(settings);
-  if (typeof window !== "undefined") {
-    try {
-      window.localStorage.setItem(UI_STORAGE_KEY, JSON.stringify(normalized));
-    } catch {
-      // Browser storage can be unavailable in restricted contexts.
-    }
-  }
-  return normalized;
-}
-
-interface InjectedSettings {
-  text?: Partial<AIEndpointSettings>;
-  image?: Partial<AIEndpointSettings>;
-  ui?: Partial<UISettings>;
-  systemPrompt?: string;
-}
-
-/** Settings inlined into the page HTML by the desktop bridge. Reading them
- * needs no network request, so reads never fail even if QtWebEngine's fetch
- * is flaky ("Failed to fetch") on a given Windows build. */
-function getInjectedSettings(): InjectedSettings {
-  if (typeof window === "undefined") return {};
-  const value = (window as Window & { __CHEMVIZ_SETTINGS__?: unknown }).__CHEMVIZ_SETTINGS__;
-  return value && typeof value === "object" ? (value as InjectedSettings) : {};
-}
-
-/** Restore the runtime snapshot from the HTML-injected settings (fallback
- * used when the bridge fetch fails). Returns true if anything was restored. */
-export function restoreSettingsFromInjection(): boolean {
-  const injected = getInjectedSettings();
-  if (!injected.text && !injected.image && !injected.ui) return false;
-  setRuntimeAISettings({
-    text: normalizeEndpoint(injected.text, DEFAULT_SETTINGS.text),
-    image: normalizeEndpoint(injected.image, DEFAULT_SETTINGS.image),
-  });
-  if (injected.ui) cacheUISettings(normalizeUISettings(injected.ui));
-  return true;
-}
-
-/** UI settings from the HTML injection, or null when absent. */
-export function getInjectedUISettings(): UISettings | null {
-  const injected = getInjectedSettings();
-  return injected.ui ? normalizeUISettings(injected.ui) : null;
-}
-
-export function getAISettings(): AISettings {
-  // The desktop bridge loads file-based settings into the runtime snapshot at
-  // startup (loadAISettingsFromDesktopBridge). Prefer that snapshot over
-  // localStorage: QtWebEngine keys localStorage by origin and the bridge port
-  // changes on every restart, so localStorage cannot survive a relaunch.
-  if (runtimeSettings) return cloneSettings(runtimeSettings);
-  const configured = typeof __CHEMVIZ_AI_SETTINGS__ === "undefined" ? {} : __CHEMVIZ_AI_SETTINGS__;
-  const legacyFilePrompt = normalizeSystemPrompt(configured.systemPrompt, "");
-  const fileSettings = {
-    text: normalizeEndpoint(configured.text, legacyFilePrompt
-      ? { ...DEFAULT_SETTINGS.text, systemPrompt: legacyFilePrompt }
-      : DEFAULT_SETTINGS.text),
-    image: normalizeEndpoint(configured.image, legacyFilePrompt
-      ? { ...DEFAULT_SETTINGS.image, systemPrompt: legacyFilePrompt }
-      : DEFAULT_SETTINGS.image),
-  };
-  let stored: Partial<AISettings> & { systemPrompt?: unknown } = {};
-  if (typeof window !== "undefined") {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) stored = JSON.parse(raw) as Partial<AISettings>;
-    } catch {
-      // Ignore unavailable or malformed browser storage and use file settings.
-    }
-  }
-  const legacyStoredPrompt = normalizeSystemPrompt(stored.systemPrompt, "");
-  return {
-    text: normalizeEndpoint(stored.text, legacyStoredPrompt
-      ? { ...fileSettings.text, systemPrompt: legacyStoredPrompt }
-      : fileSettings.text),
-    image: normalizeEndpoint(stored.image, legacyStoredPrompt
-      ? { ...fileSettings.image, systemPrompt: legacyStoredPrompt }
-      : fileSettings.image),
-  };
-}
-
-export function saveAISettings(settings: AISettings): void {
-  if (typeof window === "undefined") return;
-  const normalized = {
-    text: normalizeEndpoint(settings.text, DEFAULT_SETTINGS.text),
-    image: normalizeEndpoint(settings.image, DEFAULT_SETTINGS.image),
-  };
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-  setRuntimeAISettings(normalized);
-}
-
-/** Load persisted AI and UI settings from the local desktop bridge. */
-export async function loadAISettingsFromDesktopBridge(): Promise<UISettings | null> {
-  const mobile = androidBridge();
-  if (mobile) {
-    try {
-      const raw = mobile.getSettings?.() || "{}";
-      const value = JSON.parse(raw) as Partial<AISettings> & { ui?: unknown };
-      const normalized = {
-        text: normalizeEndpoint(value.text, DEFAULT_SETTINGS.text),
-        image: normalizeEndpoint(value.image, DEFAULT_SETTINGS.image),
-      };
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-      setRuntimeAISettings(normalized, hasDesktopDeveloperSettings());
-      return cacheUISettings(normalizeUISettings(value.ui));
-    } catch (error) {
-      console.warn("Unable to load Android settings; using local defaults", error);
-      return null;
-    }
-  }
-  const token = getDesktopBridgeToken();
-  if (!token || typeof window === "undefined") return null;
-  const response = await fetch(`${DESKTOP_BRIDGE_PREFIX}/settings`, {
-    headers: desktopBridgeHeaders(),
-  });
-  if (!response.ok) throw new Error(`无法读取桌面客户端配置（HTTP ${response.status}）`);
-  const value = await response.json() as Partial<AISettings> & { ui?: unknown };
-  const normalized = {
-    text: normalizeEndpoint(value.text, DEFAULT_SETTINGS.text),
-    image: normalizeEndpoint(value.image, DEFAULT_SETTINGS.image),
-  };
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-  } catch {
-    // localStorage is best-effort (QtWebEngine keys it by origin, so it may
-    // be a fresh empty store after a relaunch). Never let a storage failure
-    // prevent applying the file-based settings below.
-  }
-  setRuntimeAISettings(normalized, hasDesktopDeveloperSettings());
-  return cacheUISettings(normalizeUISettings(value.ui));
-}
-
-export async function saveUISettingsToDesktopBridge(settings: UISettings): Promise<boolean> {
-  const mobile = androidBridge();
-  if (mobile) {
-    const current = getAISettings();
-    const value = {
-      text: current.text,
-      image: current.image,
-      ui: normalizeUISettings(settings),
-    };
-    if (!mobile.saveSettings?.(JSON.stringify(value))) throw new Error("无法保存 Android 设置");
-    return true;
-  }
-  const token = getDesktopBridgeToken();
-  if (!token) return false;
-  // Native QtWebChannel first (packaged desktop), then the HTTP bridge.
-  if (await saveViaQtChannel({ ...getAISettings(), ui: normalizeUISettings(settings) })) return true;
-  try {
-    const response = await fetch(`${DESKTOP_BRIDGE_PREFIX}/settings`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", ...desktopBridgeHeaders() },
-      body: JSON.stringify({ ui: normalizeUISettings(settings) }),
-    });
-    if (!response.ok) throw new Error(`无法保存桌面客户端界面设置（HTTP ${response.status}）`);
-  } catch (error) {
-    if (error instanceof Error && /^无法保存桌面客户端界面设置（HTTP/.test(error.message)) {
-      throw error;
-    }
-    const current = getAISettings();
-    await saveViaImageBeacon({ ...current, ui: normalizeUISettings(settings) });
-  }
-  return true;
-}
-
-/* QtWebChannel native bridge: the packaged desktop shell exposes settings
- * read/write over Qt's internal IPC (window.qt.webChannelTransport), which
- * keeps working even when QtWebEngine's HTTP network service fails on some
- * Windows builds. The plain web build has no qt object and falls through to
- * the HTTP bridge. */
-interface QtSettingsApi {
-  getSettings(callback: (value: string) => void): void;
-  saveSettings(content: string, callback: (result: string) => void): void;
-  chatCompletions(payloadJson: string, callback: (result: string) => void): void;
-}
-
-let qtChannelPromise: Promise<QtSettingsApi | null> | null = null;
-
-function loadQWebChannelScript(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector("script[data-chemviz-qwebchannel]")) {
-      resolve();
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "qrc:///qtwebchannel/qwebchannel.js";
-    script.dataset.chemvizQwebchannel = "1";
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("qwebchannel.js 加载失败"));
-    document.head.appendChild(script);
-  });
-}
-
-export function getQtSettingsApi(): Promise<QtSettingsApi | null> {
-  const qt = (window as { qt?: { webChannelTransport?: unknown } } | undefined)?.qt;
-  if (typeof window === "undefined" || !qt?.webChannelTransport) {
-    return Promise.resolve(null);
-  }
-  if (!qtChannelPromise) {
-    qtChannelPromise = loadQWebChannelScript()
-      .then(
-        () =>
-          new Promise<QtSettingsApi | null>((resolve) => {
-            const ctor = (window as unknown as {
-              QWebChannel?: new (
-                transport: unknown,
-                callback: (channel: { objects: Record<string, QtSettingsApi> }) => void,
-              ) => void;
-            }).QWebChannel;
-            if (!ctor) {
-              resolve(null);
-              return;
-            }
-            new ctor(qt.webChannelTransport as unknown, (channel) => {
-              resolve(channel.objects.chemviz ?? null);
-            });
-          }),
-      )
-      .catch(() => null);
-  }
-  return qtChannelPromise;
-}
-
-/** Prefer the native QtWebChannel save when the desktop shell provides it. */
-async function saveViaQtChannel(settings: Partial<AISettings> & { ui?: unknown }): Promise<boolean> {
-  const api = await getQtSettingsApi();
-  if (!api) return false;
-  const result = await new Promise<string>((resolve, reject) => {
-    const timer = window.setTimeout(() => reject(new Error("保存超时")), 10000);
-    api.saveSettings(JSON.stringify(settings, null, 2), (value) => {
-      window.clearTimeout(timer);
-      resolve(value);
-    });
-  });
-  if (result !== "ok") {
-    const detail = result.startsWith("error:") ? `：${result.slice(6)}` : "";
-    throw new Error(`无法保存桌面客户端配置${detail}`);
-  }
-  return true;
-}
-
-/** Write settings without fetch(): an <img> GET beacon is not subject to
- * QtWebEngine's flaky fetch() on some Windows builds ("Failed to fetch"),
- * so saving keeps working even when the fetch network stack does not. */
-function saveViaImageBeacon(
-  settings: Partial<AISettings> & { ui?: unknown },
-): Promise<void> {
-  const token = getDesktopBridgeToken();
-  if (!token) return Promise.reject(new Error("bridge 未连接"));
-  const payload = encodeURIComponent(JSON.stringify(settings));
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    const timer = window.setTimeout(() => reject(new Error("保存超时")), 15000);
-    image.onload = () => {
-      window.clearTimeout(timer);
-      resolve();
-    };
-    image.onerror = () => {
-      window.clearTimeout(timer);
-      reject(new Error("无法保存桌面客户端配置（bridge 通道不可用）"));
-    };
-    image.src = `${DESKTOP_BRIDGE_PREFIX}/settings?action=save&token=${encodeURIComponent(token)}&data=${payload}&t=${Date.now()}`;
-  });
-}
-
-/** Write settings.int with an explicit file picker, or download it when unavailable. */
-export async function saveAISettingsFile(settings: AISettings): Promise<"bridge" | "picker" | "download"> {
-  const normalized = {
-    text: normalizeEndpoint(settings.text, DEFAULT_SETTINGS.text),
-    image: normalizeEndpoint(settings.image, DEFAULT_SETTINGS.image),
-    ui: getUISettings(),
-  };
-  const content = `${JSON.stringify(normalized, null, 2)}\n`;
-  const mobile = androidBridge();
-  if (mobile) {
-    if (!mobile.saveSettings?.(content)) throw new Error("无法保存 Android 设置");
-    return "bridge";
-  }
-  // 1) Native QtWebChannel (packaged desktop): never depends on HTTP.
-  if (await saveViaQtChannel(normalized)) return "bridge";
-  const bridgeToken = getDesktopBridgeToken();
-  if (bridgeToken) {
-    try {
-      const response = await fetch(`${DESKTOP_BRIDGE_PREFIX}/settings`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...desktopBridgeHeaders() },
-        body: content,
-      });
-      if (!response.ok) {
-        let detail = "";
-        try {
-          const payload = await response.json() as { error?: unknown };
-          if (typeof payload.error === "string") detail = `：${payload.error}`;
-        } catch {
-          // Keep the status-only error when the bridge did not return JSON.
-        }
-        throw new Error(`无法保存桌面客户端配置（HTTP ${response.status}）${detail}`);
-      }
-    } catch (error) {
-      // A non-HTTP failure (e.g. TypeError "Failed to fetch" in QtWebEngine)
-      // means the request never reached the bridge; fall back to the image
-      // beacon so saving never depends on fetch working.
-      if (error instanceof Error && /^无法保存桌面客户端配置（HTTP/.test(error.message)) {
-        throw error;
-      }
-      await saveViaImageBeacon(normalized);
-    }
-    return "bridge";
-  }
-  const picker = (window as Window & {
-    showSaveFilePicker?: (options?: unknown) => Promise<{
-      createWritable: () => Promise<{ write: (value: string) => Promise<void>; close: () => Promise<void> }>;
-    }>;
-  }).showSaveFilePicker;
-
-  if (picker) {
-    const handle = await picker({
-      suggestedName: "settings.int",
-      types: [{ description: "ChemViz3D settings", accept: { "application/json": [".int", ".json"] } }],
-    });
-    const writable = await handle.createWritable();
-    await writable.write(content);
-    await writable.close();
-    return "picker";
-  }
-
-  const blob = new Blob([content], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = "settings.int";
-  anchor.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 0);
-  return "download";
 }
 
 export function hasTextAISettings(settings = getRuntimeAISettings()): boolean {
@@ -535,15 +66,14 @@ export function isValidAIRequestUrl(value: string): boolean {
 export function hasValidTextAISettings(settings = getRuntimeAISettings()): boolean {
   const { text } = settings;
   return Boolean(text.api.trim() && text.model.trim() && isValidAIRequestUrl(text.requestUrl))
-    || runtimeDeveloperConfigured;
+    || isRuntimeDeveloperConfigured();
 }
 
-/** Text settings used by the chemistry parser. Image settings are reserved for a later image workflow. */
 /** The image endpoint has its own model; a text-only setup cannot read images. */
 export function hasValidImageAISettings(settings = getRuntimeAISettings()): boolean {
   const { image } = settings;
   return Boolean(image.api.trim() && image.model.trim() && isValidAIRequestUrl(image.requestUrl))
-    || runtimeDeveloperConfigured;
+    || isRuntimeDeveloperConfigured();
 }
 
 export function getImageAIConfig(): AIConfig {
@@ -558,8 +88,7 @@ export function getImageAIConfig(): AIConfig {
 }
 
 export function getAIConfig(): AIConfig {
-  const settings = getRuntimeAISettings();
-  const text = settings.text;
+  const text = getRuntimeAISettings().text;
   return {
     baseUrl: text.requestUrl,
     apiKey: text.api,
@@ -579,7 +108,7 @@ export function getChatCompletionsUrl(baseUrl: string): string {
 
 /** Use the Vite same-origin proxy only for the settings it was configured to proxy. */
 export function getAIRequestUrl(baseUrl: string): string {
-  if (getDesktopBridgeToken()) return `${DESKTOP_BRIDGE_PREFIX}/chat/completions`;
+  if (getDesktopBridgeToken()) return "/__chemviz_bridge/chat/completions";
   const proxyUrl = typeof __CHEMVIZ_AI_PROXY_URL__ === "undefined" ? "" : __CHEMVIZ_AI_PROXY_URL__;
   const proxySource = typeof __CHEMVIZ_AI_PROXY_SOURCE__ === "undefined" ? "" : __CHEMVIZ_AI_PROXY_SOURCE__;
   if (proxyUrl && proxySource && baseUrl.replace(/\/+$/, "") === proxySource.replace(/\/+$/, "")) {

@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { t } from "../i18n/index";
 import { useStore } from "../store/useStore";
 import { calcMoleculeProperties } from "../engine/properties";
 import type { MoleculeProperties } from "../engine/properties";
-import { platform } from "../platform";
+import { useResponsiveLayout } from "../hooks/useResponsiveLayout";
 
 interface LeftPanelProps {
   onProcessInput: (input: string, forceAI?: boolean) => void;
@@ -20,7 +20,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   onProcessInput, onProcessChemVZFile, onProcessImage, onRegenerate,
   onOpenAISettings, onClearCurrentCache, onClearAllCache, aiUnavailable,
 }) => {
-  const [isTouchDevice, setIsTouchDevice] = useState(platform.capabilities.touchFirst);
+  const { isTouch } = useResponsiveLayout();
   const inputFormula = useStore((s) => s.inputFormula);
   const setInputFormula = useStore((s) => s.setInputFormula);
   const displayMode = useStore((s) => s.displayMode);
@@ -37,15 +37,6 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
   const setConformerSearchQuality = useStore((s) => s.setConformerSearchQuality);
   const parseSource = useStore((s) => s.parseSource);
   const currentCacheInput = useStore((s) => s.currentCacheInput);
-
-  useEffect(() => {
-    const update = () => setIsTouchDevice(
-      navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches,
-    );
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
 
   const molProps = useMemo<MoleculeProperties | null>(() => {
     if (!molecule) return null;
@@ -116,8 +107,8 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
     <div className="section"><h3 className="section-title">{t("examples")}</h3>
       <div className="examples-grid">{examples.map((ex) => (<button key={ex} className="btn example-btn" onClick={() => {setInputFormula(ex);onProcessInput(ex);}} disabled={isLoading}>{ex}</button>))}</div>
     </div>
-    <div className="section"><h3 className="section-title">{t(isTouchDevice ? "touchHelp" : "shortcuts")}</h3>
-      {isTouchDevice ? (
+    <div className="section"><h3 className="section-title">{t(isTouch ? "touchHelp" : "shortcuts")}</h3>
+      {isTouch ? (
         <div className="info-list">
           <div className="touch-tip">{t("touchDragRotate")}</div>
           <div className="touch-tip">{t("touchPinchZoom")}</div>

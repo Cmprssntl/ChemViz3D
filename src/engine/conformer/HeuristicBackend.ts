@@ -37,7 +37,7 @@ export class HeuristicBackend extends ConformerBackend {
 
     let built;
     try {
-      built = buildFromBondSpec(spec, input.formula ?? "", input.smiles ?? "", undefined, { relax: false });
+      built = buildFromBondSpec(spec, input.formula ?? "", input.smiles ?? "");
     } catch {
       return null;
     }

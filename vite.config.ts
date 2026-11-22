@@ -10,7 +10,22 @@ interface SettingsFile {
   ui?: Partial<{ locale: string; displayMode: string; labelDisplayMode: string; conformerSearchQuality: string }>;
 }
 
-const emptyEndpoint = { api: '', model: '', requestUrl: '', maxRetries: 2, systemPrompt: '' };
+// The field names, enum values and defaults live in one shared JSON file so
+// the frontend, this config and desktop/bridge_server.py cannot drift apart.
+interface SettingsSchema {
+  endpoint: { stringFields: string[]; maxRetries: { default: number; min: number; max: number } };
+  ui: { defaults: Record<string, string>; values: Record<string, string[]> };
+}
+const settingsSchema = JSON.parse(
+  fs.readFileSync(path.resolve(process.cwd(), 'shared/settings.defaults.json'), 'utf8'),
+) as SettingsSchema;
+const emptyEndpoint = {
+  api: '',
+  model: '',
+  requestUrl: '',
+  maxRetries: settingsSchema.endpoint.maxRetries.default,
+  systemPrompt: '',
+};
 const defaultSettings = {
   text: { ...emptyEndpoint },
   image: { ...emptyEndpoint },
@@ -35,7 +50,7 @@ function mergeEndpoint(base: typeof emptyEndpoint, override?: SettingsFile['text
     model: nonEmpty(override?.model, base.model),
     requestUrl: nonEmpty(override?.requestUrl, base.requestUrl),
     maxRetries: typeof override?.maxRetries === 'number' && Number.isInteger(override.maxRetries)
-      ? Math.min(10, Math.max(0, override.maxRetries))
+      ? Math.min(settingsSchema.endpoint.maxRetries.max, Math.max(settingsSchema.endpoint.maxRetries.min, override.maxRetries))
       : base.maxRetries,
     systemPrompt: nonEmpty(override?.systemPrompt, base.systemPrompt),
   };
@@ -52,16 +67,16 @@ function loadAISettings(command: 'build' | 'serve') {
       : '');
   const text = mergeEndpoint(mergeEndpoint(defaultSettings.text, publicSettings.text), developerSettings.text);
   const image = mergeEndpoint(mergeEndpoint(defaultSettings.image, publicSettings.image), developerSettings.image);
-  const ui = {
-    locale: publicSettings.ui?.locale === 'zh-TW' || publicSettings.ui?.locale === 'en-US' ? publicSettings.ui.locale : 'zh-CN',
-    displayMode: publicSettings.ui?.displayMode === 'space-filling' ? 'space-filling' : 'ball-and-stick',
-    labelDisplayMode: publicSettings.ui?.labelDisplayMode === 'hover' || publicSettings.ui?.labelDisplayMode === 'never'
-      ? publicSettings.ui.labelDisplayMode
-      : 'always',
-    conformerSearchQuality: publicSettings.ui?.conformerSearchQuality === 'fast' || publicSettings.ui?.conformerSearchQuality === 'precise'
-      ? publicSettings.ui.conformerSearchQuality
-      : 'balanced',
-  };
+  const rawUI = (publicSettings.ui ?? {}) as Record<string, unknown>;
+  const ui = Object.fromEntries(
+    Object.keys(settingsSchema.ui.defaults).map((key) => {
+      const allowed = settingsSchema.ui.values[key] ?? [];
+      const candidate = rawUI[key];
+      return [key, typeof candidate === 'string' && allowed.includes(candidate)
+        ? candidate
+        : settingsSchema.ui.defaults[key]];
+    }),
+  );
   return {
     text: legacySystemPrompt && !text.systemPrompt ? { ...text, systemPrompt: legacySystemPrompt } : text,
     image: legacySystemPrompt && !image.systemPrompt ? { ...image, systemPrompt: legacySystemPrompt } : image,

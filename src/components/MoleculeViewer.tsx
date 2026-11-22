@@ -1,29 +1,17 @@
-import React, { useRef, useEffect, useCallback, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { useStore } from "../store/useStore";
-import { MoleculeScene } from "../engine/view/MoleculeScene";
-import { CameraRig } from "../engine/view/CameraRig";
+import type { CameraRig } from "../engine/view/CameraRig";
+import type { MoleculeScene } from "../engine/view/MoleculeScene";
 import { centerGroupAtOrigin } from "../engine/view/centerGroup";
-import { platform } from "../platform";
 import { applyBondRotation, snapshotPositions } from "../engine/rotation";
 import { updateMeasurementOverlays, clearMeasurementOverlays } from "../engine/measurement";
 import { addCoplanarityIndicators, clearCoplanarityIndicators } from "../engine/view/CoplanarityOverlay";
 import { t } from "../i18n/index";
-import { setScreenshotFn, setResetCameraFn } from "../utils/screenshot";
 import { useViewerPointer } from "../hooks/useViewerPointer";
-
-function createLighting(scene: THREE.Scene): void {
-  scene.add(new THREE.AmbientLight(0x404060, 0.5));
-  const dl = new THREE.DirectionalLight(0xffffff, 1.2);
-  dl.position.set(10, 15, 10);
-  dl.castShadow = true;
-  scene.add(dl);
-  const dl2 = new THREE.DirectionalLight(0x8888ff, 0.4);
-  dl2.position.set(-5, -5, -10);
-  scene.add(dl2);
-  scene.add(new THREE.HemisphereLight(0x444488, 0x222244, 0.6));
-}
+import { useViewerScene } from "../hooks/useViewerScene";
+import { useResponsiveLayout } from "../hooks/useResponsiveLayout";
 
 export const MoleculeViewer: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,7 +29,7 @@ export const MoleculeViewer: React.FC = () => {
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const pointerTypeRef = useRef<string>("mouse");
   const originalPositionsRef = useRef<Array<{ x: number; y: number; z: number }> | null>(null);
-  const [isTouchLayout, setIsTouchLayout] = useState(platform.capabilities.touchFirst);
+  const { isTouch } = useResponsiveLayout();
 
   const molecule = useStore((s) => s.molecule);
   const displayMode = useStore((s) => s.displayMode);
@@ -63,109 +51,13 @@ export const MoleculeViewer: React.FC = () => {
   const rotatingBondKey = rotatingBond ? `bond-${rotatingBond.index}` : null;
   const pointer = useViewerPointer({
     containerRef, cameraRef, moleculeGroupRef, raycasterRef, mouseRef, pointerTypeRef,
-    isTouchLayout, labelDisplayMode,
+    isTouchLayout: isTouch, labelDisplayMode,
   });
 
-  useEffect(() => {
-    const updateTouchLayout = () => {
-      setIsTouchLayout(platform.capabilities.touchFirst
-        || navigator.maxTouchPoints > 0
-        || window.matchMedia("(pointer: coarse)").matches);
-    };
-    updateTouchLayout();
-    window.addEventListener("resize", updateTouchLayout);
-    return () => window.removeEventListener("resize", updateTouchLayout);
-  }, []);
-
-  // Init scene once
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const container = containerRef.current, w = container.clientWidth, h = container.clientHeight;
-
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x111122);
-    sceneRef.current = scene;
-
-    const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
-    camera.position.set(8, 6, 10);
-    cameraRef.current = camera;
-    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-    renderer.setSize(w, h);
-    setScreenshotFn(() => { renderer.render(scene, camera); return renderer.domElement.toDataURL("image/png"); });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFShadowMap;
-    container.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.15;
-    controls.minDistance = 3; controls.maxDistance = 30;
-    controlsRef.current = controls;
-
-    const rig = new CameraRig(camera, controls);
-    rigRef.current = rig;
-    // "Reset" means "frame the molecule again": the empty-scene distance is
-    // far too close for a loaded structure on a short mobile viewport.
-    setResetCameraFn(() => {
-      const group = moleculeGroupRef.current;
-      if (group) rig.fit(group);
-      else rig.reset();
-    });
-    controls.addEventListener("start", () => { cameraTouchedRef.current = true; });
-
-    createLighting(scene);
-    scene.add(new THREE.GridHelper(15, 15, 0x333366, 0x222244));
-
-    const molGroup = new THREE.Group();
-    molGroup.name = "molecule-root";
-    scene.add(molGroup);
-    moleculeGroupRef.current = molGroup;
-
-    const moleculeScene = new MoleculeScene();
-    molGroup.add(moleculeScene.group);
-    moleculeSceneRef.current = moleculeScene;
-    rig.reset();
-
-    let animId = 0;
-    const animate = () => { animId = requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); };
-    animate();
-
-    const onResize = () => {
-      if (!containerRef.current || !cameraRef.current || !rendererRef.current) return;
-      const width = containerRef.current.clientWidth;
-      const height = containerRef.current.clientHeight;
-      if (width <= 0 || height <= 0) return;
-      const previousAspect = cameraRef.current.aspect;
-      cameraRef.current.aspect = width / height;
-      cameraRef.current.updateProjectionMatrix();
-      rendererRef.current.setSize(width, height);
-      // Panel collapse and rotation change the usable canvas; re-frame unless
-      // the user has already chosen a view.
-      const aspectChanged = Math.abs(previousAspect - cameraRef.current.aspect) > 0.01;
-      if (aspectChanged && !cameraTouchedRef.current && moleculeGroupRef.current) {
-        rigRef.current?.fit(moleculeGroupRef.current);
-      }
-    };
-    window.addEventListener("resize", onResize);
-    const resizeObserver = typeof ResizeObserver !== "undefined"
-      ? new ResizeObserver(onResize)
-      : null;
-    resizeObserver?.observe(container);
-
-    return () => {
-      setScreenshotFn(null);
-      window.removeEventListener("resize", onResize);
-      resizeObserver?.disconnect();
-      cancelAnimationFrame(animId);
-      moleculeScene.dispose();
-      moleculeSceneRef.current = null;
-      rigRef.current = null;
-      renderer.dispose();
-      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
-    };
-  }, []);
+  useViewerScene({
+    containerRef, sceneRef, cameraRef, rendererRef, controlsRef,
+    rigRef, moleculeSceneRef, moleculeGroupRef, cameraTouchedRef,
+  });
 
   // Snapshot positions when rotation starts
   useEffect(() => {

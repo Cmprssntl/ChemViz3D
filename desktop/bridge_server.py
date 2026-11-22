@@ -30,18 +30,58 @@ MAX_BODY_BYTES = 16 * 1024 * 1024
 # 1x1 transparent GIF returned by the settings "save" beacon so an <img> tag
 # (which never uses QtWebEngine's flaky fetch) can confirm a successful write.
 _PIXEL_GIF = base64.b64decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
-DEFAULT_UI_SETTINGS = {
+# Fallbacks only: the canonical values live in shared/settings.defaults.json,
+# which is also read by vite.config.ts and src/ai/settings/defaults.ts.
+_FALLBACK_UI_SETTINGS = {
     "locale": "zh-CN",
     "displayMode": "ball-and-stick",
     "labelDisplayMode": "always",
     "conformerSearchQuality": "balanced",
 }
-UI_SETTING_VALUES = {
+_FALLBACK_UI_VALUES = {
     "locale": {"zh-CN", "zh-TW", "en-US"},
     "displayMode": {"ball-and-stick", "space-filling"},
     "labelDisplayMode": {"always", "hover", "never"},
     "conformerSearchQuality": {"fast", "balanced", "precise"},
 }
+_FALLBACK_MAX_RETRIES = {"default": 2, "min": 0, "max": 10}
+
+
+def _load_settings_schema() -> dict[str, Any]:
+    path = Path(__file__).resolve().parents[1] / "shared" / "settings.defaults.json"
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+_SETTINGS_SCHEMA = _load_settings_schema()
+_UI_SCHEMA = _SETTINGS_SCHEMA.get("ui", {}) if isinstance(_SETTINGS_SCHEMA.get("ui"), dict) else {}
+_UI_DEFAULTS = _UI_SCHEMA.get("defaults", {}) if isinstance(_UI_SCHEMA.get("defaults"), dict) else {}
+_UI_VALUES = _UI_SCHEMA.get("values", {}) if isinstance(_UI_SCHEMA.get("values"), dict) else {}
+DEFAULT_UI_SETTINGS = {
+    **_FALLBACK_UI_SETTINGS,
+    **{key: value for key, value in _UI_DEFAULTS.items() if isinstance(value, str)},
+}
+UI_SETTING_VALUES: dict[str, set[str]] = {}
+for _key, _fallback in _FALLBACK_UI_VALUES.items():
+    _value = _UI_VALUES.get(_key)
+    UI_SETTING_VALUES[_key] = set(_value) if isinstance(_value, list) and _value else set(_fallback)
+_RETRIES_SCHEMA = (
+    _SETTINGS_SCHEMA.get("endpoint", {}).get("maxRetries", {})
+    if isinstance(_SETTINGS_SCHEMA.get("endpoint"), dict)
+    else {}
+)
+MAX_RETRIES = {
+    key: value if isinstance(value, int) and not isinstance(value, bool) else _FALLBACK_MAX_RETRIES[key]
+    for key, value in _FALLBACK_MAX_RETRIES.items()
+}
+MAX_RETRIES.update({
+    key: value
+    for key, value in _RETRIES_SCHEMA.items()
+    if key in MAX_RETRIES and isinstance(value, int) and not isinstance(value, bool)
+})
 
 
 def _read_json_file(path: Path) -> dict[str, Any]:
@@ -73,7 +113,7 @@ def _merged_text_settings(settings_path: Path, developer_settings_path: Path) ->
                 result[key] = value
         retries = source.get("maxRetries")
         if isinstance(retries, int) and not isinstance(retries, bool):
-            result["maxRetries"] = min(10, max(0, retries))
+            result["maxRetries"] = min(MAX_RETRIES["max"], max(MAX_RETRIES["min"], retries))
     legacy_prompt = _non_empty(developer.get("systemPrompt"), _non_empty(public.get("systemPrompt")))
     if legacy_prompt and "systemPrompt" not in result:
         result["systemPrompt"] = legacy_prompt
@@ -110,10 +150,10 @@ def _normalize_settings(value: Any, existing: dict[str, Any] | None = None) -> d
             if not isinstance(item, str):
                 raise ValueError(f"{group}.{key} must be a string")
             endpoint[key] = item
-        retries = raw.get("maxRetries", 2)
+        retries = raw.get("maxRetries", MAX_RETRIES["default"])
         if not isinstance(retries, int) or isinstance(retries, bool):
             raise ValueError(f"{group}.maxRetries must be an integer")
-        endpoint["maxRetries"] = min(10, max(0, retries))
+        endpoint["maxRetries"] = min(MAX_RETRIES["max"], max(MAX_RETRIES["min"], retries))
         normalized[group] = endpoint
     normalized["ui"] = _normalize_ui_settings(value.get("ui", previous.get("ui", {})), previous.get("ui"))
     return normalized

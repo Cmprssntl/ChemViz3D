@@ -42,8 +42,6 @@ function snapshot(file: string): SnapshotEntry {
     },
     spec.formula,
     chemvz.smiles ?? "",
-    undefined,
-    { relax: false },
   );
   return {
     atoms: molecule.atoms.map((atom) => ({

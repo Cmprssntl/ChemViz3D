@@ -124,3 +124,47 @@
 - 已生成 `release/v1.0.0/portable/ChemViz3D-v1.0.0-x86_64.AppImage`（233,822,695 bytes，SHA-256 `4bab588a180a1e92fd950dc356e786113b34bbe5cc5e5e065ef98116aa01a90c`）；`--appimage-version` 输出 `ChemViz3D v1.0.0`，`--appimage-extract` 验证通过。
 - 已生成 `release/v1.0.0/installers/debian/ChemViz3D-v1.0.0-debian-amd64.deb`（233,455,570 bytes，SHA-256 `cacb423639671150c5446e9df23b359637c9d4588166580b7ff0d0c777b72412`）；包内包含 `opt/chemviz3d/chemviz3d.ico` 和 `usr/share/applications/chemviz3d.desktop`。
 - Debian 便携包为 `release/v1.0.0/portable/ChemViz3D-v1.0.0-deb-portable.tar.gz`（SHA-256 `b534302dfa3df85445f06303e0a2eb1f81903e068eb8600a93e1e5723822ca06`）。
+
+## 2026-11-22 遗留问题与新增功能调研
+
+### 当前代码事实（v1.1.0，提交 7c94bf8）
+
+- `npm run check`：tsc 0 error，112/112 测试通过；工作树干净。
+- 行数超限：`engine/vseprBuilder.ts` 606、`ai/config.ts` 589、`engine/conformerSearch.ts` 400；组件 `RightPanel.tsx` 279、`MoleculeViewer.tsx` 258（限制 250）。
+- `engine/uff.ts` 在生产路径已无调用者：`HeuristicBackend` 与 `tests/vsepr-geometry.test.ts` 都向 `buildFromBondSpec` 传 `{ relax: false }`，只有未传该选项的旧调用会走 `uffRelax`。
+- 设置 schema 仍有三份手写：`vite.config.ts`（注入）、`src/ai/config.ts`（归一化）、`desktop/bridge_server.py`（服务端归一化）。
+- orientation / touch 判定分散在 `App.tsx`、`MoleculeViewer.tsx`、`LeftPanel.tsx` 的独立 resize 监听中。
+- `Agent.md` 仍描述 RDKit、`builder.ts`、`validation.ts`、`conformer.ts`、`smilesGenerator.ts` 等已删除模块。
+
+### 大分子基准
+
+- `tests/ocl-spike.test.ts` 实测：C40 直链 122 原子，OCL 生成 + MMFF94 约 1.4–1.8 s；C20 62 原子约 0.3 s；C12 38 原子约 0.14 s。
+- 当前 `OpenChemLibBackend` 仅在 >80 重原子时把 `maxIts` 从 400 降到 150，没有粗/细两阶段，也没有异步让出主线程。
+- `MoleculeScene` 每个原子仍是独立 `THREE.Mesh`，>400 原子时 draw call 随原子数线性增长；`MeshResources` 只复用几何/材质，不做实例化。
+
+### AI 命名设计约束
+
+- 现有命名是同步纯函数 `IupacNamer.tryName`，在 `useMolecule.withIupacName` 中一次性执行；失败写 `iupacError`，UI 不回退。
+- 预设 JSON 已有 `name`（多语言常用名）与 `smiles`，但没有标准 `iupac` 字段；`localParser` 只返回 `chemvz`。
+- AI 缓存 `ai/cache.ts` 的键是规范化输入的 FNV-1a 哈希，值必须通过 `validateAIChemVZ`；命名缓存不能复用这个校验，需要独立命名空间与键（规范 SMILES / 结构签名）。
+- AI 文本配置与重试在 `ai/config.ts`、`ai/aiParser.ts`；命名请求应复用 `text` 配置，避免新增第四组模型配置。
+- 命名应在本地同步返回后异步升级，否则无 AI 配置或网络慢时会阻塞首屏；请求令牌必须防止旧分子的 AI 结果覆盖新分子。
+
+### 晶体 / 离子键边界
+
+- 当前 `BondData` 只有 `order`，`MolecularGraph`、`HeavyMolecule`、`HarmonicForceField`、`properties` 都把每条键当共价键；离子键必须显式过滤，不能只靠 `order`。
+- `validateAIChemVZ` 要求原子图连通；离子化合物/晶体天然多组分，晶体校验必须单独分支。
+- 晶体位置必须显式给出（分数坐标），不能走 `ConformerService`；渲染层只消费 `atoms[].x/y/z`，因此晶格→笛卡尔转换应放在进入 `MoleculeData` 之前。
+- 独立计划见 `task_plan_crystal_ionic.md`，采用 `chemvz: 3`，不改变 `chemvz: 2`。
+
+### 2026-11-22 P8 清理结果（工作树，未发布）
+
+- P8.1：删除 `src/engine/uff.ts`，移除 `vseprBuilder` 的 UFF 死路径与 `BuildOptions.relax`；`HeuristicBackend` 继续使用 `ConstrainedMinimizer`。
+- P8.2：新增 `shared/settings.defaults.json`，`vite.config.ts`、`src/ai/config.ts`、`desktop/bridge_server.py`、`desktop/build_release.py` 共用同一份字段/枚举/默认值。
+- P8.3：`src/ai/config.ts` 从 589 行降为 118 行门面，实现拆到 `src/ai/settings/{types,prompt,defaults,storage,bridge}.ts`；公开导出保持兼容。
+- P8.4：`src/engine/vseprBuilder.ts` 从 606 行降为 391 行；`KNOWN_SPECS`/`NAME_MAP`/`generateName` 移到 `placement/knownSpecs.ts`，端基甲基与 sp2 平面约束移到 `placement/postPlacement.ts`。
+- P8.5：`src/engine/conformerSearch.ts` 降为 18 行门面；实现拆到 `engine/conformer/search/{types,planarity,explore}.ts`。
+- P8.6：`RightPanel.tsx` 从 279 行降为 123 行，拆出 `RightPanelSelection/Measurement/Coplanarity/Conformer`；`MoleculeViewer.tsx` 从 258 行降为 150 行，场景初始化移到 `hooks/useViewerScene.ts`。
+- P8.7：新增 `hooks/useResponsiveLayout.ts`，`App`/`MoleculeViewer`/`LeftPanel` 共用同一 orientation + touch 快照，移除三处重复 resize 监听。
+- P8.8/P8.9：删除未被任何桌面/Android 代码实现的 `window.__chemviz` 桥（`ChemVizBridge` 接口与 `App.tsx` 两处 effect）；`ChemVizAndroid` 的方法均仍被使用，予以保留。
+- `Agent.md` 已更新技术栈、系统架构、文件表、VSEPR/构象/命名章节与 Android 路径；历史 UFF 章节标注为已移除。

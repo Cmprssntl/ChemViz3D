@@ -1,140 +1,21 @@
 ﻿import * as THREE from "three";
 import type { MoleculeData, AtomData, BondData } from "../types/molecule";
-import { BL_CC, BL_CC2, BL_CC3, BL_CH, BL_CO, BL_CO2, BL_CN, BL_OH, BL_NH, atomRenderRadius } from "./config";
-import { vseprPositions, tetrahedralPositions } from "./geometry";
+import { vseprPositions } from "./geometry";
 import { bestFitPlane } from "./coplanarity";
 import { placeRingAtoms } from "./placement/ringTemplate";
 import { placeRingHydrogens } from "./placement/ringHydrogens";
 import { fillHydrogens } from "./placement/hydrogenFill";
-import { bondLen, getHybrid, nSubstituents, valenceForAtom, type BondSpec, type Hybrid } from "./placement/spec";
+import { bondLen, getHybrid, nSubstituents, type BondSpec, type Hybrid } from "./placement/spec";
+import { KNOWN_SPECS, NAME_MAP, generateName } from "./placement/knownSpecs";
+import { enforceSp2CarbonPlanarity, normalizeTerminalMethyls } from "./placement/postPlacement";
 
 export type { BondSpec } from "./placement/spec";
-import { uffRelax, buildTopology, type UFFAtom } from "./uff";
-
-/**
- * Restore the defining geometry of trigonal-planar carbon after force-field
- * relaxation.  The lightweight UFF model has bond and angle terms, but no
- * improper/out-of-plane term, so a carbon can retain three nearly 120 degree
- * angles while its three bond vectors are still skewed in 3D.  Projecting
- * each neighbour vector onto a deterministic least-squares plane fixes that
- * ambiguity while preserving every C-X bond length.
- */
-function enforceSp2CarbonPlanarity(
-  atoms: AtomData[],
-  bonds: BondData[],
-): void {
-  const adjacency = new Map<number, number[]>();
-  for (const bond of bonds) {
-    if (!adjacency.has(bond.atom1Idx)) adjacency.set(bond.atom1Idx, []);
-    if (!adjacency.has(bond.atom2Idx)) adjacency.set(bond.atom2Idx, []);
-    adjacency.get(bond.atom1Idx)!.push(bond.atom2Idx);
-    adjacency.get(bond.atom2Idx)!.push(bond.atom1Idx);
-  }
-  for (const neighbors of adjacency.values()) neighbors.sort((a, b) => a - b);
-
-  const planarCarbons = atoms
-    .filter((atom) => atom.element === "C" && atom.hybridization === "sp2")
-    .map((atom) => atom.index)
-    .sort((a, b) => a - b);
-
-  // A few fixed projection rounds handle fused rings and conjugated chains,
-  // where correcting one centre also moves a shared sp2 neighbour.
-  for (let round = 0; round < 16; round++) {
-    for (const carbonIndex of planarCarbons) {
-      const carbon = atoms[carbonIndex];
-      const neighbors = (adjacency.get(carbonIndex) || []).filter((index) => index !== carbonIndex);
-      if (neighbors.length < 3) continue;
-
-      const center = new THREE.Vector3(carbon.x, carbon.y, carbon.z);
-      const points = [center, ...neighbors.map((index) => {
-        const atom = atoms[index];
-        return new THREE.Vector3(atom.x, atom.y, atom.z);
-      })];
-      const fit = bestFitPlane(points);
-      const normal = fit.normal.clone().normalize();
-      if (!Number.isFinite(normal.x) || normal.lengthSq() < 1e-12) continue;
-
-      for (const neighborIndex of neighbors) {
-        const neighbor = atoms[neighborIndex];
-        const vector = new THREE.Vector3(neighbor.x - carbon.x, neighbor.y - carbon.y, neighbor.z - carbon.z);
-        const length = vector.length();
-        if (length < 1e-8) continue;
-        vector.addScaledVector(normal, -vector.dot(normal));
-        if (vector.lengthSq() < 1e-12) continue;
-        vector.normalize().multiplyScalar(length);
-        neighbor.x = carbon.x + vector.x;
-        neighbor.y = carbon.y + vector.y;
-        neighbor.z = carbon.z + vector.z;
-      }
-    }
-  }
-}
-
-// ── known bond specs indexed by canonical formula ──
-
-const KNOWN_SPECS: Record<string, BondSpec> = {
-  // Hydrocarbons
-  CH4:  { atoms: ["C"],                       bonds: [] },
-  C2H6: { atoms: ["C","C"],                   bonds: [[0,1,1]] },
-  C2H4: { atoms: ["C","C"],                   bonds: [[0,1,2]] },
-  C2H2: { atoms: ["C","C"],                   bonds: [[0,1,3]] },
-  C3H8: { atoms: ["C","C","C"],               bonds: [[0,1,1],[1,2,1]] },
-  C4H10:{ atoms: ["C","C","C","C"],           bonds: [[0,1,1],[1,2,1],[2,3,1]] },
-  C5H12:{ atoms: ["C","C","C","C","C"],       bonds: [[0,1,1],[0,2,1],[0,3,1],[0,4,1]] }, // neopentane
-  // Cycloalkanes
-  C3H6: { atoms: ["C","C","C"],               bonds: [[0,1,1],[1,2,1],[2,0,1]],
-          hybridizations: ["sp3","sp3","sp3"] },
-  C4H8: { atoms: ["C","C","C","C"],           bonds: [[0,1,1],[1,2,1],[2,3,1],[3,0,1]],
-          hybridizations: ["sp3","sp3","sp3","sp3"] },
-  C5H10:{ atoms: ["C","C","C","C","C"],       bonds: [[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,0,1]],
-          hybridizations: ["sp3","sp3","sp3","sp3","sp3"] },
-  C6H12:{ atoms: ["C","C","C","C","C","C"],   bonds: [[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1]],
-          hybridizations: ["sp3","sp3","sp3","sp3","sp3","sp3"] },
-  C7H14:{ atoms: ["C","C","C","C","C","C","C"], bonds: [[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,6,1],[6,0,1]],
-          hybridizations: ["sp3","sp3","sp3","sp3","sp3","sp3","sp3"] },
-  C8H16:{ atoms: ["C","C","C","C","C","C","C","C"], bonds: [[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,6,1],[6,7,1],[7,0,1]],
-          hybridizations: ["sp3","sp3","sp3","sp3","sp3","sp3","sp3","sp3"] },
-  C9H18:{ atoms: ["C","C","C","C","C","C","C","C","C"], bonds: [[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,6,1],[6,7,1],[7,8,1],[8,0,1]],
-          hybridizations: ["sp3","sp3","sp3","sp3","sp3","sp3","sp3","sp3","sp3"] },
-  C10H20:{ atoms: ["C","C","C","C","C","C","C","C","C","C"], bonds: [[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,6,1],[6,7,1],[7,8,1],[8,9,1],[9,0,1]],
-          hybridizations: ["sp3","sp3","sp3","sp3","sp3","sp3","sp3","sp3","sp3","sp3"] },
-
-  // Alcohols & ethers
-  CH4O: { atoms: ["C","O"],                   bonds: [[0,1,1]] },      // methanol
-  C2H6O:{ atoms: ["C","C","O"],               bonds: [[0,1,1],[1,2,1]] }, // ethanol
-  C2H6O2:{atoms: ["C","O","C"],               bonds: [[0,1,1],[1,2,1]] }, // dimethyl ether
-
-  // Carbonyl compounds
-  C2H4O:{ atoms: ["C","C","O"],               bonds: [[0,1,1],[1,2,2]] }, // acetaldehyde
-  CH2O2:{ atoms: ["C","O","O"],               bonds: [[0,1,2],[0,2,1]] }, // formic acid
-  C2H4O2:{atoms: ["C","C","O","O"],           bonds: [[0,1,1],[1,2,2],[1,3,1]] }, // acetic acid
-
-  // Esters
-  C3H6O2:{atoms:["C","C","O","O","C"],        bonds:[[0,1,1],[1,2,2],[1,3,1],[3,4,1]] }, // methyl acetate
-  C4H8O2:{atoms:["C","C","C","O","O","C"],    bonds:[[0,1,1],[1,2,1],[2,3,2],[2,4,1],[4,5,1]] }, // ethyl acetate
-
-  // Inorganic
-  H2O:  { atoms: ["O"],                       bonds: [] },
-  NH3:  { atoms: ["N"],                       bonds: [] },
-  CO2:  { atoms: ["C","O","O"],               bonds: [[0,1,2],[0,2,2]] },
-
-  // Amines (NEW)
-  CH5N: { atoms: ["C","N"],                   bonds: [[0,1,1]] },      // methylamine
-  C2H7N:{ atoms: ["C","C","N"],               bonds: [[0,1,1],[1,2,1]] }, // ethylamine
-};
-
-export interface BuildOptions {
-  /** Run the legacy in-builder UFF relaxation. The conformer service disables
-   *  it and uses the constrained minimizer instead. */
-  relax?: boolean;
-}
 
 export function buildFromBondSpec(
   spec: BondSpec,
   formula: string,
   smiles: string,
   jsonName?: string,
-  options: BuildOptions = {},
 ): MoleculeData {
   const n = spec.atoms.length;
   if (n === 0) return { atoms:[], bonds:[], name:formula, formula, smiles };
@@ -458,20 +339,6 @@ export function buildFromBondSpec(
     vseprDirs: getVSEPRDirs, atoms, bonds, counter,
   });
 
-  // Name map
-  const NAME_MAP: Record<string, string> = {
-    CH4:"methane", C2H6:"ethane", C2H4:"ethene", C2H2:"ethyne", C6H6:"benzene",
-    C3H8:"propane", C4H10:"butane",
-    C3H6:"cyclopropane", C4H8:"cyclobutane", C5H10:"cyclopentane",
-    C6H12:"cyclohexane", C7H14:"cycloheptane",
-    C8H16:"cyclooctane", C9H18:"cyclononane", C10H20:"cyclodecane",
-    C3H6O2:"methyl acetate", C4H8O2:"ethyl acetate",
-    CH4O:"methanol", C2H6O:"ethanol", C2H4O2:"acetic acid", CH2O2:"formic acid",
-    C2H4O:"acetaldehyde", C2H6O2:"dimethyl ether",
-    H2O:"water", NH3:"ammonia", CO2:"carbon dioxide",
-    CH5N:"methylamine", C2H7N:"ethylamine",
-  };
-
   // Compute the actual molecular formula from ALL atoms (including H's
   // added by the VSEPR builder). The `formula` parameter only knows
   // about the heavy atoms (e.g. "C4" for cyclobutane), but the final
@@ -490,61 +357,10 @@ export function buildFromBondSpec(
   const sysName = generateName(actualFormula);
   const name = jsonName || NAME_MAP[actualFormula] || NAME_MAP[formula] || sysName || actualFormula;
 
-  // ── UFF Force Field Relaxation ──
-  // Post-process: run molecular mechanics energy minimization to fix
-  // ring pucker (cyclopentane envelope etc.), H-H repulsion (methyl
-  // staggered conformation), and general bond/angle/VdW strains.
-  // This replaces the hand-rolled "max min H-H" rotation search and
-  // the "staggered" offset hacks above — those are kept as initial
-  // guesses and the optimizer refines from there.
-  const uffAtoms: UFFAtom[] = atoms.map((a, i) => ({
-    el: a.element,
-    hyb: (hyb[i]?.toString()) ?? "",
-    x: a.x, y: a.y, z: a.z,
-  }));
-  const bondPairs: [number, number][] = bonds.map(b => [b.atom1Idx, b.atom2Idx]);
-  const topo = buildTopology(uffAtoms, bondPairs);
-  if (options.relax !== false) uffRelax(uffAtoms, topo);
-  // Copy optimized positions back into AtomData
-  for (let i = 0; i < atoms.length; i++) {
-    atoms[i].x = uffAtoms[i].x;
-    atoms[i].y = uffAtoms[i].y;
-    atoms[i].z = uffAtoms[i].z;
-  }
+  normalizeTerminalMethyls(spec, hyb, atoms, bonds);
 
-  // The simplified UFF implementation can distort terminal methyl groups in
-  // larger aromatic molecules. Restore their exact tetrahedral geometry from
-  // the optimized C-heavy-atom bond direction after relaxation.
-  for (let carbonIdx = 0; carbonIdx < n; carbonIdx++) {
-    if (spec.atoms[carbonIdx] !== "C" || hyb[carbonIdx] !== "sp3") continue;
-
-    const attachedBonds = bonds.filter(
-      (bond) => bond.atom1Idx === carbonIdx || bond.atom2Idx === carbonIdx,
-    );
-    const hydrogenIdxs = attachedBonds
-      .map((bond) => bond.atom1Idx === carbonIdx ? bond.atom2Idx : bond.atom1Idx)
-      .filter((idx) => atoms[idx].element === "H");
-    const heavyIdxs = attachedBonds
-      .map((bond) => bond.atom1Idx === carbonIdx ? bond.atom2Idx : bond.atom1Idx)
-      .filter((idx) => atoms[idx].element !== "H");
-
-    if (hydrogenIdxs.length !== 3 || heavyIdxs.length !== 1) continue;
-
-    const carbon = atoms[carbonIdx];
-    const heavy = atoms[heavyIdxs[0]];
-    const towardHeavy = new THREE.Vector3(heavy.x - carbon.x, heavy.y - carbon.y, heavy.z - carbon.z);
-    const hydrogenDirs = vseprPositions(towardHeavy, 4).slice(0, 3);
-    for (let h = 0; h < hydrogenIdxs.length; h++) {
-      const hydrogen = atoms[hydrogenIdxs[h]];
-      hydrogen.x = carbon.x + hydrogenDirs[h].x * BL_CH;
-      hydrogen.y = carbon.y + hydrogenDirs[h].y * BL_CH;
-      hydrogen.z = carbon.z + hydrogenDirs[h].z * BL_CH;
-    }
-  }
-
-  // UFF does not include an improper torsion term.  Apply the exact local
-  // trigonal-planar constraint last so the displayed three bonds of every
-  // sp2 carbon (including its implicit H, when present) are truly coplanar.
+  // Apply the exact local trigonal-planar constraint last so the displayed
+  // three bonds of every sp2 carbon (including its implicit H) are coplanar.
   enforceSp2CarbonPlanarity(atoms, bonds);
 
   return { atoms, bonds, name, formula: actualFormula, smiles };
@@ -572,35 +388,4 @@ export function buildFromKnownFormula(formula: string, smiles: string): Molecule
   const spec = KNOWN_SPECS[key];
   if (!spec) return null;
   return buildFromBondSpec(spec, formula, smiles);
-}
-
-function generateName(formula: string): string | null {
-  const m = formula.match(/^C(\d*)H(\d*)(.*)$/);
-  if (!m) return null;
-  const c = parseInt(m[1] || "1", 10);
-  const h = parseInt(m[2] || "0", 10);
-  const suffix = m[3];
-  const prefix = ["","meth","eth","prop","but","pent","hex","hept","oct","non","dec"][c];
-  if (!prefix) return null;
-  if (!suffix) {
-    if (h === 2 * c + 2) return prefix + "ane";
-    if (h === 2 * c) return prefix + "ene";
-    if (h === 2 * c - 2) return prefix + "yne";
-    return null;
-  }
-  if (suffix === "O") {
-    if (h === 2 * c + 2) return prefix + "anol";
-    if (h === 2 * c) return prefix + "anal";
-    return null;
-  }
-  if (suffix === "O2") {
-    if (h === 2 * c + 2) return prefix + "anoic acid";
-    return null;
-  }
-  if (suffix === "N") {
-    // Simple amine pattern: CnH2n+3N
-    if (h === 2 * c + 3) return prefix + "ylamine";
-    return null;
-  }
-  return null;
 }

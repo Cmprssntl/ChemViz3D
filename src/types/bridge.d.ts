@@ -1,12 +1,8 @@
-interface ChemVizBridge {
-  loadMolecule(formula: string, canonical: string, smiles: string, name: string): void;
-  sendMeasurement(type: string, values: any): void;
-  sendStatus(message: string): void;
-  sendMoleculeInfo(info: any): void;
-}
-
 interface Window {
-  __chemviz?: ChemVizBridge;
+  /**
+   * Android WebView bridge (`addJavascriptInterface`).
+   * Every method is optional because the same bundle also runs on desktop/web.
+   */
   ChemVizAndroid?: {
     onReady(): void;
     onConsoleLog(message: string): void;

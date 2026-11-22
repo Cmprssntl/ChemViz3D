@@ -294,6 +294,14 @@
 - 文档：Android `onConsoleLog` 接入 logcat，删除旧原生 UI 的三个空回调。
 - 推送：`main`（ecc9016 起）、`ForAndroid`（366e283）。
 
+## 2026-11-22 遗留清理 / AI 命名 / 大分子分级
+
+- 完成项目再调研：确认 112/112 测试通过、工作树干净、最新提交 `7c94bf8`。
+- 新建 `task_plan_crystal_ionic.md`：晶体（`chemvz: 3`、晶格、分数坐标、晶胞、镜像、CIF 子集）与离子键（`bond.kind`、渲染、图规则、命名）独立计划。
+- `task_plan.md` 新增 P8（历史遗留清理）、P9（AI 命名 + 缓存/预设 + 本地回退）、P10（大分子 coarse→fine 分级）；P11 指向独立计划。
+- `findings.md` 记录当前行数超限、UFF 死路径、设置 schema 三处重复、orientation 重复监听、C40 约 1.4–1.8 s 基准与命名/晶体设计约束。
+- 下一步：P8.1 删除 UFF 死路径并跑回归。
+
 ### v1.1.0 统一发布（完成）
 - Android 外壳迁入主仓库 `android/`，`ForAndroid` 分支与独立仓库取消（最终快照 `backup/chemviz3d-android-final-20261120-131236.bundle`）。
 - 新增 `desktop/build_release.py`：用 `release/desktop` 打包 Qt 单文件，产出 deb、便携 tar.xz、Windows zip 与 Inno Setup 安装包；暂存目录放 `/tmp`（项目盘为 NTFS，chmod 无效）。

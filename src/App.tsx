@@ -21,6 +21,7 @@ import { takeScreenshot, resetCameraView } from "./utils/screenshot";
 import { t } from "./i18n/index";
 import { loadExternalPresets } from "./ai/localParser";
 import { acquireImageDataUrl } from "./platform/imageInput";
+import { useResponsiveLayout } from "./hooks/useResponsiveLayout";
 import "./App.css";
 
 const App: React.FC = () => {
@@ -30,9 +31,7 @@ const App: React.FC = () => {
   const [aiUnavailable, setAiUnavailable] = useState(true);
   const [screenshotNotice, setScreenshotNotice] = useState<string | null>(null);
   const screenshotTimer = useRef<number | null>(null);
-  const [orientation, setOrientation] = useState<"portrait" | "landscape">(
-    window.innerWidth < window.innerHeight ? "portrait" : "landscape",
-  );
+  const { orientation } = useResponsiveLayout();
   const leftCollapsed = useStore((s) => s.leftCollapsed);
   const setError = useStore((s) => s.setError);
 
@@ -52,16 +51,6 @@ const App: React.FC = () => {
   const rightCollapsed = useStore((s) => s.rightCollapsed);
   const setLeftCollapsed = useStore((s) => s.setLeftCollapsed);
   const setRightCollapsed = useStore((s) => s.setRightCollapsed);
-  const molecule = useStore((s) => s.molecule);
-  const measurePoints = useStore((s) => s.measurePoints);
-  const measureType = useStore((s) => s.measureType);
-
-  useEffect(() => {
-    const handleResize = () => setOrientation(window.innerWidth < window.innerHeight ? "portrait" : "landscape");
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   useEffect(() => {
     const handleToast = (event: Event) => {
       const message = (event as CustomEvent<{ message?: string }>).detail?.message;
@@ -87,8 +76,8 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Preserve the Android touch bridge: Java can submit a formula and receives
-  // the current molecule/measurement without changing the desktop workflow.
+  // Preserve the Android touch bridge: Java can submit a formula through a
+  // custom DOM event without changing the desktop workflow.
   useEffect(() => {
     const handleAndroidMolecule = (event: Event) => {
       const formula = (event as CustomEvent<{ formula?: string }>).detail?.formula;
@@ -97,43 +86,6 @@ const App: React.FC = () => {
     window.addEventListener("android-molecule", handleAndroidMolecule);
     return () => window.removeEventListener("android-molecule", handleAndroidMolecule);
   }, [processInput]);
-
-  useEffect(() => {
-    if (!window.__chemviz?.sendMoleculeInfo) return;
-    if (!molecule) {
-      window.__chemviz.sendMoleculeInfo(null);
-      return;
-    }
-    window.__chemviz.sendMoleculeInfo({
-      formula: molecule.formula,
-      name: molecule.name,
-      smiles: molecule.smiles,
-      atoms: molecule.atoms.length,
-      bonds: molecule.bonds.length,
-    });
-  }, [molecule]);
-
-  useEffect(() => {
-    if (!window.__chemviz?.sendMeasurement || !measureType || measurePoints.length < 2 || !molecule) return;
-    const atoms = measurePoints.map((index) => molecule.atoms[index]);
-    if (atoms.some((atom) => !atom)) return;
-    if (measureType === "distance" && atoms.length === 2) {
-      const [a, b] = atoms;
-      const value = Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
-      window.__chemviz.sendMeasurement("distance", { value: Number(value.toFixed(3)) });
-    } else if (measureType === "angle" && atoms.length === 3) {
-      const [a, b, c] = atoms;
-      const ab = { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z };
-      const cb = { x: c.x - b.x, y: c.y - b.y, z: c.z - b.z };
-      const dot = ab.x * cb.x + ab.y * cb.y + ab.z * cb.z;
-      const abLen = Math.hypot(ab.x, ab.y, ab.z);
-      const cbLen = Math.hypot(cb.x, cb.y, cb.z);
-      const value = Math.acos(Math.max(-1, Math.min(1, dot / (abLen * cbLen)))) * 180 / Math.PI;
-      window.__chemviz.sendMeasurement("angle", { value: Number(value.toFixed(1)) });
-    } else if (measureType === "dihedral" && atoms.length === 4) {
-      window.__chemviz.sendMeasurement("dihedral", { value: 0 });
-    }
-  }, [measurePoints, measureType, molecule]);
 
   useEffect(() => {
     let active = true;

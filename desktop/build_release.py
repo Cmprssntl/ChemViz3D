@@ -107,6 +107,7 @@ def build_executable(target: str, reuse: Path | None) -> Path:
         "--add-data", f"{PROJECT_ROOT / 'README.md'}{separator}.",
         "--add-data", f"{PROJECT_ROOT / 'LICENSE'}{separator}.",
         "--add-data", f"{PROJECT_ROOT / 'settings.int'}{separator}.",
+        "--add-data", f"{PROJECT_ROOT / 'shared'}{separator}shared",
         "--add-data", f"{PROJECT_ROOT / 'molecules'}{separator}molecules",
         "--hidden-import", "PySide6.QtWebEngineWidgets",
         "--hidden-import", "PySide6.QtWebEngineCore",
