@@ -323,4 +323,4 @@
 - 产出两档压缩包：`ChemViz3D-presets-500.zip`（444 个常用/天然产物 + 56 个小同系物）与 `ChemViz3D-presets-2000.zip`（全部 2000 个）。
 - 删除旧的 1162 个 `ChemViz3D-presets-supplement.zip`，README 更新为两档说明。
 - 新增 `tests/preset-pack.test.ts`：校验 2000 个预设的 schema、唯一结构，并抽样构建 3D 几何；`npm run check` 149/149。
-- 两个压缩包上传到 GitHub Release `v1.0.0`。
+- 两个压缩包上传到 GitHub Release `v1.1.0`；`v1.0.0` 保持“暂不提供预设补充包”。
